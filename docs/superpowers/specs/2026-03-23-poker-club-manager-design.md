@@ -18,6 +18,7 @@ A multi-tenant web app for managing real-life poker clubs. Club admins can manag
 **Platform:** Supabase (Postgres + Auth + Realtime + Row Level Security)
 **Hosting:** Vercel (managed); exit strategy to any Node.js host or self-hosted via Docker
 **Offline:** PWA with service worker — the tournament display screen remains functional if the connection drops mid-event
+**i18n:** Paraglide JS (by Inlang) — compile-time safe, SvelteKit-native. UI strings only (not user-generated content). Languages: English (default) + German. Detection: browser `Accept-Language` header with manual override stored in a cookie.
 
 ### Multi-Tenancy
 

@@ -367,6 +367,197 @@ git commit -m "feat: add initial DB schema with clubs and club_members + RLS pol
 
 ---
 
+## Task 2b: i18n Setup (Paraglide JS)
+
+**Files:**
+- Create: `messages/en.json` — English message catalogue
+- Create: `messages/de.json` — German message catalogue
+- Modify: `src/hooks.server.ts` — add Paraglide language detection handle
+- Modify: `src/routes/+layout.svelte` — wrap with `<ParaglideJS>`
+- Create: `src/lib/i18n.ts` — re-export paraglide runtime helpers
+
+- [ ] **Step 1: Install and initialise Paraglide**
+
+```bash
+npx @inlang/paraglide-sveltekit@latest init
+```
+
+When prompted: select English as the default language, add German as a second language. Accept all other defaults.
+
+This creates:
+- `messages/en.json` and `messages/de.json`
+- `project.inlang/` config directory
+- Adds `@inlang/paraglide-sveltekit` to `package.json`
+- Updates `vite.config.ts` with the Paraglide plugin
+- Adds `src/lib/i18n.ts` (or `src/i18n.ts` depending on version)
+
+- [ ] **Step 2: Verify generated structure**
+
+```bash
+ls messages/
+# Expected: en.json  de.json
+cat messages/en.json
+# Expected: {} or a default structure
+```
+
+- [ ] **Step 3: Add initial message keys**
+
+`messages/en.json`:
+```json
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app_name": "Poker Club Manager",
+  "nav_home": "Home",
+  "nav_tournaments": "Tournaments",
+  "nav_leaderboard": "Leaderboard",
+  "nav_admin": "Admin",
+  "auth_sign_in": "Sign in",
+  "auth_email_label": "Email",
+  "auth_magic_link_button": "Send magic link",
+  "auth_check_email": "Check your email — we sent you a magic link.",
+  "auth_invalid_email": "Please enter a valid email address.",
+  "club_create_title": "Create your club",
+  "club_name_label": "Club name",
+  "club_slug_label": "URL slug",
+  "club_display_name_label": "Your display name in this club",
+  "club_create_button": "Create club",
+  "members_title": "Members",
+  "members_invite_title": "Invite member",
+  "members_invite_email": "Email",
+  "members_invite_display_name": "Display name",
+  "members_invite_button": "Send invite",
+  "members_remove": "Remove",
+  "settings_title": "Club settings",
+  "settings_save": "Save changes",
+  "settings_saved": "Settings saved.",
+  "error_required": "This field is required.",
+  "error_invalid_slug": "Slug must be lowercase letters, numbers, and hyphens only.",
+  "error_slug_taken": "That slug is already taken.",
+  "error_already_member": "This user is already a member.",
+  "error_cannot_remove_self": "Cannot remove yourself.",
+  "invite_title": "You're invited!",
+  "invite_body": "You've been invited to join {club_name}.",
+  "invite_join_button": "Join club",
+  "get_started": "Get started",
+  "landing_tagline": "Manage your club, run tournaments, track your legends."
+}
+```
+
+`messages/de.json`:
+```json
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app_name": "Poker Club Manager",
+  "nav_home": "Startseite",
+  "nav_tournaments": "Turniere",
+  "nav_leaderboard": "Rangliste",
+  "nav_admin": "Admin",
+  "auth_sign_in": "Anmelden",
+  "auth_email_label": "E-Mail",
+  "auth_magic_link_button": "Magic Link senden",
+  "auth_check_email": "Bitte prüfe deine E-Mails — wir haben dir einen Magic Link gesendet.",
+  "auth_invalid_email": "Bitte gib eine gültige E-Mail-Adresse ein.",
+  "club_create_title": "Club erstellen",
+  "club_name_label": "Club-Name",
+  "club_slug_label": "URL-Slug",
+  "club_display_name_label": "Dein Anzeigename in diesem Club",
+  "club_create_button": "Club erstellen",
+  "members_title": "Mitglieder",
+  "members_invite_title": "Mitglied einladen",
+  "members_invite_email": "E-Mail",
+  "members_invite_display_name": "Anzeigename",
+  "members_invite_button": "Einladung senden",
+  "members_remove": "Entfernen",
+  "settings_title": "Club-Einstellungen",
+  "settings_save": "Änderungen speichern",
+  "settings_saved": "Einstellungen gespeichert.",
+  "error_required": "Dieses Feld ist erforderlich.",
+  "error_invalid_slug": "Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.",
+  "error_slug_taken": "Dieser Slug ist bereits vergeben.",
+  "error_already_member": "Dieser Benutzer ist bereits Mitglied.",
+  "error_cannot_remove_self": "Du kannst dich nicht selbst entfernen.",
+  "invite_title": "Du wurdest eingeladen!",
+  "invite_body": "Du wurdest eingeladen, {club_name} beizutreten.",
+  "invite_join_button": "Club beitreten",
+  "get_started": "Loslegen",
+  "landing_tagline": "Verwalte deinen Club, organisiere Turniere, verewige deine Legenden."
+}
+```
+
+- [ ] **Step 4: Add language detection to hooks**
+
+Check what `npx @inlang/paraglide-sveltekit init` generated in `src/hooks.server.ts`. It should have added a `i18n.handle()` call. If it created a separate `hooks.server.ts` instead of modifying the existing one, merge them into one file:
+
+```typescript
+import { createServerClient } from '@supabase/ssr';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { sequence } from '@sveltejs/kit/hooks';
+import { i18n } from '$lib/i18n';
+import type { Handle } from '@sveltejs/kit';
+import type { Database } from '$lib/types';
+
+const supabaseHandle: Handle = async ({ event, resolve }) => {
+  event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll: () => event.cookies.getAll(),
+      setAll: (cookiesToSet) =>
+        cookiesToSet.forEach(({ name, value, options }) =>
+          event.cookies.set(name, value, { ...options, path: '/' })
+        )
+    }
+  });
+
+  event.locals.safeGetSession = async () => {
+    const { data: { session } } = await event.locals.supabase.auth.getSession();
+    if (!session) return { session: null, user: null };
+    const { data: { user }, error } = await event.locals.supabase.auth.getUser();
+    if (error) return { session: null, user: null };
+    return { session, user };
+  };
+
+  return resolve(event, {
+    filterSerializedResponseHeaders(name) {
+      return name === 'content-range' || name === 'x-supabase-api-version';
+    }
+  });
+};
+
+export const handle: Handle = sequence(i18n.handle(), supabaseHandle);
+```
+
+- [ ] **Step 5: Update root layout to wrap with ParaglideJS**
+
+`src/routes/+layout.svelte`:
+```svelte
+<script lang="ts">
+  import '../app.css';
+  import { ParaglideJS } from '@inlang/paraglide-sveltekit';
+  import { i18n } from '$lib/i18n';
+  const { data, children } = $props();
+</script>
+
+<ParaglideJS {i18n}>
+  {@render children()}
+</ParaglideJS>
+```
+
+- [ ] **Step 6: Verify build compiles**
+
+```bash
+npm run build
+```
+
+Expected: build succeeds. Fix any TypeScript errors before proceeding.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add messages/ src/ project.inlang/ vite.config.ts package.json
+git commit -m "feat: add Paraglide JS i18n with English and German message catalogues"
+```
+
+---
+
 ## Task 3: Supabase Client Helpers + Slug Validation
 
 **Files:**
