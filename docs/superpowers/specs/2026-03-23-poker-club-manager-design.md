@@ -43,8 +43,8 @@ The display screen (`/[club]/tournaments/[id]/display`) is cached by a service w
 ### club_members
 | Column | Type | Notes |
 |--------|------|-------|
-| club_id | uuid | FK → clubs |
-| user_id | uuid | FK → auth.users |
+| club_id | uuid | PK (composite with user_id), FK → clubs |
+| user_id | uuid | PK (composite with club_id), FK → auth.users |
 | role | text | `admin` \| `member` |
 | display_name | text | |
 | joined_at | timestamptz | |
@@ -94,7 +94,7 @@ Reusable payout templates per club.
 | prize_structure_id | uuid | FK → prize_structures |
 | buy_in | numeric | Base buy-in amount |
 | status | text | `draft` \| `active` \| `finished` |
-| state | jsonb | Live running state (current level, timer, chip counts, etc.) — broadcast via Realtime |
+| state | jsonb | Live running state — broadcast via Realtime. Schema: `{ current_level_index: int, level_started_at: timestamptz, is_paused: bool, paused_remaining_ms: int\|null, players_remaining: int, total_chips: int, chip_counts: [{ member_id, display_name, chips }], recent_eliminations: [{ member_id, display_name, position, eliminated_at }] }` |
 | display_public | boolean | If true, display screen is viewable without login |
 | created_at | timestamptz | |
 
@@ -109,6 +109,7 @@ Reusable payout templates per club.
 | finish_position | integer | Null while still playing |
 | eliminated_at | timestamptz | |
 | prize_amount | numeric | Calculated at finish |
+| points | integer | Points earned, calculated at finish from club's points schedule |
 
 ---
 
@@ -156,6 +157,16 @@ Reusable payout templates per club.
 2. **Registration** — Admin registers players from the member list. Prize pool is calculated live as players are added.
 3. **Running** — Timer starts. Admin records eliminations, rebuys, and chip counts from the run screen. Display screen updates live via Supabase Realtime. Timer auto-advances blind levels.
 4. **Finish** — Admin records final positions. App calculates prize payouts from the prize structure. Results are posted to club leaderboard and member stats.
+
+### Leaderboard Calculation
+
+Two separate leaderboards are shown at club level (all-time and per-season if applicable) and on each tournament:
+
+**Points leaderboard** — members earn points based on finish position. The points schedule is configurable per club via `clubs.settings.points_schedule` (an array of `{ position, points }`). Default schedule: 1st = 100, 2nd = 75, 3rd = 60, 4th = 50, 5th = 40, 6th–10th = 30 down to 10, remaining = 5. Points are stored per `tournament_players` row and summed for club standings.
+
+**Prize money leaderboard** — total `prize_amount` summed across all finished tournaments for each member.
+
+Both leaderboards display: rank, member name, value (points or prize total), number of tournaments played, and wins (1st place finishes).
 
 ### Admin Run Screen
 Controls: start/pause/advance timer, record elimination, record rebuy/add-on, update chip counts, toggle display public, end tournament.
