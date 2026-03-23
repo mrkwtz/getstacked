@@ -1,2 +1,21 @@
-<h1>Poker Club Manager</h1>
-<p>Landing page — coming in Task 5.</p>
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import * as m from '$lib/paraglide/messages';
+
+  const { data } = $props<{ data: { session: unknown } }>();
+
+  $effect(() => {
+    if (data.session) goto('/clubs/new');
+  });
+</script>
+
+<div class="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white">
+  <h1 class="text-4xl font-bold mb-4">{m.app_name()}</h1>
+  <p class="text-gray-400 mb-8 text-lg">{m.landing_tagline()}</p>
+  <a
+    href="/auth/login"
+    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors"
+  >
+    {m.get_started()}
+  </a>
+</div>
