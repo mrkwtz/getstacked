@@ -33,5 +33,7 @@
   "invite_body": "You've been invited to join {club_name}.",
   "invite_join_button": "Join club",
   "get_started": "Get started",
-  "landing_tagline": "Manage your club, run tournaments, track your legends."
+  "landing_tagline": "Manage your club, run tournaments, track your legends.",
+  "club_home_welcome": "Welcome to {club_name}",
+  "club_home_placeholder": "Tournaments and recent results will appear here."
 }

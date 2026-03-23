@@ -33,5 +33,7 @@
   "invite_body": "Du wurdest eingeladen, {club_name} beizutreten.",
   "invite_join_button": "Club beitreten",
   "get_started": "Loslegen",
-  "landing_tagline": "Verwalte deinen Club, organisiere Turniere, verewige deine Legenden."
+  "landing_tagline": "Verwalte deinen Club, organisiere Turniere, verewige deine Legenden.",
+  "club_home_welcome": "Willkommen bei {club_name}",
+  "club_home_placeholder": "Turniere und aktuelle Ergebnisse erscheinen hier."
 }
