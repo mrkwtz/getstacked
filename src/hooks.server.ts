@@ -1,9 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { sequence } from '@sveltejs/kit/hooks';
+import { i18n } from '$lib/i18n';
 import type { Handle } from '@sveltejs/kit';
 import type { Database } from '$lib/types';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const supabaseHandle: Handle = async ({ event, resolve }) => {
   event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => event.cookies.getAll(),
@@ -28,3 +30,5 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   });
 };
+
+export const handle: Handle = sequence(i18n.handle(), supabaseHandle);
