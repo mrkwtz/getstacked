@@ -2,7 +2,7 @@
   import { enhance } from '$app/forms';
   import * as m from '$lib/paraglide/messages';
 
-  const { form } = $props<{ form: { sent?: boolean; error?: string } | null }>();
+  const { form } = $props<{ form: { sent?: boolean; errorKey?: string; errorMessage?: string } | null }>();
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-950">
@@ -25,8 +25,10 @@
           />
         </div>
 
-        {#if form?.error}
-          <p class="text-red-400 text-sm mb-3">{form.error}</p>
+        {#if form?.errorKey === 'invalid_email'}
+          <p class="text-red-400 text-sm mb-3">{m.auth_invalid_email()}</p>
+        {:else if form?.errorKey}
+          <p class="text-red-400 text-sm mb-3">{form.errorMessage ?? m.auth_invalid_email()}</p>
         {/if}
 
         <button
