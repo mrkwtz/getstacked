@@ -1,11 +1,13 @@
 import { redirect } from '@sveltejs/kit';
+import { createServiceClient } from '$lib/server/supabase';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ parent, locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ parent }) => {
 	const { session } = await parent();
 	if (!session) return {};
 
-	const { data: membership } = await supabase
+	const service = createServiceClient();
+	const { data: membership } = await service
 		.from('club_members')
 		.select('clubs(slug)')
 		.eq('user_id', session.user.id)
