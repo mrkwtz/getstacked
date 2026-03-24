@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 
-// We'll import this helper once we create it
 import { parseTheme } from '../../src/routes/+layout.server';
 
 describe('parseTheme', () => {
