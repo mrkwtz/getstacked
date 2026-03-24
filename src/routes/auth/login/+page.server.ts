@@ -3,7 +3,7 @@ import { createAnonClient } from '$lib/server/supabase';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-  default: async ({ request, cookies, url }) => {
+  magic_link: async ({ request, cookies, url }) => {
     const formData = await request.formData();
     const email = formData.get('email')?.toString().trim() ?? '';
 

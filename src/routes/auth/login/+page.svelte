@@ -33,7 +33,7 @@
     {#if form?.sent}
       <p class="text-green-400">{m.auth_check_email()}</p>
     {:else}
-      <form method="POST" use:enhance>
+      <form method="POST" action="?/magic_link" use:enhance>
         <div class="mb-4">
           <label for="email" class="block text-sm font-medium text-gray-300 mb-1">{m.auth_email_label()}</label>
           <input
