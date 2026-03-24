@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { parseTheme } from '../../src/routes/+layout.server';
+import { parseTheme } from '../../src/lib/theme';
 
 describe('parseTheme', () => {
   it('returns dark by default when cookie is missing', () => {

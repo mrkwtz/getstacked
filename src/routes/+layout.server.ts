@@ -1,8 +1,5 @@
 import type { LayoutServerLoad } from './$types';
-
-export function parseTheme(value: string | undefined): 'dark' | 'light' {
-  return value === 'light' ? 'light' : 'dark';
-}
+import { parseTheme } from '$lib/theme';
 
 export const load: LayoutServerLoad = async ({ cookies, locals: { safeGetSession } }) => {
   const { session } = await safeGetSession();
