@@ -1,6 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Poker Club Manager",
+  "app_name": "GetStacked",
   "nav_home": "Startseite",
   "nav_tournaments": "Turniere",
   "nav_leaderboard": "Rangliste",
