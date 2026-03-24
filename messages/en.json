@@ -8,6 +8,8 @@
   "auth_sign_in": "Sign in",
   "auth_email_label": "Email",
   "auth_magic_link_button": "Send magic link",
+  "auth_continue_with_google": "Continue with Google",
+  "auth_or_divider": "or",
   "auth_check_email": "Check your email — we sent you a magic link.",
   "auth_invalid_email": "Please enter a valid email address.",
   "club_create_title": "Create your club",
