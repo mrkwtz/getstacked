@@ -29,49 +29,64 @@
   }
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-950">
-  <div class="w-full max-w-md p-8 bg-gray-900 rounded-xl shadow-lg">
-    <h1 class="text-2xl font-bold text-white mb-6">{m.club_create_title()}</h1>
-
-    <form method="POST" use:enhance>
-      <div class="mb-4">
-        <label for="name" class="block text-sm font-medium text-gray-300 mb-1">{m.club_name_label()}</label>
-        <input
-          id="name" name="name" type="text" required
-          value={name} oninput={onNameInput}
-          class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
-          placeholder="River City Poker Club"
-        />
-      </div>
-
-      <div class="mb-4">
-        <label for="slug" class="block text-sm font-medium text-gray-300 mb-1">
-          {m.club_slug_label()} <span class="text-gray-500 font-normal">— yourclub.app/<span class="text-indigo-400">{slug || 'slug'}</span></span>
-        </label>
-        <input
-          id="slug" name="slug" type="text" required
-          value={slug} oninput={onSlugInput}
-          class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
-          placeholder="river-city"
-        />
-      </div>
-
+<div class="min-h-screen bg-background flex items-center justify-center px-4">
+  <div class="w-full max-w-sm">
+    <div class="bg-card border border-border rounded-xl p-8">
       <div class="mb-6">
-        <label for="display_name" class="block text-sm font-medium text-gray-300 mb-1">{m.club_display_name_label()}</label>
-        <input
-          id="display_name" name="display_name" type="text" required
-          class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
-          placeholder="Poker Pete"
-        />
+        <p class="font-extrabold text-sm tracking-tight text-foreground mb-1">GETSTACKED</p>
+        <p class="text-sm text-muted-foreground">{m.club_create_title()}</p>
       </div>
 
-      {#if errorMessage()}
-        <p class="text-red-400 text-sm mb-4">{errorMessage()}</p>
-      {/if}
+      <form method="POST" use:enhance class="flex flex-col gap-4">
+        <div>
+          <label for="name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.club_name_label()}
+          </label>
+          <input
+            id="name" name="name" type="text" required
+            value={name} oninput={onNameInput}
+            placeholder="River City Poker Club"
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
 
-      <button type="submit" class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
-        {m.club_create_button()}
-      </button>
-    </form>
+        <div>
+          <label for="slug" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.club_slug_label()}
+            <span class="text-muted-foreground font-normal ml-1">
+              — app/<span class="text-accent">{slug || 'slug'}</span>
+            </span>
+          </label>
+          <input
+            id="slug" name="slug" type="text" required
+            value={slug} oninput={onSlugInput}
+            placeholder="river-city"
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
+
+        <div>
+          <label for="display_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.club_display_name_label()}
+          </label>
+          <input
+            id="display_name" name="display_name" type="text" required
+            placeholder="Poker Pete"
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
+
+        {#if errorMessage()}
+          <p class="text-xs text-accent">{errorMessage()}</p>
+        {/if}
+
+        <button
+          type="submit"
+          class="w-full bg-accent text-accent-foreground text-sm font-medium py-2.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+        >
+          {m.club_create_button()}
+        </button>
+      </form>
+    </div>
   </div>
 </div>

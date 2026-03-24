@@ -14,27 +14,40 @@
   }
 </script>
 
-<div class="max-w-md">
-  <h1 class="text-2xl font-bold mb-6">{m.settings_title()}</h1>
+<div class="max-w-sm flex flex-col gap-6">
+  <h1 class="text-base font-semibold text-foreground">{m.settings_title()}</h1>
 
-  <form method="POST" use:enhance class="bg-gray-900 rounded-xl p-6 space-y-4">
+  <form method="POST" use:enhance class="bg-card border border-border rounded-lg p-5 flex flex-col gap-4">
     <div>
-      <label for="name" class="block text-sm font-medium text-gray-300 mb-1">{m.club_name_label()}</label>
-      <input id="name" name="name" type="text" required value={data.club.name}
-        class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500" />
+      <label for="name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+        {m.club_name_label()}
+      </label>
+      <input
+        id="name" name="name" type="text" required value={data.club.name}
+        class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+      />
     </div>
     <div>
-      <label for="slug" class="block text-sm font-medium text-gray-300 mb-1">{m.club_slug_label()}</label>
-      <input id="slug" name="slug" type="text" required value={data.club.slug}
-        class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500" />
+      <label for="slug" class="block text-xs font-medium text-muted-foreground mb-1.5">
+        {m.club_slug_label()}
+      </label>
+      <input
+        id="slug" name="slug" type="text" required value={data.club.slug}
+        class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+      />
     </div>
+
     {#if form?.errorKey}
-      <p class="text-red-400 text-sm">{resolveError(form.errorKey)}</p>
+      <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
     {/if}
     {#if form?.saved}
-      <p class="text-green-400 text-sm">{m.settings_saved()}</p>
+      <p class="text-xs text-green-500">{m.settings_saved()}</p>
     {/if}
-    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+
+    <button
+      type="submit"
+      class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+    >
       {m.settings_save()}
     </button>
   </form>
