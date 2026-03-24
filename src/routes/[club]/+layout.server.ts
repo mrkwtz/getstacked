@@ -1,13 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-import { createServiceClient } from '$lib/server/supabase';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ params, locals: { supabase, safeGetSession } }) => {
   const { session } = await safeGetSession();
   if (!session) throw redirect(303, '/auth/login');
 
-  const service = createServiceClient();
-  const { data: club } = await service
+  const { data: club } = await supabase
     .from('clubs')
     .select('*')
     .eq('slug', params.club)
