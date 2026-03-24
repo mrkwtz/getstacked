@@ -1,12 +1,13 @@
 import { fail, error } from '@sveltejs/kit';
-import { createServiceClient } from '$lib/server/supabase';
+import { createServiceClient, createUserClient } from '$lib/server/supabase';
 import { isAdmin } from '$lib/members';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ parent, locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ parent, locals: { safeGetSession } }) => {
   const { club } = await parent();
+  const { session } = await safeGetSession();
 
-  const { data: members } = await supabase
+  const { data: members } = await createUserClient(session!.access_token)
     .from('club_members')
     .select('*')
     .eq('club_id', club.id)
