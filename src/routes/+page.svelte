@@ -1,12 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
-
-  const { data } = $props<{ data: { session: unknown } }>();
-
-  $effect(() => {
-    if (data.session) goto('/clubs/new');
-  });
 </script>
 
 <div class="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white">

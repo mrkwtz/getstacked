@@ -73,7 +73,7 @@ tests/
 - Create: `src/routes/+layout.svelte`, `src/routes/+page.svelte`
 - Create: `.env.example`
 
-- [ ] **Step 1: Scaffold SvelteKit project**
+- [x] **Step 1: Scaffold SvelteKit project**
 
 ```bash
 npm create svelte@latest . -- --template skeleton --types typescript --no-prettier --no-eslint --no-playwright --no-vitest
@@ -81,7 +81,7 @@ npm create svelte@latest . -- --template skeleton --types typescript --no-pretti
 
 Select: Skeleton project, TypeScript, no extras (we add them manually).
 
-- [ ] **Step 2: Add TailwindCSS**
+- [x] **Step 2: Add TailwindCSS**
 
 ```bash
 npx svelte-add@latest tailwindcss
@@ -90,7 +90,7 @@ npm install
 
 Verify `src/app.css` contains Tailwind directives and `tailwind.config.js` exists.
 
-- [ ] **Step 3: Add Vitest + Playwright**
+- [x] **Step 3: Add Vitest + Playwright**
 
 ```bash
 npm install -D vitest @vitest/ui jsdom @testing-library/svelte @playwright/test
@@ -126,13 +126,13 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Add Supabase packages**
+- [x] **Step 4: Add Supabase packages**
 
 ```bash
 npm install @supabase/supabase-js @supabase/ssr
 ```
 
-- [ ] **Step 5: Create `.env.example`**
+- [x] **Step 5: Create `.env.example`**
 
 ```bash
 # .env.example
@@ -143,7 +143,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 Copy to `.env` and fill in after Supabase CLI setup (Task 2).
 
-- [ ] **Step 6: Create root layout**
+- [x] **Step 6: Create root layout**
 
 `src/routes/+layout.server.ts`:
 ```typescript
@@ -176,7 +176,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 <slot />
 ```
 
-- [ ] **Step 7: Verify dev server starts**
+- [x] **Step 7: Verify dev server starts**
 
 ```bash
 npm run dev
@@ -184,7 +184,7 @@ npm run dev
 
 Expected: server running at `http://localhost:5173` with no errors.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -200,7 +200,7 @@ git commit -m "feat: scaffold SvelteKit project with Tailwind, Vitest, Supabase 
 - Create: `supabase/seed.sql`
 - Create: `src/lib/types.ts`
 
-- [ ] **Step 1: Initialise Supabase CLI**
+- [x] **Step 1: Initialise Supabase CLI**
 
 ```bash
 npx supabase init
@@ -209,7 +209,7 @@ npx supabase start
 
 Expected output includes `API URL`, `anon key`, and `service_role key`. Copy these into `.env`.
 
-- [ ] **Step 2: Write failing schema test**
+- [x] **Step 2: Write failing schema test**
 
 `tests/unit/clubs.test.ts`:
 ```typescript
@@ -232,7 +232,7 @@ describe('isValidSlug', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 ```bash
 npx vitest run tests/unit/clubs.test.ts
@@ -240,7 +240,7 @@ npx vitest run tests/unit/clubs.test.ts
 
 Expected: FAIL — `$lib/clubs` not found.
 
-- [ ] **Step 4: Create migration**
+- [x] **Step 4: Create migration**
 
 `supabase/migrations/0001_initial.sql`:
 ```sql
@@ -312,7 +312,7 @@ create policy "admins can manage club members"
   );
 ```
 
-- [ ] **Step 5: Apply migration**
+- [x] **Step 5: Apply migration**
 
 ```bash
 npx supabase db reset
@@ -320,7 +320,7 @@ npx supabase db reset
 
 Expected: migration applied, seed not yet (no seed.sql content yet). No errors.
 
-- [ ] **Step 6: Create seed file**
+- [x] **Step 6: Create seed file**
 
 `supabase/seed.sql`:
 ```sql
@@ -334,7 +334,7 @@ Expected: migration applied, seed not yet (no seed.sql content yet). No errors.
 
 Note: full seed requires real auth user UUIDs — fill in after creating test users in the local Supabase dashboard at `http://localhost:54323`.
 
-- [ ] **Step 7: Generate TypeScript types**
+- [x] **Step 7: Generate TypeScript types**
 
 ```bash
 npx supabase gen types typescript --local > src/lib/types.ts
@@ -342,7 +342,7 @@ npx supabase gen types typescript --local > src/lib/types.ts
 
 Verify `src/lib/types.ts` contains `Database`, `clubs`, and `club_members` type definitions.
 
-- [ ] **Step 8: Add domain types**
+- [x] **Step 8: Add domain types**
 
 Append to `src/lib/types.ts`:
 ```typescript
@@ -358,7 +358,7 @@ export type ClubContext = {
 };
 ```
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add supabase/ src/lib/types.ts
@@ -376,7 +376,7 @@ git commit -m "feat: add initial DB schema with clubs and club_members + RLS pol
 - Modify: `src/routes/+layout.svelte` — wrap with `<ParaglideJS>`
 - Create: `src/lib/i18n.ts` — re-export paraglide runtime helpers
 
-- [ ] **Step 1: Install and initialise Paraglide**
+- [x] **Step 1: Install and initialise Paraglide**
 
 ```bash
 npx @inlang/paraglide-sveltekit@latest init
@@ -391,7 +391,7 @@ This creates:
 - Updates `vite.config.ts` with the Paraglide plugin
 - Adds `src/lib/i18n.ts` (or `src/i18n.ts` depending on version)
 
-- [ ] **Step 2: Verify generated structure**
+- [x] **Step 2: Verify generated structure**
 
 ```bash
 ls messages/
@@ -400,7 +400,7 @@ cat messages/en.json
 # Expected: {} or a default structure
 ```
 
-- [ ] **Step 3: Add initial message keys**
+- [x] **Step 3: Add initial message keys**
 
 `messages/en.json`:
 ```json
@@ -484,7 +484,7 @@ cat messages/en.json
 }
 ```
 
-- [ ] **Step 4: Add language detection to hooks**
+- [x] **Step 4: Add language detection to hooks**
 
 Check what `npx @inlang/paraglide-sveltekit init` generated in `src/hooks.server.ts`. It should have added a `i18n.handle()` call. If it created a separate `hooks.server.ts` instead of modifying the existing one, merge them into one file:
 
@@ -525,7 +525,7 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(i18n.handle(), supabaseHandle);
 ```
 
-- [ ] **Step 5: Update root layout to wrap with ParaglideJS**
+- [x] **Step 5: Update root layout to wrap with ParaglideJS**
 
 `src/routes/+layout.svelte`:
 ```svelte
@@ -541,7 +541,7 @@ export const handle: Handle = sequence(i18n.handle(), supabaseHandle);
 </ParaglideJS>
 ```
 
-- [ ] **Step 6: Verify build compiles**
+- [x] **Step 6: Verify build compiles**
 
 ```bash
 npm run build
@@ -549,7 +549,7 @@ npm run build
 
 Expected: build succeeds. Fix any TypeScript errors before proceeding.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add messages/ src/ project.inlang/ vite.config.ts package.json
@@ -565,7 +565,7 @@ git commit -m "feat: add Paraglide JS i18n with English and German message catal
 - Create: `src/lib/server/supabase.ts`
 - Create: `src/lib/clubs.ts`
 
-- [ ] **Step 1: Create browser Supabase client factory**
+- [x] **Step 1: Create browser Supabase client factory**
 
 `src/lib/supabase.ts`:
 ```typescript
@@ -578,7 +578,7 @@ export function createClient() {
 }
 ```
 
-- [ ] **Step 2: Create server Supabase client factory**
+- [x] **Step 2: Create server Supabase client factory**
 
 `src/lib/server/supabase.ts`:
 ```typescript
@@ -609,7 +609,7 @@ export function createServiceClient() {
 }
 ```
 
-- [ ] **Step 3: Create clubs helper with slug validation**
+- [x] **Step 3: Create clubs helper with slug validation**
 
 `src/lib/clubs.ts`:
 ```typescript
@@ -618,7 +618,7 @@ export function isValidSlug(slug: string): boolean {
 }
 ```
 
-- [ ] **Step 4: Run unit tests**
+- [x] **Step 4: Run unit tests**
 
 ```bash
 npx vitest run tests/unit/clubs.test.ts
@@ -626,7 +626,7 @@ npx vitest run tests/unit/clubs.test.ts
 
 Expected: all 4 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/
@@ -642,7 +642,7 @@ git commit -m "feat: add Supabase client helpers and slug validation"
 - Create: `src/routes/auth/login/+page.server.ts`
 - Create: `src/routes/auth/callback/+server.ts`
 
-- [ ] **Step 1: Write failing e2e test**
+- [x] **Step 1: Write failing e2e test**
 
 `tests/e2e/auth.test.ts`:
 ```typescript
@@ -663,7 +663,7 @@ test('submitting login shows confirmation message', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npx playwright test tests/e2e/auth.test.ts
@@ -671,7 +671,7 @@ npx playwright test tests/e2e/auth.test.ts
 
 Expected: FAIL — route not found.
 
-- [ ] **Step 3: Create login server action**
+- [x] **Step 3: Create login server action**
 
 `src/routes/auth/login/+page.server.ts`:
 ```typescript
@@ -701,7 +701,7 @@ export const actions: Actions = {
 };
 ```
 
-- [ ] **Step 4: Create login page**
+- [x] **Step 4: Create login page**
 
 `src/routes/auth/login/+page.svelte`:
 ```svelte
@@ -746,7 +746,7 @@ export const actions: Actions = {
 </div>
 ```
 
-- [ ] **Step 5: Create auth callback handler**
+- [x] **Step 5: Create auth callback handler**
 
 `src/routes/auth/callback/+server.ts`:
 ```typescript
@@ -767,7 +767,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 };
 ```
 
-- [ ] **Step 6: Run e2e tests**
+- [x] **Step 6: Run e2e tests**
 
 ```bash
 npx playwright test tests/e2e/auth.test.ts
@@ -775,7 +775,7 @@ npx playwright test tests/e2e/auth.test.ts
 
 Expected: both tests PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/routes/auth/
@@ -791,7 +791,7 @@ git commit -m "feat: add magic link auth flow with login page and callback handl
 - Modify: `src/routes/+layout.server.ts`
 - Modify: `src/routes/+page.svelte`
 
-- [ ] **Step 1: Update root layout server load to expose session**
+- [x] **Step 1: Update root layout server load to expose session**
 
 `src/routes/+layout.server.ts` (full replacement):
 ```typescript
@@ -805,7 +805,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 };
 ```
 
-- [ ] **Step 2: Update root layout**
+- [x] **Step 2: Update root layout**
 
 `src/routes/+layout.svelte`:
 ```svelte
@@ -817,7 +817,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 <slot />
 ```
 
-- [ ] **Step 3: Create landing page**
+- [x] **Step 3: Create landing page**
 
 `src/routes/+page.svelte`:
 ```svelte
@@ -842,7 +842,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 </div>
 ```
 
-- [ ] **Step 4: Verify landing page**
+- [x] **Step 4: Verify landing page**
 
 ```bash
 npm run dev
@@ -850,7 +850,7 @@ npm run dev
 
 Open `http://localhost:5173`. Expected: landing page with "Get started" link.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/+layout.svelte src/routes/+layout.server.ts src/routes/+page.svelte
@@ -865,7 +865,7 @@ git commit -m "feat: add landing page with session-aware redirect"
 - Create: `src/routes/clubs/new/+page.svelte`
 - Create: `src/routes/clubs/new/+page.server.ts`
 
-- [ ] **Step 1: Write failing e2e test**
+- [x] **Step 1: Write failing e2e test**
 
 Add to `tests/e2e/club.test.ts`:
 ```typescript
@@ -883,7 +883,7 @@ test('create club page shows form', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npx playwright test tests/e2e/club.test.ts
@@ -891,7 +891,7 @@ npx playwright test tests/e2e/club.test.ts
 
 Expected: FAIL — route not found.
 
-- [ ] **Step 3: Create club creation server action**
+- [x] **Step 3: Create club creation server action**
 
 `src/routes/clubs/new/+page.server.ts`:
 ```typescript
@@ -947,7 +947,7 @@ export const actions: Actions = {
 };
 ```
 
-- [ ] **Step 4: Create club creation page**
+- [x] **Step 4: Create club creation page**
 
 `src/routes/clubs/new/+page.svelte`:
 ```svelte
@@ -1020,7 +1020,7 @@ export const actions: Actions = {
 </div>
 ```
 
-- [ ] **Step 5: Run e2e test**
+- [x] **Step 5: Run e2e test**
 
 ```bash
 npx playwright test tests/e2e/club.test.ts
@@ -1028,7 +1028,7 @@ npx playwright test tests/e2e/club.test.ts
 
 Expected: PASS (unauthenticated redirect works).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/routes/clubs/
@@ -1044,7 +1044,7 @@ git commit -m "feat: add club creation flow with slug validation"
 - Create: `src/routes/[club]/+layout.svelte`
 - Create: `src/routes/[club]/+page.svelte`
 
-- [ ] **Step 1: Write unit test for member role helper**
+- [x] **Step 1: Write unit test for member role helper**
 
 `tests/unit/members.test.ts`:
 ```typescript
@@ -1061,7 +1061,7 @@ describe('isAdmin', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npx vitest run tests/unit/members.test.ts
@@ -1069,7 +1069,7 @@ npx vitest run tests/unit/members.test.ts
 
 Expected: FAIL — `$lib/members` not found.
 
-- [ ] **Step 3: Create members helper**
+- [x] **Step 3: Create members helper**
 
 `src/lib/members.ts`:
 ```typescript
@@ -1080,7 +1080,7 @@ export function isAdmin(member: ClubMember): boolean {
 }
 ```
 
-- [ ] **Step 4: Run unit test**
+- [x] **Step 4: Run unit test**
 
 ```bash
 npx vitest run tests/unit/members.test.ts
@@ -1088,7 +1088,7 @@ npx vitest run tests/unit/members.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Create club layout server load**
+- [x] **Step 5: Create club layout server load**
 
 `src/routes/[club]/+layout.server.ts`:
 ```typescript
@@ -1123,7 +1123,7 @@ export const load: LayoutServerLoad = async ({ params, cookies }) => {
 };
 ```
 
-- [ ] **Step 6: Create club layout**
+- [x] **Step 6: Create club layout**
 
 `src/routes/[club]/+layout.svelte`:
 ```svelte
@@ -1154,7 +1154,7 @@ export const load: LayoutServerLoad = async ({ params, cookies }) => {
 </div>
 ```
 
-- [ ] **Step 7: Create club home page**
+- [x] **Step 7: Create club home page**
 
 `src/routes/[club]/+page.svelte`:
 ```svelte
@@ -1166,7 +1166,7 @@ export const load: LayoutServerLoad = async ({ params, cookies }) => {
 <p class="text-gray-400">Tournaments and recent results will appear here.</p>
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/routes/\[club\]/ src/lib/members.ts tests/unit/members.test.ts
@@ -1182,7 +1182,7 @@ git commit -m "feat: add club layout with nav and protected route guard"
 - Create: `src/routes/[club]/admin/members/+page.svelte`
 - Create: `src/routes/[club]/admin/members/+page.server.ts`
 
-- [ ] **Step 1: Write failing e2e access test**
+- [x] **Step 1: Write failing e2e access test**
 
 `tests/e2e/access.test.ts`:
 ```typescript
@@ -1195,7 +1195,7 @@ test('non-admin cannot access admin routes', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npx playwright test tests/e2e/access.test.ts
@@ -1203,7 +1203,7 @@ npx playwright test tests/e2e/access.test.ts
 
 Expected: FAIL — route not found.
 
-- [ ] **Step 3: Create admin layout guard**
+- [x] **Step 3: Create admin layout guard**
 
 `src/routes/[club]/admin/+layout.server.ts`:
 ```typescript
@@ -1218,7 +1218,7 @@ export const load: LayoutServerLoad = async ({ parent }) => {
 };
 ```
 
-- [ ] **Step 4: Create member management server**
+- [x] **Step 4: Create member management server**
 
 `src/routes/[club]/admin/members/+page.server.ts`:
 ```typescript
@@ -1297,7 +1297,7 @@ export const actions: Actions = {
 };
 ```
 
-- [ ] **Step 5: Create member management page**
+- [x] **Step 5: Create member management page**
 
 `src/routes/[club]/admin/members/+page.svelte`:
 ```svelte
@@ -1361,7 +1361,7 @@ export const actions: Actions = {
 </div>
 ```
 
-- [ ] **Step 6: Run e2e test**
+- [x] **Step 6: Run e2e test**
 
 ```bash
 npx playwright test tests/e2e/access.test.ts
@@ -1369,7 +1369,7 @@ npx playwright test tests/e2e/access.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/routes/\[club\]/admin/ tests/e2e/access.test.ts
@@ -1384,7 +1384,7 @@ git commit -m "feat: add admin member management with invite and remove"
 - Create: `src/routes/[club]/admin/settings/+page.svelte`
 - Create: `src/routes/[club]/admin/settings/+page.server.ts`
 
-- [ ] **Step 1: Create settings server**
+- [x] **Step 1: Create settings server**
 
 `src/routes/[club]/admin/settings/+page.server.ts`:
 ```typescript
@@ -1427,7 +1427,7 @@ export const actions: Actions = {
 };
 ```
 
-- [ ] **Step 2: Create settings page**
+- [x] **Step 2: Create settings page**
 
 `src/routes/[club]/admin/settings/+page.svelte`:
 ```svelte
@@ -1464,7 +1464,7 @@ export const actions: Actions = {
 </div>
 ```
 
-- [ ] **Step 3: Add admin nav**
+- [x] **Step 3: Add admin nav**
 
 Add an admin dashboard page at `src/routes/[club]/admin/+page.svelte`:
 ```svelte
@@ -1480,7 +1480,7 @@ Add an admin dashboard page at `src/routes/[club]/admin/+page.svelte`:
 </nav>
 ```
 
-- [ ] **Step 4: Run full test suite**
+- [x] **Step 4: Run full test suite**
 
 ```bash
 npx vitest run && npx playwright test
@@ -1488,7 +1488,7 @@ npx vitest run && npx playwright test
 
 Expected: all tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/\[club\]/admin/
