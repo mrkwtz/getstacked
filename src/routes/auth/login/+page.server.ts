@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { createAnonClient } from '$lib/server/supabase';
 import type { Actions } from './$types';
 
@@ -20,5 +20,17 @@ export const actions: Actions = {
     if (error) return fail(500, { errorKey: 'server_error', errorMessage: error.message });
 
     return { sent: true };
+  },
+
+  google: async ({ cookies, url }) => {
+    const supabase = createAnonClient(cookies);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${url.origin}/auth/callback` }
+    });
+
+    if (error) return fail(500, { errorKey: 'server_error', errorMessage: error.message });
+
+    throw redirect(303, data.url);
   }
 };
