@@ -30,6 +30,7 @@ export const actions: Actions = {
     });
 
     if (error) return fail(500, { errorKey: 'server_error', errorMessage: error.message });
+    if (!data.url) return fail(500, { errorKey: 'server_error', errorMessage: 'Google OAuth is not configured in Supabase' });
 
     throw redirect(303, data.url);
   }
