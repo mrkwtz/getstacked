@@ -3,6 +3,11 @@ import { createAnonClient } from '$lib/server/supabase';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
+  // OAuth cancellation: Google returns ?error=access_denied with no code
+  if (url.searchParams.get('error')) {
+    throw redirect(303, '/auth/login');
+  }
+
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') ?? '/';
 
