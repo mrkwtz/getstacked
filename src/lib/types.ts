@@ -242,3 +242,49 @@ export type ClubContext = {
   member: ClubMember;
   role: Role;
 };
+
+export interface BlindStructure {
+  id: string;
+  club_id: string;
+  name: string;
+  levels: import('./tournaments').BlindLevel[];
+  created_at: string;
+}
+
+export interface PrizeStructure {
+  id: string;
+  club_id: string;
+  name: string;
+  payouts: import('./tournaments').Payout[];
+  created_at: string;
+}
+
+export interface Tournament {
+  id: string;
+  club_id: string;
+  name: string;
+  date: string;
+  format: 'freezeout' | 'rebuy';
+  buy_in: number;
+  rebuy_amount: number | null;
+  addon_amount: number | null;
+  blind_structure_id: string | null;
+  prize_structure_id: string | null;
+  status: 'registration' | 'running' | 'finished';
+  created_at: string;
+  blind_structures?: { name: string } | null;
+  prize_structures?: { name: string } | null;
+}
+
+export interface TournamentPlayer {
+  id: string;
+  tournament_id: string;
+  member_club_id: string | null;
+  member_user_id: string | null;
+  guest_name: string | null;
+  rebuys: number;
+  addon: boolean;
+  finish_position: number | null;
+  created_at: string;
+  club_members?: { display_name: string } | null;
+}
