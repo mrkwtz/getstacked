@@ -1,14 +1,15 @@
 <script lang="ts">
-  let isDark = $state(true);
-
-  $effect(() => {
-    isDark = document.documentElement.classList.contains('dark');
-  });
+  let isDark = $state(
+    typeof document !== 'undefined'
+      ? document.documentElement.classList.contains('dark')
+      : true
+  );
 
   function toggle() {
+    const next = isDark ? 'light' : 'dark';
     isDark = !isDark;
-    const next = isDark ? 'dark' : 'light';
-    document.documentElement.className = next;
+    document.documentElement.classList.remove('dark', 'light');
+    document.documentElement.classList.add(next);
     document.cookie = `theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
   }
 </script>

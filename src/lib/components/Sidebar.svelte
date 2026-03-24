@@ -34,7 +34,7 @@
     <a
       href={clubPath}
       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
-        isActive(clubPath, true) || (currentPath === clubPath)
+        isActive(clubPath, true)
           ? 'bg-accent/10 border-l-2 border-accent text-foreground font-medium pl-[10px]'
           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
       }"
