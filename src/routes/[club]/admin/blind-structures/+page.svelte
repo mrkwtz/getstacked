@@ -54,7 +54,7 @@
               <form method="POST" action="?/delete_blind_structure" use:enhance>
                 <input type="hidden" name="id" value={s.id} />
                 <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  Delete
+                  {m.common_delete()}
                 </button>
               </form>
             {/if}

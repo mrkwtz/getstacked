@@ -93,5 +93,6 @@
   "error_no_blind_structures": "Create a blind structure first.",
   "error_no_prize_structures": "Create a prize structure first.",
   "error_tournament_not_open": "Tournament registration is closed.",
-  "error_structure_in_use": "This structure is used by an existing tournament."
+  "error_structure_in_use": "This structure is used by an existing tournament.",
+  "common_delete": "Delete"
 }
