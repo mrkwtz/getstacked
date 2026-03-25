@@ -105,5 +105,19 @@
   "settings_delete_club": "Delete club",
   "settings_delete_warning": "This will permanently delete the club and all its data including members, tournaments, and structures. This cannot be undone.",
   "settings_delete_confirm_label": "Type the club name to confirm",
-  "error_club_name_mismatch": "Club name does not match."
+  "error_club_name_mismatch": "Club name does not match.",
+  "tournament_start_button": "Start tournament",
+  "tournament_finish_button": "Finish tournament",
+  "tournament_confirm_finish": "Confirm & close tournament",
+  "tournament_cancel_review": "Cancel",
+  "tournament_review_title": "Review results",
+  "tournament_position_col": "Position",
+  "tournament_payout_col": "Payout",
+  "tournament_bust_button": "→ {position}",
+  "tournament_undo_bust": "Undo",
+  "tournament_rebuy_col": "Rebuys",
+  "tournament_addon_col": "Add-on",
+  "tournament_min_players_error": "At least 2 players required to start.",
+  "tournament_positions_incomplete": "Assign all finish positions before finishing.",
+  "error_tournament_not_running": "This action requires the tournament to be running."
 }

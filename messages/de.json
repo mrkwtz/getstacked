@@ -105,5 +105,19 @@
   "settings_delete_club": "Club löschen",
   "settings_delete_warning": "Dadurch wird der Club und alle zugehörigen Daten dauerhaft gelöscht, einschließlich Mitglieder, Turniere und Strukturen. Dies kann nicht rückgängig gemacht werden.",
   "settings_delete_confirm_label": "Gib den Club-Namen zur Bestätigung ein",
-  "error_club_name_mismatch": "Club-Name stimmt nicht überein."
+  "error_club_name_mismatch": "Club-Name stimmt nicht überein.",
+  "tournament_start_button": "Turnier starten",
+  "tournament_finish_button": "Turnier beenden",
+  "tournament_confirm_finish": "Bestätigen & Turnier schließen",
+  "tournament_cancel_review": "Abbrechen",
+  "tournament_review_title": "Ergebnisse prüfen",
+  "tournament_position_col": "Platz",
+  "tournament_payout_col": "Auszahlung",
+  "tournament_bust_button": "→ {position}",
+  "tournament_undo_bust": "Rückgängig",
+  "tournament_rebuy_col": "Rebuys",
+  "tournament_addon_col": "Add-on",
+  "tournament_min_players_error": "Mindestens 2 Spieler erforderlich.",
+  "tournament_positions_incomplete": "Alle Platzierungen müssen vergeben sein.",
+  "error_tournament_not_running": "Diese Aktion erfordert ein laufendes Turnier."
 }
