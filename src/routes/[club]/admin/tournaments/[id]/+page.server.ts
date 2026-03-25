@@ -218,6 +218,7 @@ export const actions: Actions = {
     const totalPlayers = players.length;
     const assigned = new Set(players.map((p) => p.finish_position).filter((p) => p !== null));
     const available = Array.from({ length: totalPlayers }, (_, i) => i + 1).filter((p) => !assigned.has(p));
+    if (available.length === 0) return fail(400, { errorKey: 'server_error' });
     const nextPosition = Math.max(...available);
 
     const { error: updateError } = await service
@@ -296,7 +297,8 @@ export const actions: Actions = {
     const { error: updateError } = await service
       .from('tournament_players')
       .update({ rebuys: player.rebuys + 1 })
-      .eq('id', playerId);
+      .eq('id', playerId)
+      .eq('tournament_id', params.id);
     if (updateError) return fail(500, { errorKey: 'server_error' });
 
     return {};
@@ -333,7 +335,8 @@ export const actions: Actions = {
     const { error: updateError } = await service
       .from('tournament_players')
       .update({ rebuys: player.rebuys - 1 })
-      .eq('id', playerId);
+      .eq('id', playerId)
+      .eq('tournament_id', params.id);
     if (updateError) return fail(500, { errorKey: 'server_error' });
 
     return {};
@@ -369,7 +372,8 @@ export const actions: Actions = {
     const { error: updateError } = await service
       .from('tournament_players')
       .update({ addon: !player.addon })
-      .eq('id', playerId);
+      .eq('id', playerId)
+      .eq('tournament_id', params.id);
     if (updateError) return fail(500, { errorKey: 'server_error' });
 
     return {};
