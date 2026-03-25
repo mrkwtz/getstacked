@@ -497,7 +497,7 @@ export interface Tournament {
   status: 'registration' | 'running' | 'finished';
   created_at: string;
   blind_structures?: { name: string } | null;
-  prize_structures?: { name: string } | null;
+  prize_structures?: { name: string; payouts: { position: number; percentage: number }[] } | null;
 }
 
 export interface TournamentPlayer {
@@ -509,6 +509,7 @@ export interface TournamentPlayer {
   rebuys: number;
   addon: boolean;
   finish_position: number | null;
+  payout_amount: number | null;  // ← add this line
   created_at: string;
   club_members?: { display_name: string } | null;
 }
