@@ -6,15 +6,17 @@ export const actions: Actions = {
   magic_link: async ({ request, cookies, url }) => {
     const formData = await request.formData();
     const email = formData.get('email')?.toString().trim() ?? '';
+    const next = formData.get('next')?.toString() ?? '/';
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return fail(400, { errorKey: 'invalid_email' });
     }
 
+    const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
     const supabase = createAnonClient(cookies);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${url.origin}/auth/callback` }
+      options: { emailRedirectTo: `${url.origin}/auth/callback?next=${encodeURIComponent(safeNext)}` }
     });
 
     if (error) return fail(500, { errorKey: 'server_error', errorMessage: error.message });
@@ -22,11 +24,15 @@ export const actions: Actions = {
     return { sent: true };
   },
 
-  google: async ({ cookies, url }) => {
+  google: async ({ cookies, url, request }) => {
+    const formData = await request.formData();
+    const next = formData.get('next')?.toString() ?? '/';
+    const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
+
     const supabase = createAnonClient(cookies);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${url.origin}/auth/callback` }
+      options: { redirectTo: `${url.origin}/auth/callback?next=${encodeURIComponent(safeNext)}` }
     });
 
     if (error) return fail(500, { errorKey: 'server_error', errorMessage: error.message });

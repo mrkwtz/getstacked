@@ -66,6 +66,44 @@ export type Database = {
           },
         ]
       }
+      club_invites: {
+        Row: {
+          club_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_invites_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_members: {
         Row: {
           club_id: string
@@ -419,7 +457,6 @@ export const Constants = {
 } as const
 
 
-// Convenience aliases
 export type Club = Database['public']['Tables']['clubs']['Row'];
 export type ClubMember = Database['public']['Tables']['club_members']['Row'];
 export type Role = 'admin' | 'member';
@@ -475,3 +512,5 @@ export interface TournamentPlayer {
   created_at: string;
   club_members?: { display_name: string } | null;
 }
+
+export type ClubInvite = Database['public']['Tables']['club_invites']['Row'];

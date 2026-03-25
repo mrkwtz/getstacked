@@ -7,13 +7,14 @@ export const load: PageServerLoad = async ({ parent, locals: { safeGetSession } 
   const { club } = await parent();
   const { session } = await safeGetSession();
 
-  const { data: members } = await createUserClient(session!.access_token)
-    .from('club_members')
-    .select('*')
-    .eq('club_id', club.id)
-    .order('joined_at');
+  const userClient = createUserClient(session!.access_token);
+  const [{ data: members }, { data: invites }] = await Promise.all([
+    userClient.from('club_members').select('*').eq('club_id', club.id).order('joined_at'),
+    userClient.from('club_invites').select('id, created_at, expires_at, used_at')
+      .eq('club_id', club.id).is('used_at', null).order('created_at', { ascending: false }),
+  ]);
 
-  return { members: members ?? [] };
+  return { members: members ?? [], invites: invites ?? [] };
 };
 
 async function getClubAndMember(params: { club: string }, safeGetSession: () => Promise<{ session: import('@supabase/supabase-js').Session | null }>) {
@@ -29,43 +30,35 @@ async function getClubAndMember(params: { club: string }, safeGetSession: () => 
 }
 
 export const actions: Actions = {
-  invite_member: async ({ request, params, locals: { safeGetSession } }) => {
+  create_invite: async ({ params, locals: { safeGetSession } }) => {
+    const { club, member } = await getClubAndMember(params, safeGetSession);
+    if (!isAdmin(member)) throw error(403, 'Admin access required');
+
+    const { data: invite, error: insertError } = await createServiceClient()
+      .from('club_invites')
+      .insert({ club_id: club.id, created_by: member.user_id })
+      .select('id')
+      .single();
+
+    if (insertError || !invite) return fail(500, { errorKey: 'server_error' });
+    return { createdInviteId: invite.id };
+  },
+
+  revoke_invite: async ({ request, params, locals: { safeGetSession } }) => {
     const { club, member } = await getClubAndMember(params, safeGetSession);
     if (!isAdmin(member)) throw error(403, 'Admin access required');
 
     const formData = await request.formData();
-    const email = formData.get('email')?.toString().trim() ?? '';
-    const displayName = formData.get('display_name')?.toString().trim() ?? '';
+    const inviteId = formData.get('invite_id')?.toString() ?? '';
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return fail(400, { errorKey: 'auth_invalid_email' });
-    }
-    if (!displayName) return fail(400, { errorKey: 'error_required' });
+    const { error: deleteError } = await createServiceClient()
+      .from('club_invites')
+      .delete()
+      .eq('id', inviteId)
+      .eq('club_id', club.id);
 
-    const service = createServiceClient();
-
-    // Look up existing user by email, or invite them
-    const { data: { users } } = await service.auth.admin.listUsers({ perPage: 1000 });
-    let targetUser = users.find((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? null;
-
-    if (!targetUser) {
-      const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(email, {
-        data: { invited_to_club: club.id }
-      });
-      if (inviteError) return fail(500, { errorKey: 'server_error' });
-      targetUser = invited.user;
-    }
-
-    const { error: memberError } = await service
-      .from('club_members')
-      .insert({ club_id: club.id, user_id: targetUser.id, role: 'member', display_name: displayName });
-
-    if (memberError) {
-      if (memberError.code === '23505') return fail(400, { errorKey: 'error_already_member' });
-      return fail(500, { errorKey: 'server_error' });
-    }
-
-    return { invited: true };
+    if (deleteError) return fail(500, { errorKey: 'server_error' });
+    return {};
   },
 
   remove_member: async ({ request, params, locals: { safeGetSession } }) => {

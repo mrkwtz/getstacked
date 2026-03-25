@@ -1,10 +1,13 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { page } from '$app/state';
   import * as m from '$lib/paraglide/messages';
 
   const { form } = $props<{
     form: { sent?: boolean; errorKey?: string; errorMessage?: string } | null;
   }>();
+
+  const next = $derived(page.url.searchParams.get('next') ?? '/');
 </script>
 
 <div class="min-h-screen bg-background flex items-center justify-center px-4">
@@ -19,6 +22,7 @@
 
       <!-- Google -->
       <form method="POST" action="?/google" use:enhance>
+        <input type="hidden" name="next" value={next} />
         <button
           type="submit"
           class="w-full flex items-center justify-center gap-2.5 bg-muted border border-border text-foreground text-sm font-medium px-4 py-2.5 rounded-md hover:bg-muted/80 transition-colors cursor-pointer"
@@ -45,6 +49,7 @@
         <p class="text-sm text-foreground text-center">{m.auth_check_email()}</p>
       {:else}
         <form method="POST" action="?/magic_link" use:enhance class="flex flex-col gap-3">
+          <input type="hidden" name="next" value={next} />
           <div>
             <label for="email" class="block text-xs font-medium text-muted-foreground mb-1.5">
               {m.auth_email_label()}
