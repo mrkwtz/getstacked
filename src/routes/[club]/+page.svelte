@@ -2,7 +2,7 @@
   import * as m from '$lib/paraglide/messages';
   import type { Club, ClubMember } from '$lib/types';
 
-  const { data } = $props<{ data: { club: Club; member: ClubMember } }>();
+  const { data } = $props<{ data: { club: Club; member: ClubMember; memberCount: number; tournamentCount: number } }>();
 </script>
 
 <div class="p-6 flex flex-col gap-6">
@@ -12,11 +12,11 @@
   <div class="grid grid-cols-3 gap-4">
     <div class="bg-card border border-border rounded-lg p-4">
       <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Members</p>
-      <p class="text-3xl font-light text-foreground">—</p>
+      <p class="text-3xl font-light text-foreground">{data.memberCount}</p>
     </div>
     <div class="bg-card border border-border rounded-lg p-4">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Games</p>
-      <p class="text-3xl font-light text-foreground">—</p>
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Tournaments</p>
+      <p class="text-3xl font-light text-foreground">{data.tournamentCount}</p>
     </div>
     <div class="bg-card border border-border rounded-lg p-4">
       <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Balance</p>
