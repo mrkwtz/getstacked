@@ -45,8 +45,8 @@ export const actions: Actions = {
     const service = createServiceClient();
 
     // Look up existing user by email, or invite them
-    const { data: { user: existingUser } } = await service.auth.admin.getUserByEmail(email);
-    let targetUser = existingUser ?? null;
+    const { data: { users } } = await service.auth.admin.listUsers({ perPage: 1000 });
+    let targetUser = users.find((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? null;
 
     if (!targetUser) {
       const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(email, {

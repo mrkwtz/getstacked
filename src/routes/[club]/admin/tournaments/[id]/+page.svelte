@@ -14,7 +14,7 @@
   }>();
 
   function resolveError(key: string): string {
-    const msgs = m as Record<string, (() => string) | undefined>;
+    const msgs = m as unknown as Record<string, (() => string) | undefined>;
     return msgs[key]?.() ?? key;
   }
 
