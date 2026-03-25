@@ -29,7 +29,19 @@
   }
 </script>
 
-<div class="min-h-screen bg-background flex items-center justify-center px-4">
+<div class="min-h-screen bg-background flex items-center justify-center px-4 relative">
+  <div class="absolute top-4 right-4">
+    <form method="POST" action="/auth/logout">
+      <button type="submit" title="Sign out" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer">
+        Sign out
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </form>
+  </div>
   <div class="w-full max-w-sm">
     <div class="bg-card border border-border rounded-xl p-8">
       <div class="mb-6">
@@ -90,3 +102,4 @@
     </div>
   </div>
 </div>
+
