@@ -1,12 +1,27 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { isValidSlug } from '$lib/clubs';
 import { isAdmin } from '$lib/members';
+import { createUserClient } from '$lib/server/supabase';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-  default: async ({ request, locals: { supabase }, parent }) => {
-    const { club, member } = await parent();
-    if (!isAdmin(member)) throw error(403, 'Admin access required');
+  default: async ({ request, params, locals: { safeGetSession } }) => {
+    const { session } = await safeGetSession();
+    if (!session) throw error(401, 'Unauthorized');
+
+    const supabase = createUserClient(session.access_token);
+
+    const { data: club } = await supabase.from('clubs').select('*').eq('slug', params.club).single();
+    if (!club) throw error(404, 'Club not found');
+
+    const { data: member } = await supabase
+      .from('club_members')
+      .select('*')
+      .eq('club_id', club.id)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!member || !isAdmin(member)) throw error(403, 'Admin access required');
 
     const formData = await request.formData();
     const name = formData.get('name')?.toString().trim() ?? '';
