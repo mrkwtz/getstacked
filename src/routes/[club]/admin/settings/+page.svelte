@@ -17,7 +17,7 @@
 <div class="max-w-sm flex flex-col gap-6">
   <h1 class="text-base font-semibold text-foreground">{m.settings_title()}</h1>
 
-  <form method="POST" use:enhance class="bg-card border border-border rounded-lg p-5 flex flex-col gap-4">
+  <form method="POST" use:enhance={() => async ({ update }) => update({ reset: false })} class="bg-card border border-border rounded-lg p-5 flex flex-col gap-4">
     <div>
       <label for="name" class="block text-xs font-medium text-muted-foreground mb-1.5">
         {m.club_name_label()}
