@@ -94,5 +94,10 @@
   "error_no_prize_structures": "Bitte zuerst eine Preisstruktur erstellen.",
   "error_tournament_not_open": "Die Turnier-Registrierung ist geschlossen.",
   "error_structure_in_use": "Diese Struktur wird von einem bestehenden Turnier verwendet.",
-  "common_delete": "Löschen"
+  "common_delete": "Löschen",
+  "settings_danger_zone": "Gefahrenzone",
+  "settings_delete_club": "Club löschen",
+  "settings_delete_warning": "Dadurch wird der Club und alle zugehörigen Daten dauerhaft gelöscht, einschließlich Mitglieder, Turniere und Strukturen. Dies kann nicht rückgängig gemacht werden.",
+  "settings_delete_confirm_label": "Gib den Club-Namen zur Bestätigung ein",
+  "error_club_name_mismatch": "Club-Name stimmt nicht überein."
 }

@@ -94,5 +94,10 @@
   "error_no_prize_structures": "Create a prize structure first.",
   "error_tournament_not_open": "Tournament registration is closed.",
   "error_structure_in_use": "This structure is used by an existing tournament.",
-  "common_delete": "Delete"
+  "common_delete": "Delete",
+  "settings_danger_zone": "Danger zone",
+  "settings_delete_club": "Delete club",
+  "settings_delete_warning": "This will permanently delete the club and all its data including members, tournaments, and structures. This cannot be undone.",
+  "settings_delete_confirm_label": "Type the club name to confirm",
+  "error_club_name_mismatch": "Club name does not match."
 }
