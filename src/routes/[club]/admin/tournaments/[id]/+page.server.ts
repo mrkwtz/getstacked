@@ -78,11 +78,21 @@ export const actions: Actions = {
     const { club, member } = await getClubAndMember(params, safeGetSession);
     if (!isAdmin(member)) throw error(403, 'Admin access required');
 
+    const service = createServiceClient();
+
+    // Verify tournament is in registration
+    const { data: tournament } = await service
+      .from('tournaments')
+      .select('status')
+      .eq('id', params.id)
+      .eq('club_id', club.id)
+      .single();
+    if (!tournament) return fail(404, { errorKey: 'server_error' });
+    if (tournament.status !== 'registration') return fail(400, { errorKey: 'error_tournament_not_open' });
+
     const formData = await request.formData();
     const memberId = formData.get('member_id')?.toString().trim() ?? '';
     const guestName = formData.get('guest_name')?.toString().trim() ?? '';
-
-    const service = createServiceClient();
 
     if (memberId) {
       // Verify member belongs to this club
