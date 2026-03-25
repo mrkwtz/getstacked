@@ -201,6 +201,7 @@ export type Database = {
           id: string
           member_club_id: string | null
           member_user_id: string | null
+          payout_amount: number | null
           rebuys: number
           tournament_id: string
         }
@@ -212,6 +213,7 @@ export type Database = {
           id?: string
           member_club_id?: string | null
           member_user_id?: string | null
+          payout_amount?: number | null | undefined
           rebuys?: number
           tournament_id: string
         }
@@ -223,6 +225,7 @@ export type Database = {
           id?: string
           member_club_id?: string | null
           member_user_id?: string | null
+          payout_amount?: number | null | undefined
           rebuys?: number
           tournament_id?: string
         }
@@ -509,7 +512,7 @@ export interface TournamentPlayer {
   rebuys: number;
   addon: boolean;
   finish_position: number | null;
-  payout_amount: number | null;  // ← add this line
+  payout_amount: number | null;
   created_at: string;
   club_members?: { display_name: string } | null;
 }
