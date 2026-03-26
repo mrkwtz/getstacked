@@ -243,6 +243,74 @@ export type Database = {
             referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tournaments_blind_structure_id_fkey"
+            columns: ["blind_structure_id"]
+            isOneToOne: false
+            referencedRelation: "blind_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_prize_structure_id_fkey"
+            columns: ["prize_structure_id"]
+            isOneToOne: false
+            referencedRelation: "prize_structures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_players: {
+        Row: {
+          id: string
+          tournament_id: string
+          member_club_id: string | null
+          member_user_id: string | null
+          guest_name: string | null
+          rebuys: number
+          addon: boolean
+          finish_position: number | null
+          payout_amount: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          member_club_id?: string | null
+          member_user_id?: string | null
+          guest_name?: string | null
+          rebuys?: number
+          addon?: boolean
+          finish_position?: number | null
+          payout_amount?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          member_club_id?: string | null
+          member_user_id?: string | null
+          guest_name?: string | null
+          rebuys?: number
+          addon?: boolean
+          finish_position?: number | null
+          payout_amount?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_players_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_players_member_club_id_member_user_id_fkey"
+            columns: ["member_club_id", "member_user_id"]
+            isOneToOne: false
+            referencedRelation: "club_members"
+            referencedColumns: ["club_id", "user_id"]
+          },
         ]
       }
     }
