@@ -1,11 +1,12 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
+  import { invalidateAll } from '$app/navigation';
   import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
 
   const { data } = $props<{
     data: {
-      club: { slug: string; id: string };
+      club: { id: string; slug: string };
       blindStructures: { id: string; name: string }[];
       prizeStructures: { id: string; name: string }[];
     };
@@ -16,43 +17,74 @@
     return msgs[key]?.() ?? key;
   }
 
-  let name = $state('');
-  let date = $state('');
-  let buyIn = $state('');
-  let rebuyAmount = $state('');
-  let addonAmount = $state('');
-  let blindStructureId = $state('');
-  let prizeStructureId = $state('');
   let format = $state('freezeout');
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
 
-  async function handleCreate() {
+  async function handleCreate(e: SubmitEvent) {
+    e.preventDefault();
     if (loading) return;
-    errorKey = null;
-    if (!name.trim() || !date || !buyIn) { errorKey = 'error_required'; return; }
-
     loading = true;
+    errorKey = null;
     try {
+      const formData = new FormData(e.currentTarget as HTMLFormElement);
+      const name = formData.get('name')?.toString().trim() ?? '';
+      const date = formData.get('date')?.toString() ?? '';
+      const formatVal = formData.get('format')?.toString() ?? '';
+      const buyInRaw = formData.get('buy_in')?.toString() ?? '';
+      const rebuyRaw = formData.get('rebuy_amount')?.toString() ?? '';
+      const addonRaw = formData.get('addon_amount')?.toString() ?? '';
+      const blindStructureId = formData.get('blind_structure_id')?.toString() ?? '';
+      const prizeStructureId = formData.get('prize_structure_id')?.toString() ?? '';
+
+      if (!name || !date || !buyInRaw) { errorKey = 'error_required'; return; }
+      if (!['freezeout', 'rebuy'].includes(formatVal)) { errorKey = 'error_required'; return; }
+
+      const buyIn = Math.round(parseFloat(buyInRaw) * 100);
+      if (buyIn <= 0) { errorKey = 'error_required'; return; }
+
+      let rebuyAmount: number | null = null;
+      let addonAmount: number | null = null;
+      if (formatVal === 'rebuy') {
+        if (!rebuyRaw) { errorKey = 'error_required'; return; }
+        rebuyAmount = Math.round(parseFloat(rebuyRaw) * 100);
+        if (rebuyAmount <= 0) { errorKey = 'error_required'; return; }
+        if (addonRaw) {
+          addonAmount = Math.round(parseFloat(addonRaw) * 100);
+          if (addonAmount <= 0) { errorKey = 'error_required'; return; }
+        }
+      }
+
       const supabase = createClient();
+
+      if (blindStructureId) {
+        const { data: bs } = await supabase.from('blind_structures').select('id').eq('id', blindStructureId).eq('club_id', data.club.id).single();
+        if (!bs) { errorKey = 'error_required'; return; }
+      }
+      if (prizeStructureId) {
+        const { data: ps } = await supabase.from('prize_structures').select('id').eq('id', prizeStructureId).eq('club_id', data.club.id).single();
+        if (!ps) { errorKey = 'error_required'; return; }
+      }
+
       const { data: tournament, error } = await supabase
         .from('tournaments')
         .insert({
           club_id: data.club.id,
-          name: name.trim(),
+          name,
           date,
-          format,
-          buy_in: Number(buyIn),
-          rebuy_amount: rebuyAmount ? Number(rebuyAmount) : null,
-          addon_amount: addonAmount ? Number(addonAmount) : null,
+          format: formatVal,
+          buy_in: buyIn,
+          rebuy_amount: rebuyAmount,
+          addon_amount: addonAmount,
           blind_structure_id: blindStructureId || null,
           prize_structure_id: prizeStructureId || null,
           status: 'registration',
         })
         .select('id')
         .single();
-      if (error) { errorKey = 'server_error'; return; }
-      await goto(`/${data.club.slug}/admin/tournaments/${tournament.id}`);
+
+      if (error || !tournament) { errorKey = 'server_error'; return; }
+      goto(`/${data.club.slug}/admin/tournaments/${tournament.id}`);
     } finally {
       loading = false;
     }
@@ -63,14 +95,13 @@
   <h1 class="text-base font-semibold text-foreground">{m.tournament_new_title()}</h1>
 
   <div class="bg-card border border-border rounded-lg p-5">
-    <div class="flex flex-col gap-4 max-w-lg">
+    <form class="flex flex-col gap-4 max-w-lg" onsubmit={handleCreate}>
       <div>
         <label for="t-name" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.tournament_name_label()}
         </label>
         <input
-          id="t-name" type="text"
-          bind:value={name}
+          id="t-name" type="text" name="name"
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
         />
       </div>
@@ -80,10 +111,23 @@
           {m.tournament_date_label()}
         </label>
         <input
-          id="t-date" type="date"
-          bind:value={date}
+          id="t-date" type="date" name="date"
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
         />
+      </div>
+
+      <div>
+        <label for="t-format" class="block text-xs font-medium text-muted-foreground mb-1.5">
+          {m.tournament_format_label()}
+        </label>
+        <select
+          id="t-format" name="format"
+          bind:value={format}
+          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="freezeout">{m.tournament_format_freezeout()}</option>
+          <option value="rebuy">{m.tournament_format_rebuy()}</option>
+        </select>
       </div>
 
       <div>
@@ -91,41 +135,39 @@
           {m.tournament_buy_in_label()}
         </label>
         <input
-          id="t-buyin" type="number" min="0" step="1"
-          bind:value={buyIn}
+          id="t-buyin" type="number" name="buy_in" min="0" step="0.01"
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
         />
       </div>
 
-      <div>
-        <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
-          {m.tournament_rebuy_label()}
-        </label>
-        <input
-          id="t-rebuy" type="number" min="0" step="1"
-          bind:value={rebuyAmount}
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-        />
-      </div>
+      {#if format === 'rebuy'}
+        <div>
+          <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.tournament_rebuy_label()}
+          </label>
+          <input
+            id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
 
-      <div>
-        <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
-          {m.tournament_addon_label()}
-        </label>
-        <input
-          id="t-addon" type="number" min="0" step="1"
-          bind:value={addonAmount}
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-        />
-      </div>
+        <div>
+          <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.tournament_addon_label()}
+          </label>
+          <input
+            id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
+      {/if}
 
       <div>
         <label for="t-blind" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.tournament_blind_structure_label()}
         </label>
         <select
-          id="t-blind"
-          bind:value={blindStructureId}
+          id="t-blind" name="blind_structure_id"
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
         >
           <option value="">{m.tournament_none_option()}</option>
@@ -140,8 +182,7 @@
           {m.tournament_prize_structure_label()}
         </label>
         <select
-          id="t-prize"
-          bind:value={prizeStructureId}
+          id="t-prize" name="prize_structure_id"
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
         >
           <option value="">{m.tournament_none_option()}</option>
@@ -156,13 +197,12 @@
       {/if}
 
       <button
-        type="button"
-        onclick={handleCreate}
+        type="submit"
         disabled={loading}
         class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {m.tournament_create_button()}
       </button>
-    </div>
+    </form>
   </div>
 </div>
