@@ -6,5 +6,5 @@ export function parseTheme(value: string | undefined): Theme {
   if (value && VALID_THEMES.has(value)) {
     return value as Theme;
   }
-  return 'system';
+  return 'dark';
 }
