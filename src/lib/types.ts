@@ -90,6 +90,59 @@ export type Database = {
         }
         Relationships: []
       }
+      tournaments: {
+        Row: {
+          id: string
+          club_id: string
+          name: string
+          date: string
+          format: string
+          buy_in: number
+          rebuy_amount: number | null
+          addon_amount: number | null
+          blind_structure_id: string | null
+          prize_structure_id: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          club_id: string
+          name: string
+          date: string
+          format: string
+          buy_in: number
+          rebuy_amount?: number | null
+          addon_amount?: number | null
+          blind_structure_id?: string | null
+          prize_structure_id?: string | null
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          club_id?: string
+          name?: string
+          date?: string
+          format?: string
+          buy_in?: number
+          rebuy_amount?: number | null
+          addon_amount?: number | null
+          blind_structure_id?: string | null
+          prize_structure_id?: string | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -235,6 +288,7 @@ export const Constants = {
 // Convenience aliases
 export type Club = Database['public']['Tables']['clubs']['Row'];
 export type ClubMember = Database['public']['Tables']['club_members']['Row'];
+export type Tournament = Database['public']['Tables']['tournaments']['Row'];
 export type Role = 'admin' | 'member';
 
 export type ClubContext = {
