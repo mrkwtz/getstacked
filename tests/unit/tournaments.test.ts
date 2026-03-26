@@ -1,0 +1,103 @@
+import { describe, it, expect } from 'vitest';
+import { validatePayouts, calculatePrizePool, calculatePayouts } from '$lib/tournaments';
+
+describe('validatePayouts', () => {
+  it('returns error_required for empty array', () => {
+    expect(validatePayouts([])).toBe('error_required');
+  });
+
+  it('returns error_required if any percentage is 0', () => {
+    expect(validatePayouts([{ position: 1, percentage: 0 }])).toBe('error_required');
+  });
+
+  it('returns error_required if any percentage is negative', () => {
+    expect(validatePayouts([{ position: 1, percentage: -5 }])).toBe('error_required');
+  });
+
+  it('returns error_required if any percentage is > 100', () => {
+    expect(validatePayouts([{ position: 1, percentage: 101 }])).toBe('error_required');
+  });
+
+  it('returns error_payouts_must_total_100 if percentages sum to 99', () => {
+    expect(
+      validatePayouts([
+        { position: 1, percentage: 60 },
+        { position: 2, percentage: 39 },
+      ])
+    ).toBe('error_payouts_must_total_100');
+  });
+
+  it('returns null for a valid single payout of 100%', () => {
+    expect(validatePayouts([{ position: 1, percentage: 100 }])).toBeNull();
+  });
+
+  it('returns null for valid payouts summing to 100', () => {
+    expect(
+      validatePayouts([
+        { position: 1, percentage: 60 },
+        { position: 2, percentage: 25 },
+        { position: 3, percentage: 15 },
+      ])
+    ).toBeNull();
+  });
+});
+
+describe('calculatePrizePool', () => {
+  it('returns correct prize pool for basic arithmetic case', () => {
+    // 10 players * 100 buy-in + 3 rebuys * 100 + 2 add-ons * 50
+    expect(calculatePrizePool(10, 100, 3, 100, 2, 50)).toBe(1400);
+  });
+
+  it('returns 0 when all inputs are 0', () => {
+    expect(calculatePrizePool(0, 0, 0, 0, 0, 0)).toBe(0);
+  });
+
+  it('handles no rebuys and no add-ons', () => {
+    expect(calculatePrizePool(5, 200, 0, 0, 0, 0)).toBe(1000);
+  });
+});
+
+describe('calculatePayouts', () => {
+  it('maps finish positions to payout amounts correctly', () => {
+    const players = [
+      { id: 'p1', finish_position: 1 },
+      { id: 'p2', finish_position: 2 },
+    ];
+    const payouts = [
+      { position: 1, percentage: 60 },
+      { position: 2, percentage: 40 },
+    ];
+    const result = calculatePayouts(players, payouts, 1000);
+    expect(result).toEqual([
+      { playerId: 'p1', amount: 600 },
+      { playerId: 'p2', amount: 400 },
+    ]);
+  });
+
+  it('excludes players without a finish_position', () => {
+    const players = [
+      { id: 'p1', finish_position: 1 },
+      { id: 'p2', finish_position: null },
+    ];
+    const payouts = [{ position: 1, percentage: 100 }];
+    const result = calculatePayouts(players, payouts, 500);
+    expect(result).toEqual([{ playerId: 'p1', amount: 500 }]);
+  });
+
+  it('excludes players whose position has no matching payout entry', () => {
+    const players = [
+      { id: 'p1', finish_position: 1 },
+      { id: 'p2', finish_position: 5 },
+    ];
+    const payouts = [{ position: 1, percentage: 100 }];
+    const result = calculatePayouts(players, payouts, 300);
+    expect(result).toEqual([{ playerId: 'p1', amount: 300 }]);
+  });
+
+  it('rounds amounts using Math.round', () => {
+    const players = [{ id: 'p1', finish_position: 1 }];
+    const payouts = [{ position: 1, percentage: 33.33 }];
+    const result = calculatePayouts(players, payouts, 100);
+    expect(result).toEqual([{ playerId: 'p1', amount: Math.round(100 * (33.33 / 100)) }]);
+  });
+});
