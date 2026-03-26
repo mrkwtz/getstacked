@@ -43,5 +43,17 @@
   "get_started": "Loslegen",
   "landing_tagline": "Verwalte deinen Club, organisiere Turniere, verewige deine Legenden.",
   "club_home_welcome": "Willkommen bei {club_name}",
-  "club_home_placeholder": "Turniere und aktuelle Ergebnisse erscheinen hier."
+  "club_home_placeholder": "Turniere und aktuelle Ergebnisse erscheinen hier.",
+  "blind_structures_title": "Blind-Strukturen",
+  "blind_structure_new_title": "Neue Blind-Struktur",
+  "blind_structure_name_label": "Name",
+  "blind_structure_add_level": "Level hinzufügen",
+  "blind_structure_duration_label": "Dauer (Min.)",
+  "blind_structure_sb_label": "Small Blind",
+  "blind_structure_bb_label": "Big Blind",
+  "blind_structure_ante_label": "Ante",
+  "blind_structure_create_button": "Erstellen",
+  "blind_structure_empty": "Noch keine Blind-Strukturen.",
+  "blind_structure_in_use": "In Verwendung",
+  "error_structure_in_use": "Diese Struktur wird von einem bestehenden Turnier verwendet."
 }

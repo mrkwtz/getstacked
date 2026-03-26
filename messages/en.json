@@ -43,5 +43,17 @@
   "get_started": "Get started",
   "landing_tagline": "Manage your club, run tournaments, track your legends.",
   "club_home_welcome": "Welcome to {club_name}",
-  "club_home_placeholder": "Tournaments and recent results will appear here."
+  "club_home_placeholder": "Tournaments and recent results will appear here.",
+  "blind_structures_title": "Blind structures",
+  "blind_structure_new_title": "New blind structure",
+  "blind_structure_name_label": "Name",
+  "blind_structure_add_level": "Add level",
+  "blind_structure_duration_label": "Duration (min)",
+  "blind_structure_sb_label": "Small blind",
+  "blind_structure_bb_label": "Big blind",
+  "blind_structure_ante_label": "Ante",
+  "blind_structure_create_button": "Create",
+  "blind_structure_empty": "No blind structures yet.",
+  "blind_structure_in_use": "In use",
+  "error_structure_in_use": "This structure is used by an existing tournament."
 }
