@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
-  import { invalidateAll } from '$app/navigation';
   import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
 
