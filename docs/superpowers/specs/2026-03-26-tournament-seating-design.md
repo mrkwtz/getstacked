@@ -62,7 +62,7 @@ A **Seating** section appears on the tournament detail page below the player lis
 3. A **Draw seats** button is available once tables are configured and ≥ 2 players are registered.
 4. After the draw, the seating grid appears. Any players added after the draw appear in an **Unseated** list below the grid.
 5. Unseated players can be assigned via:
-   - **Auto-Seat** button: distributes all unseated players evenly across tables (fills the table with fewest active players first), then fills remaining empty seats randomly.
+   - **Auto-Seat** button: distributes all unseated players evenly across tables using round-robin order (smallest active count first, cycling through tables until all are seated).
    - **Manual**: per-player table + seat number selectors.
 6. Admin can **re-draw** at any point during registration, resetting all seat assignments. Re-draw is disabled once the tournament is running.
 
@@ -89,7 +89,7 @@ The seating section becomes the **Seating** tab / section on the tournament deta
 Triggered automatically after any bust:
 
 - Compute active player count per table (excluding busted).
-- If `max(active) - min(active) >= 2`: show a suggestion banner: **"Move [player] from Table X seat Y → Table Z seat W"**. The suggested player is the most recently seated active player on the largest table. The target seat is the lowest empty seat on the smallest table.
+- If `max(active) - min(active) >= 2`: show a suggestion banner: **"Move [player] from Table X seat Y → Table Z seat W"**. The suggested player is the active player with the highest seat number on the largest table. The target seat is the lowest-numbered empty seat on the smallest table.
 - If any table has exactly 1 active player: show a **Break table** banner instead: **"Break Table X — move [player] to Table Y seat Z"**.
 - Admin can **Confirm** (updates `table_id` and `seat_number`) or **Dismiss** (hides banner until next bust).
 - At most one suggestion is shown at a time. After a confirm or next bust, suggestions are re-evaluated.
@@ -103,7 +103,7 @@ Triggered automatically after any bust:
 | `supabase/migrations/0007_tournament_seating.sql` | Create `tournament_tables`, alter `tournament_players` |
 | `src/lib/seating.ts` | `drawSeats()`, `autoSeat()`, `suggestRebalanceMove()`, `suggestTableBreak()` |
 | `tests/unit/seating.test.ts` | TDD tests for all seating utility functions |
-| `src/lib/types.ts` | Add `tournament_tables` Database type |
+| `src/lib/types.ts` | Add `tournament_tables` Database type; add `TournamentTable` hand-written interface; extend `TournamentPlayer` interface with `table_id`, `seat_number`, `preferred_table` |
 | `src/routes/[club]/admin/tournaments/[id]/+page.ts` | Load tables + seating data |
 | `src/routes/[club]/admin/tournaments/[id]/+page.svelte` | Add Seating section (registration + running views) |
 
@@ -115,6 +115,7 @@ Triggered automatically after any bust:
 |----------|-----------|
 | Lock count exceeds table seats | Draw fails with inline error message listing affected tables |
 | Draw with 0 tables configured | Draw button disabled; prompt to configure tables first |
+| Re-configuring tables (changing count) | All existing `tournament_tables` rows are deleted and recreated; all seat assignments and locks are reset. Admin is warned before confirming. |
 | Manual seat already occupied | Error: "Seat N at Table X is taken" |
 | Supabase write failure | Inline error, no state change |
 
