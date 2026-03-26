@@ -65,6 +65,7 @@
         .eq('id', inviteId)
         .eq('club_id', data.club.id);
       if (error) { errorKey = 'server_error'; return; }
+      if (inviteId === newInviteId) newInviteId = null;
       await invalidateAll();
     } finally {
       loading = false;
