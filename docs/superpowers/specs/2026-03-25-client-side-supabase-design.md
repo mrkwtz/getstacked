@@ -1,26 +1,31 @@
-# Client-Side Supabase Mutations Design
+# Client-Side Supabase Mutations & Reads Design
 
 ## Goal
 
-Move all data mutations from SvelteKit server actions (browser → server → Supabase) to direct browser → Supabase calls using RLS, so writes skip the server entirely. Page loads (reads) stay as server loads — they already respect RLS via `createUserClient`, and converting them to universal loads would require a cookie-aware Supabase client setup in a root `+layout.ts`, which is a separate concern.
+Move all data mutations AND reads from server-side SvelteKit loads to direct browser → Supabase calls using RLS. This eliminates Vercel function invocations for page-specific data on every navigation — important because tournament players visiting the app trigger server function costs.
+
+The unavoidable minimum: the root `+layout.server.ts` still runs server-side on every navigation to manage Supabase auth cookies (the session HttpOnly cookie must be set/read server-side). Everything else goes client-side.
 
 ---
 
 ## Scope
 
 **In scope:**
-- Remove all `actions` exports from `+page.server.ts` files
+- Add `src/routes/+layout.ts` — universal layout that creates a Supabase client (browser on client, cookie-aware on server) and exposes it to all child loads via `parent()`
+- Modify `src/routes/+layout.server.ts` — expose `cookies` so the universal layout can create an authenticated server-side Supabase client during SSR
+- Convert `[club]/+layout.server.ts` → `+layout.ts` (universal)
+- Convert `[club]/admin/+layout.server.ts` → `+layout.ts` (universal)
+- Convert all `+page.server.ts` load functions → `+page.ts` (universal)
+- Remove all `actions` from `+page.server.ts` files
 - Add async browser-client mutation handlers to `.svelte` files
-- Replace `use:enhance` form submissions with `onclick` handlers
-- Use `invalidateAll()` after each mutation to re-run server loads
+- Use `invalidateAll()` after mutations to re-run universal loads
 - Add a Supabase RLS migration for clubs DELETE (required for `delete_club`)
 
 **Out of scope:**
-- Converting page loads to universal loads (`+page.ts`)
-- Auth/session management changes
-- Realtime subscriptions or optimistic UI
-- Club creation (`/clubs/new`) — stays server-side (redirects after creation)
+- Converting auth routes (`/auth/login`, `/auth/logout`) — use `locals.supabase` for cookie management
+- Club creation (`/clubs/new`) — stays server-side
 - Invite acceptance (`/invite/[token]`) — stays server-side (service role needed)
+- Eliminating the root `+layout.server.ts` entirely (requires switching from HttpOnly cookies to localStorage — a separate future improvement)
 
 ---
 
@@ -48,9 +53,241 @@ create policy "admins can delete own club"
 
 ---
 
+## Universal Load Setup
+
+### `src/routes/+layout.server.ts` — add `cookies` to return value
+
+```ts
+export const load: LayoutServerLoad = async ({ cookies, locals: { safeGetSession } }) => {
+  return {
+    theme: parseTheme(cookies.get('theme')),
+    cookies: cookies.getAll(), // needed by +layout.ts to create server-side Supabase client
+  };
+};
+```
+
+`session` is removed from here — the universal `+layout.ts` below provides it instead.
+
+### `src/routes/+layout.ts` — new file
+
+```ts
+import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import type { LayoutLoad } from './$types';
+import type { Database } from '$lib/types';
+
+export const load: LayoutLoad = async ({ data, depends, fetch }) => {
+  depends('supabase:auth');
+
+  const supabase = isBrowser()
+    ? createBrowserClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
+    : createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+        global: { fetch },
+        cookies: { getAll: () => data.cookies, setAll: () => {} },
+      });
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  return { supabase, session };
+};
+```
+
+- On the server (SSR): uses `data.cookies` from the server layout to create an authenticated client
+- On the client (navigation): uses `createBrowserClient` which reads the session from the browser cookie/localStorage
+- `depends('supabase:auth')` allows auth state changes to invalidate this load
+
+All child loads receive `{ supabase, session, theme }` via `await parent()`.
+
+---
+
+## Layout Conversions
+
+### `[club]/+layout.server.ts` → `[club]/+layout.ts`
+
+Delete the `.server.ts` file. Create `+layout.ts`:
+
+```ts
+import { error, redirect } from '@sveltejs/kit';
+import type { LayoutLoad } from './$types';
+
+export const load: LayoutLoad = async ({ params, parent }) => {
+  const { supabase, session } = await parent();
+  if (!session) throw redirect(303, '/auth/login');
+
+  const { data: club } = await supabase
+    .from('clubs').select('*').eq('slug', params.club).single();
+  if (!club) throw error(404, 'Club not found');
+
+  const { data: member } = await supabase
+    .from('club_members').select('*')
+    .eq('club_id', club.id).eq('user_id', session.user.id).single();
+  if (!member) throw error(403, 'You are not a member of this club');
+
+  return { club, member };
+};
+```
+
+On client-side navigation this runs entirely in the browser — no server call.
+
+### `[club]/admin/+layout.server.ts` → `[club]/admin/+layout.ts`
+
+Delete the `.server.ts` file. Create `+layout.ts`:
+
+```ts
+import { error } from '@sveltejs/kit';
+import { isAdmin } from '$lib/members';
+import type { LayoutLoad } from './$types';
+
+export const load: LayoutLoad = async ({ parent }) => {
+  const { member } = await parent();
+  if (!isAdmin(member)) throw error(403, 'Admin access required');
+  return {};
+};
+```
+
+---
+
+## Page Load Conversions
+
+All `+page.server.ts` load functions become `+page.ts`. The pattern: call `await parent()` to get `{ supabase, club }`, use `supabase` for queries.
+
+### `[club]/+page.ts` (was `+page.server.ts`)
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const [{ count: memberCount }, { count: tournamentCount }] = await Promise.all([
+    supabase.from('club_members').select('*', { count: 'exact', head: true }).eq('club_id', club.id),
+    supabase.from('tournaments').select('*', { count: 'exact', head: true }).eq('club_id', club.id),
+  ]);
+  return { memberCount: memberCount ?? 0, tournamentCount: tournamentCount ?? 0 };
+};
+```
+
+### `[club]/admin/members/+page.ts` (keep load, remove actions)
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const [{ data: members }, { data: invites }] = await Promise.all([
+    supabase.from('club_members').select('*').eq('club_id', club.id).order('joined_at'),
+    supabase.from('club_invites').select('id, created_at, expires_at, used_at')
+      .eq('club_id', club.id).is('used_at', null).order('created_at', { ascending: false }),
+  ]);
+  return { members: members ?? [], invites: invites ?? [] };
+};
+```
+
+### `[club]/admin/tournaments/+page.ts`
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const { data: tournaments } = await supabase
+    .from('tournaments').select('*').eq('club_id', club.id).order('date', { ascending: false });
+  return { tournaments: tournaments ?? [] };
+};
+```
+
+### `[club]/admin/tournaments/new/+page.ts` (keep load, remove action)
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const [{ data: blindStructures }, { data: prizeStructures }] = await Promise.all([
+    supabase.from('blind_structures').select('id, name').eq('club_id', club.id).order('name'),
+    supabase.from('prize_structures').select('id, name').eq('club_id', club.id).order('name'),
+  ]);
+  return { blindStructures: blindStructures ?? [], prizeStructures: prizeStructures ?? [] };
+};
+```
+
+### `[club]/admin/tournaments/[id]/+page.ts` (keep load, remove actions)
+
+```ts
+import { error } from '@sveltejs/kit';
+import { calculatePrizePool } from '$lib/tournaments';
+
+export const load: PageLoad = async ({ params, parent }) => {
+  const { supabase, club } = await parent();
+
+  const { data: tournament } = await supabase
+    .from('tournaments')
+    .select('*, blind_structures(name), prize_structures(name, payouts)')
+    .eq('id', params.id).eq('club_id', club.id).single();
+  if (!tournament) throw error(404, 'Tournament not found');
+
+  const [{ data: players }, { data: members }] = await Promise.all([
+    supabase.from('tournament_players')
+      .select('*, club_members!tournament_players_member_club_id_member_user_id_fkey(display_name)')
+      .eq('tournament_id', params.id).order('created_at'),
+    supabase.from('club_members').select('user_id, display_name')
+      .eq('club_id', club.id).order('display_name'),
+  ]);
+
+  const allPlayers = players ?? [];
+  const registeredIds = new Set(allPlayers.map(p => p.member_user_id).filter(Boolean));
+  const availableMembers = (members ?? []).filter(m => !registeredIds.has(m.user_id));
+  const totalRebuys = allPlayers.reduce((sum, p) => sum + p.rebuys, 0);
+  const addonCount = allPlayers.filter(p => p.addon).length;
+
+  const prizePool = calculatePrizePool(
+    allPlayers.length, tournament.buy_in,
+    totalRebuys, tournament.rebuy_amount ?? 0,
+    addonCount, tournament.addon_amount ?? 0,
+  );
+
+  const prizeStructure = tournament.prize_structures
+    ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
+    : null;
+
+  return { tournament, players: allPlayers, availableMembers, prizePool, prizeStructure };
+};
+```
+
+### `[club]/admin/blind-structures/+page.ts` (keep load, remove actions)
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const { data: structures } = await supabase
+    .from('blind_structures').select('*, tournaments(id)').eq('club_id', club.id).order('name');
+  return {
+    structures: (structures ?? []).map(s => ({
+      id: s.id, name: s.name,
+      levels: s.levels as { small_blind: number; big_blind: number; ante: number; duration_minutes: number }[],
+      in_use: Array.isArray(s.tournaments) && s.tournaments.length > 0,
+    })),
+  };
+};
+```
+
+### `[club]/admin/prize-structures/+page.ts` (keep load, remove actions)
+
+```ts
+export const load: PageLoad = async ({ parent }) => {
+  const { supabase, club } = await parent();
+  const { data: structures } = await supabase
+    .from('prize_structures').select('*, tournaments(id)').eq('club_id', club.id).order('name');
+  return {
+    structures: (structures ?? []).map(s => ({
+      id: s.id, name: s.name,
+      payouts: s.payouts as { position: number; percentage: number }[],
+      in_use: Array.isArray(s.tournaments) && s.tournaments.length > 0,
+    })),
+  };
+};
+```
+
+### `[club]/admin/settings/+page.server.ts` — delete entirely
+
+No load function. After removing actions, the file is empty and deleted.
+
+---
+
 ## Mutation Pattern
 
-Every handler uses `try/finally` to ensure `loading` is always reset, even on early returns:
+Every handler uses `try/finally` to ensure `loading` is always reset:
 
 ```ts
 import { createClient } from '$lib/supabase';
@@ -74,17 +311,15 @@ async function handleAction() {
 }
 ```
 
-`loading` prevents double-submission. The `try/finally` ensures `loading` is reset whether the handler returns early (validation failure, error) or completes normally. `errorKey` replaces `form.errorKey` (same `resolveError(key)` rendering pattern already used in `members/+page.svelte`).
+`loading` prevents double-submission. The `try/finally` ensures `loading` resets whether the handler returns early or completes normally. `errorKey` replaces `form.errorKey` (same `resolveError(key)` rendering pattern already used in `members/+page.svelte`).
 
 ---
 
-## Per-Page Changes
+## Mutation Changes Per Page
 
 ### `[club]/admin/members/+page.server.ts`
 
 Remove actions: `create_invite`, `revoke_invite`, `remove_member`
-
-The file becomes load-only (no `actions` export, no `createServiceClient` import).
 
 **`members/+page.svelte` changes:**
 
@@ -94,8 +329,7 @@ The file becomes load-only (no `actions` export, no `createServiceClient` import
   const { data: invite, error } = await supabase
     .from('club_invites')
     .insert({ club_id: data.club.id, created_by: data.member.user_id })
-    .select('id')
-    .single();
+    .select('id').single();
   if (error) { errorKey = 'server_error'; return; }
   newInviteId = invite.id;
   await invalidateAll();
@@ -123,18 +357,15 @@ Remove actions: `create_blind_structure`, `delete_blind_structure`
 **`blind-structures/+page.svelte` changes:**
 
 - `handleCreate(formData: FormData)`:
-  - Perform same validation as the current action (name required, ≥1 level, level values valid)
-  - On validation error: set `errorKey` without calling Supabase
+  - Validate: name required, ≥1 level, level values valid (same as current action)
   ```ts
   await supabase.from('blind_structures').insert({ club_id: data.club.id, name, levels });
   await invalidateAll();
   ```
 - `handleDelete(id: string)`:
-  - Check in-use before deleting (include `club_id` to scope to user's club via RLS):
   ```ts
   const { data: linked } = await supabase
-    .from('tournaments').select('id')
-    .eq('blind_structure_id', id).eq('club_id', data.club.id).limit(1);
+    .from('tournaments').select('id').eq('blind_structure_id', id).eq('club_id', data.club.id).limit(1);
   if (linked?.length) { errorKey = 'error_structure_in_use'; return; }
   await supabase.from('blind_structures').delete().eq('id', id).eq('club_id', data.club.id);
   await invalidateAll();
@@ -155,11 +386,9 @@ Remove actions: `create_prize_structure`, `delete_prize_structure`
   await invalidateAll();
   ```
 - `handleDelete(id: string)`:
-  - Same in-use check as blind structures (query `tournaments` by `prize_structure_id`):
   ```ts
   const { data: linked } = await supabase
-    .from('tournaments').select('id')
-    .eq('prize_structure_id', id).eq('club_id', data.club.id).limit(1);
+    .from('tournaments').select('id').eq('prize_structure_id', id).eq('club_id', data.club.id).limit(1);
   if (linked?.length) { errorKey = 'error_structure_in_use'; return; }
   await supabase.from('prize_structures').delete().eq('id', id).eq('club_id', data.club.id);
   await invalidateAll();
@@ -175,7 +404,7 @@ Remove action: `create_tournament`
 
 - `handleCreate(formData: FormData)`:
   - Same validation as the current action (name, date, format, buy_in, etc.)
-  - Verify optional structure IDs belong to this club (if provided):
+  - Verify structures belong to this club:
   ```ts
   if (blindStructureId) {
     const { data: bs } = await supabase.from('blind_structures').select('id').eq('id', blindStructureId).eq('club_id', data.club.id).single();
@@ -203,20 +432,11 @@ Remove all actions: `add_player`, `remove_player`, `start_tournament`, `bust_pla
 
 **`tournaments/[id]/+page.svelte` changes:**
 
-Each becomes an async handler. The page already has all needed data from the server load (`data.tournament`, `data.players`, `data.prizeStructure`, `data.prizePool`). `invalidateAll()` after each mutation ensures `data.players` is fresh before the next operation.
-
----
+Each becomes an async handler. All needed data is available from the page load (`data.tournament`, `data.players`, `data.prizeStructure`, `data.prizePool`). `invalidateAll()` after each mutation keeps data fresh.
 
 **`handleAddPlayer(memberId: string | null, guestName: string | null)`:**
 - Guard: `if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }`
-- Duplicate check:
-  ```ts
-  if (memberId) {
-    const existing = data.players.find(p => p.member_user_id === memberId);
-    if (existing) { errorKey = 'error_duplicate_player'; return; }
-  }
-  ```
-- Insert:
+- Duplicate check: `const existing = data.players.find(p => p.member_user_id === memberId); if (existing) { errorKey = 'error_duplicate_player'; return; }`
   ```ts
   await supabase.from('tournament_players').insert({
     tournament_id: data.tournament.id,
@@ -244,12 +464,7 @@ Each becomes an async handler. The page already has all needed data from the ser
 
 **`handleBustPlayer(playerId: string)`:**
 - Guard: `if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }`
-- Guard: already-busted check:
-  ```ts
-  const player = data.players.find(p => p.id === playerId);
-  if (!player || player.finish_position !== null) return;
-  ```
-- Calculate next position from current `data.players` (same algorithm as server):
+- Guard: `const player = data.players.find(p => p.id === playerId); if (!player || player.finish_position !== null) return;`
   ```ts
   const totalPlayers = data.players.length;
   const assigned = new Set(data.players.map(p => p.finish_position).filter(p => p !== null));
@@ -261,7 +476,6 @@ Each becomes an async handler. The page already has all needed data from the ser
     .eq('id', playerId).eq('tournament_id', data.tournament.id);
   await invalidateAll();
   ```
-  `invalidateAll()` refreshes `data.players` so the next bust uses fresh position data.
 
 **`handleUnsetBust(playerId: string)`:**
 - Guard: `if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }`
@@ -286,7 +500,7 @@ Each becomes an async handler. The page already has all needed data from the ser
 **`handleRemoveRebuy(playerId: string)`:**
 - Guard: `if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }`
 - Guard: `if (data.tournament.format !== 'rebuy') return;`
-- Guard: `if (player.rebuys <= 0) return;`
+- Guard: `const player = data.players.find(p => p.id === playerId)!; if (player.rebuys <= 0) return;`
   ```ts
   await supabase.from('tournament_players')
     .update({ rebuys: player.rebuys - 1 })
@@ -307,34 +521,18 @@ Each becomes an async handler. The page already has all needed data from the ser
 
 **`handleFinishTournament()`:**
 - Guard: `if (data.tournament.status !== 'running') return;`
-- Guard: all players must have positions:
-  ```ts
-  if (data.players.some(p => p.finish_position === null)) {
-    errorKey = 'tournament_positions_incomplete'; return;
-  }
-  ```
-- Guard: prize structure must be assigned:
-  ```ts
-  if (!data.prizeStructure) { errorKey = 'error_no_prize_structures'; return; }
-  ```
-- Recalculate prize pool from current page data (matches server logic; data is fresh after invalidateAll on each rebuy/addon):
+- Guard: `if (data.players.some(p => p.finish_position === null)) { errorKey = 'tournament_positions_incomplete'; return; }`
+- Guard: `if (!data.prizeStructure) { errorKey = 'error_no_prize_structures'; return; }`
   ```ts
   import { calculatePrizePool, calculatePayouts } from '$lib/tournaments';
   const totalRebuys = data.players.reduce((sum, p) => sum + p.rebuys, 0);
   const addonCount = data.players.filter(p => p.addon).length;
   const prizePool = calculatePrizePool(
-    data.players.length,
-    data.tournament.buy_in,
-    totalRebuys,
-    data.tournament.rebuy_amount ?? 0,
-    addonCount,
-    data.tournament.addon_amount ?? 0
+    data.players.length, data.tournament.buy_in,
+    totalRebuys, data.tournament.rebuy_amount ?? 0,
+    addonCount, data.tournament.addon_amount ?? 0,
   );
   const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
-  ```
-- Write payouts then set status:
-  ```ts
-  const { error: payoutError } = await supabase.rpc // use individual updates:
   await Promise.all(payoutResults.map(({ playerId, amount }) =>
     supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId)
   ));
@@ -346,9 +544,7 @@ Each becomes an async handler. The page already has all needed data from the ser
 
 ### `[club]/admin/settings/+page.server.ts`
 
-Remove actions: `update`, `delete_club`
-
-The file currently has no `load` export (load comes from parent layout). After removing actions it becomes empty and can be deleted entirely.
+Remove actions: `update`, `delete_club`. File becomes empty — delete it.
 
 **`settings/+page.svelte` changes:**
 
@@ -356,11 +552,7 @@ The file currently has no `load` export (load comes from parent layout). After r
   - Validate name (non-empty) and slug with `isValidSlug` from `$lib/clubs`:
   ```ts
   if (!isValidSlug(slug)) { errorKey = 'error_invalid_slug'; return; }
-  ```
-  - Update:
-  ```ts
-  const { error: updateError } = await supabase
-    .from('clubs').update({ name, slug }).eq('id', data.club.id);
+  const { error: updateError } = await supabase.from('clubs').update({ name, slug }).eq('id', data.club.id);
   if (updateError?.code === '23505') { errorKey = 'error_slug_taken'; return; }
   if (updateError) { errorKey = 'server_error'; return; }
   if (slug !== data.club.slug) { goto(`/${slug}/admin/settings`); return; }
@@ -369,12 +561,11 @@ The file currently has no `load` export (load comes from parent layout). After r
   ```
 
 - `handleDeleteClub(confirmName: string)`:
-  - Client-side confirmation: `if (confirmName !== data.club.name) { errorKey = 'error_club_name_mismatch'; return; }`
+  - Guard: `if (confirmName !== data.club.name) { errorKey = 'error_club_name_mismatch'; return; }`
   ```ts
   await supabase.from('clubs').delete().eq('id', data.club.id);
   goto('/');
   ```
-  - Relies on the new clubs DELETE policy in migration `0006`.
 
 ---
 
@@ -382,14 +573,16 @@ The file currently has no `load` export (load comes from parent layout). After r
 
 | File | Reason |
 |---|---|
-| `src/routes/+layout.server.ts` | Session cookie management |
-| `src/routes/[club]/+layout.server.ts` | Auth validation + redirect |
-| `src/routes/[club]/admin/+layout.server.ts` | Admin role check |
-| `src/routes/[club]/admin/+page.server.ts` | Redirect only |
+| `src/routes/+layout.server.ts` | Auth cookie management (unavoidable) |
+| `src/routes/[club]/admin/+page.server.ts` | Redirect only — trivial |
 | `src/routes/clubs/new/+page.server.ts` | Club creation stays server-side |
 | `src/routes/invite/[token]/+page.server.ts` | Invite acceptance needs service role |
-| `src/routes/auth/*/+page.server.ts` | Auth/session management |
-| All `+page.server.ts` `load` functions | Unchanged — reads stay server-side |
+| `src/routes/auth/*/+page.server.ts` | Cookie-based auth management |
+| `src/hooks.server.ts` | Supabase cookie client setup |
+
+**Server invocations per navigation after migration:**
+- Root `+layout.server.ts` only — 1 invocation (down from 3–4 today)
+- Page-specific data: 0 server invocations (browser → Supabase directly)
 
 ---
 
@@ -397,13 +590,13 @@ The file currently has no `load` export (load comes from parent layout). After r
 
 - All `.svelte` files: `let errorKey = $state<string | null>(null)` replaces `form.errorKey`
 - Render errors with existing `resolveError(key)` pattern (already in `members/+page.svelte`, copy to others)
-- `loading = $state(false)` prevents double-submission on all handlers
+- `loading = $state(false)` with `try/finally` prevents double-submission and ensures reset
 
 ---
 
 ## i18n Keys Used
 
-All keys referenced in handlers are already defined in `messages/en.json` and `messages/de.json`:
+All keys are already defined in `messages/en.json` and `messages/de.json`:
 - `server_error`, `error_required`, `error_invalid_slug`, `error_slug_taken`, `error_club_name_mismatch`
 - `error_structure_in_use`, `error_cannot_remove_self`, `error_duplicate_player`
 - `error_tournament_not_open`, `error_tournament_not_running`, `error_no_prize_structures`
