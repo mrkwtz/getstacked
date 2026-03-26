@@ -34,6 +34,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      club_invites: {
+        Row: {
+          id: string
+          club_id: string
+          created_by: string
+          created_at: string
+          expires_at: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          id?: string
+          club_id: string
+          created_by: string
+          created_at?: string
+          expires_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          id?: string
+          club_id?: string
+          created_by?: string
+          created_at?: string
+          expires_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_invites_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_members: {
         Row: {
           club_id: string
