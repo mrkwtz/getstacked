@@ -36,7 +36,7 @@ create table tournament_tables (
 );
 ```
 
-RLS: members can read, admins can manage (same pattern as other tournament tables).
+RLS: members can read (player-visible seating view is out of scope for now but the read policy is open to all members for future use), admins can manage.
 
 ### Modified: `tournament_players`
 
@@ -73,7 +73,7 @@ Input: list of players with optional `preferred_table`, list of tables with `max
 1. Validate: for each table, count players locked to it. If count > `max_seats`, return an error: "Table N has X locks but only Y seats."
 2. For each table, shuffle its locked players and assign them seats 1..N.
 3. Collect remaining (unlocked) players and shuffle them.
-4. Fill remaining empty seats across tables in round-robin order (smallest table first) until all players are seated.
+4. Fill remaining empty seats across tables in round-robin order (table with fewest assigned seats first; tie-break by lowest table number) until all players are seated.
 
 ### Running phase
 
@@ -89,7 +89,7 @@ The seating section becomes the **Seating** tab / section on the tournament deta
 Triggered automatically after any bust:
 
 - Compute active player count per table (excluding busted).
-- If `max(active) - min(active) >= 2`: show a suggestion banner: **"Move [player] from Table X seat Y → Table Z seat W"**. The suggested player is the active player with the highest seat number on the largest table. The target seat is the lowest-numbered empty seat on the smallest table.
+- If `max(active) - min(active) >= 2`: show a suggestion banner: **"Move [player] from Table X seat Y → Table Z seat W"**. The suggested player is the active player with the highest seat number on the largest table (tie-break: lowest table number if multiple tables share the max). The target seat is the lowest-numbered empty seat on the smallest table (tie-break: lowest table number).
 - If any table has exactly 1 active player: show a **Break table** banner instead: **"Break Table X — move [player] to Table Y seat Z"**.
 - Admin can **Confirm** (updates `table_id` and `seat_number`) or **Dismiss** (hides banner until next bust).
 - At most one suggestion is shown at a time. After a confirm or next bust, suggestions are re-evaluated.
@@ -104,7 +104,7 @@ Triggered automatically after any bust:
 | `src/lib/seating.ts` | `drawSeats()`, `autoSeat()`, `suggestRebalanceMove()`, `suggestTableBreak()` |
 | `tests/unit/seating.test.ts` | TDD tests for all seating utility functions |
 | `src/lib/types.ts` | Add `tournament_tables` Database type; add `TournamentTable` hand-written interface; extend `TournamentPlayer` interface with `table_id`, `seat_number`, `preferred_table` |
-| `src/routes/[club]/admin/tournaments/[id]/+page.ts` | Load tables + seating data |
+| `src/routes/[club]/admin/tournaments/[id]/+page.ts` | Add a parallel `Promise.all` query for `tournament_tables` (ordered by `number`) alongside the existing tournament + players queries |
 | `src/routes/[club]/admin/tournaments/[id]/+page.svelte` | Add Seating section (registration + running views) |
 
 ---
@@ -115,7 +115,7 @@ Triggered automatically after any bust:
 |----------|-----------|
 | Lock count exceeds table seats | Draw fails with inline error message listing affected tables |
 | Draw with 0 tables configured | Draw button disabled; prompt to configure tables first |
-| Re-configuring tables (changing count) | All existing `tournament_tables` rows are deleted and recreated; all seat assignments and locks are reset. Admin is warned before confirming. |
+| Re-configuring tables (changing count or seats) | If tables already exist, submitting "Set tables" with different values shows an inline confirmation: "This will reset all seat assignments and locks. Continue?" Admin must click a second **Confirm reset** button to proceed. |
 | Manual seat already occupied | Error: "Seat N at Table X is taken" |
 | Supabase write failure | Inline error, no state change |
 
