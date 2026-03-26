@@ -2,6 +2,7 @@
   import { createClient } from '$lib/supabase';
   import { invalidateAll } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
+  import { validatePayouts } from '$lib/tournaments';
 
   const { data } = $props<{
     data: {
@@ -44,14 +45,8 @@
       position: i + 1,
       percentage: Number(p.percentage),
     }));
-    for (const payout of parsedPayouts) {
-      if (payout.percentage <= 0 || payout.percentage > 100) {
-        errorKey = 'error_required';
-        return;
-      }
-    }
-    const total = parsedPayouts.reduce((sum, p) => sum + p.percentage, 0);
-    if (Math.round(total) !== 100) { errorKey = 'error_payouts_must_total_100'; return; }
+    const validationError = validatePayouts(parsedPayouts);
+    if (validationError) { errorKey = validationError; return; }
 
     loading = true;
     try {
