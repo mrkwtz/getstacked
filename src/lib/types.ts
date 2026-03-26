@@ -42,7 +42,7 @@ export type Database = {
           created_at: string
           expires_at: string
           used_at: string | null
-          used_by: string | null
+          used_by_user_id: string | null
         }
         Insert: {
           id?: string
@@ -51,7 +51,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           used_at?: string | null
-          used_by?: string | null
+          used_by_user_id?: string | null
         }
         Update: {
           id?: string
@@ -60,7 +60,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           used_at?: string | null
-          used_by?: string | null
+          used_by_user_id?: string | null
         }
         Relationships: [
           {
