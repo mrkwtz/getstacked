@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
+  import { createClient } from '$lib/supabase';
+  import { invalidateAll } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
 
-  const { data, form } = $props<{
+  const { data } = $props<{
     data: {
+      club: { id: string };
       structures: {
         id: string;
         name: string;
@@ -11,7 +13,6 @@
         in_use: boolean;
       }[];
     };
-    form: { created?: boolean; errorKey?: string } | null;
   }>();
 
   function resolveError(key: string): string {
@@ -27,6 +28,64 @@
 
   function removeLevel(i: number) {
     levels = levels.filter((_, idx) => idx !== i);
+  }
+
+  let name = $state('');
+  let loading = $state(false);
+  let errorKey = $state<string | null>(null);
+
+  async function handleCreate() {
+    if (loading) return;
+    errorKey = null;
+    if (!name.trim()) { errorKey = 'error_required'; return; }
+    if (levels.length === 0) { errorKey = 'error_required'; return; }
+
+    const parsedLevels = levels.map((l) => ({
+      small_blind: Number(l.small_blind),
+      big_blind: Number(l.big_blind),
+      ante: Number(l.ante),
+      duration_minutes: Number(l.duration_minutes),
+    }));
+    for (const level of parsedLevels) {
+      if (level.small_blind <= 0 || level.big_blind < level.small_blind || level.duration_minutes <= 0 || level.ante < 0) {
+        errorKey = 'error_required';
+        return;
+      }
+    }
+
+    loading = true;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('blind_structures')
+        .insert({ club_id: data.club.id, name: name.trim(), levels: parsedLevels });
+      if (error) { errorKey = 'server_error'; return; }
+      name = '';
+      levels = [{ small_blind: '', big_blind: '', ante: '0', duration_minutes: '' }];
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (loading) return;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { data: linked } = await supabase
+        .from('tournaments')
+        .select('id')
+        .eq('blind_structure_id', id)
+        .eq('club_id', data.club.id)
+        .limit(1);
+      if (linked?.length) { errorKey = 'error_structure_in_use'; return; }
+      await supabase.from('blind_structures').delete().eq('id', id).eq('club_id', data.club.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 </script>
 
@@ -51,12 +110,9 @@
             {#if s.in_use}
               <span class="text-xs text-muted-foreground">{m.blind_structure_in_use()}</span>
             {:else}
-              <form method="POST" action="?/delete_blind_structure" use:enhance>
-                <input type="hidden" name="id" value={s.id} />
-                <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  {m.common_delete()}
-                </button>
-              </form>
+              <button type="button" onclick={() => handleDelete(s.id)} class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                {m.common_delete()}
+              </button>
             {/if}
           </div>
         </div>
@@ -67,13 +123,14 @@
   <!-- Create form -->
   <div class="bg-card border border-border rounded-lg p-5">
     <h2 class="text-sm font-semibold text-foreground mb-4">{m.blind_structure_new_title()}</h2>
-    <form method="POST" action="?/create_blind_structure" use:enhance class="flex flex-col gap-4 max-w-lg">
+    <div class="flex flex-col gap-4 max-w-lg">
       <div>
         <label for="bs-name" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.blind_structure_name_label()}
         </label>
         <input
-          id="bs-name" name="name" type="text" required
+          id="bs-name" type="text"
+          bind:value={name}
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
         />
       </div>
@@ -94,19 +151,19 @@
             {#each levels as level, i}
               <tr>
                 <td class="pr-2 pb-2">
-                  <input name="duration_minutes" type="number" min="1" required bind:value={level.duration_minutes}
+                  <input type="number" min="1" bind:value={level.duration_minutes}
                     class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
                 </td>
                 <td class="pr-2 pb-2">
-                  <input name="small_blind" type="number" min="1" required bind:value={level.small_blind}
+                  <input type="number" min="1" bind:value={level.small_blind}
                     class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
                 </td>
                 <td class="pr-2 pb-2">
-                  <input name="big_blind" type="number" min="1" required bind:value={level.big_blind}
+                  <input type="number" min="1" bind:value={level.big_blind}
                     class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
                 </td>
                 <td class="pr-2 pb-2">
-                  <input name="ante" type="number" min="0" bind:value={level.ante}
+                  <input type="number" min="0" bind:value={level.ante}
                     class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
                 </td>
                 <td class="pb-2">
@@ -126,14 +183,14 @@
         + {m.blind_structure_add_level()}
       </button>
 
-      {#if form?.errorKey}
-        <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
+      {#if errorKey}
+        <p class="text-xs text-accent">{resolveError(errorKey)}</p>
       {/if}
 
-      <button type="submit"
+      <button type="button" onclick={handleCreate}
         class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer">
         {m.blind_structure_create_button()}
       </button>
-    </form>
+    </div>
   </div>
 </div>

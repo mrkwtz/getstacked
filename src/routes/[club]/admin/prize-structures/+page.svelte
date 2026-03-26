@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
+  import { createClient } from '$lib/supabase';
+  import { invalidateAll } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
+  import { validatePayouts } from '$lib/tournaments';
 
-  const { data, form } = $props<{
+  const { data } = $props<{
     data: {
+      club: { id: string };
       structures: {
         id: string;
         name: string;
@@ -11,7 +14,6 @@
         in_use: boolean;
       }[];
     };
-    form: { created?: boolean; errorKey?: string } | null;
   }>();
 
   function resolveError(key: string): string {
@@ -26,21 +28,73 @@
       .join(', ');
   }
 
-  let payoutRows = $state([{ position: '1', percentage: '' }]);
-  const total = $derived(payoutRows.reduce((acc, r) => acc + (Number(r.percentage) || 0), 0));
+  let payouts = $state([{ position: 1, percentage: '' }]);
 
-  function addRow() {
-    payoutRows = [...payoutRows, { position: String(payoutRows.length + 1), percentage: '' }];
+  function addPayout() {
+    payouts = [...payouts, { position: payouts.length + 1, percentage: '' }];
   }
 
-  function removeRow(i: number) {
-    payoutRows = payoutRows.filter((_, idx) => idx !== i);
+  function removePayout(i: number) {
+    payouts = payouts.filter((_, idx) => idx !== i);
+  }
+
+  let name = $state('');
+  let loading = $state(false);
+  let errorKey = $state<string | null>(null);
+
+  async function handleCreate() {
+    if (loading) return;
+    errorKey = null;
+    if (!name.trim()) { errorKey = 'error_required'; return; }
+    if (payouts.length === 0) { errorKey = 'error_required'; return; }
+
+    const parsedPayouts = payouts.map((p, i) => ({
+      position: i + 1,
+      percentage: Number(p.percentage),
+    }));
+    const validationError = validatePayouts(parsedPayouts);
+    if (validationError) { errorKey = validationError; return; }
+
+    loading = true;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('prize_structures')
+        .insert({ club_id: data.club.id, name: name.trim(), payouts: parsedPayouts });
+      if (error) { errorKey = 'server_error'; return; }
+      name = '';
+      payouts = [{ position: 1, percentage: '' }];
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (loading) return;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { data: linked } = await supabase
+        .from('tournaments')
+        .select('id')
+        .eq('prize_structure_id', id)
+        .eq('club_id', data.club.id)
+        .limit(1);
+      if (linked?.length) { errorKey = 'error_structure_in_use'; return; }
+      await supabase.from('prize_structures').delete().eq('id', id).eq('club_id', data.club.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 </script>
 
 <div class="flex flex-col gap-6">
   <h1 class="text-base font-semibold text-foreground">{m.prize_structures_title()}</h1>
 
+  <!-- List -->
   {#if data.structures.length === 0}
     <p class="text-sm text-muted-foreground">{m.prize_structure_empty()}</p>
   {:else}
@@ -58,12 +112,9 @@
             {#if s.in_use}
               <span class="text-xs text-muted-foreground">{m.prize_structure_in_use()}</span>
             {:else}
-              <form method="POST" action="?/delete_prize_structure" use:enhance>
-                <input type="hidden" name="id" value={s.id} />
-                <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  {m.common_delete()}
-                </button>
-              </form>
+              <button type="button" onclick={() => handleDelete(s.id)} class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                {m.common_delete()}
+              </button>
             {/if}
           </div>
         </div>
@@ -74,52 +125,63 @@
   <!-- Create form -->
   <div class="bg-card border border-border rounded-lg p-5">
     <h2 class="text-sm font-semibold text-foreground mb-4">{m.prize_structure_new_title()}</h2>
-    <form method="POST" action="?/create_prize_structure" use:enhance class="flex flex-col gap-4 max-w-sm">
+    <div class="flex flex-col gap-4 max-w-lg">
       <div>
         <label for="ps-name" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.prize_structure_name_label()}
         </label>
         <input
-          id="ps-name" name="name" type="text" required
+          id="ps-name" type="text"
+          bind:value={name}
           class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
         />
       </div>
 
-      <div>
-        <div class="flex gap-4 text-xs font-medium text-muted-foreground mb-1.5">
-          <span class="w-20">{m.prize_structure_position_label()}</span>
-          <span class="w-20">{m.prize_structure_percentage_label()}</span>
-        </div>
-        {#each payoutRows as row, i}
-          <div class="flex gap-2 mb-2 items-center">
-            <input name="position" type="number" min="1" required bind:value={row.position}
-              class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
-            <input name="percentage" type="number" min="1" max="100" required bind:value={row.percentage}
-              class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
-            {#if payoutRows.length > 1}
-              <button type="button" onclick={() => removeRow(i)}
-                class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">✕</button>
-            {/if}
-          </div>
-        {/each}
-        <p class="text-xs mt-1 {total === 100 ? 'text-muted-foreground' : 'text-accent'}">
-          Total: {total}%
-        </p>
+      <!-- Payouts table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-muted-foreground">
+              <th class="text-left font-medium pb-2">{m.prize_structure_position_label()}</th>
+              <th class="text-left font-medium pb-2">{m.prize_structure_percentage_label()}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each payouts as payout, i}
+              <tr>
+                <td class="pr-2 pb-2">
+                  <span class="text-sm text-foreground">{i + 1}</span>
+                </td>
+                <td class="pr-2 pb-2">
+                  <input type="number" min="0.01" max="100" step="0.01" bind:value={payout.percentage}
+                    class="w-24 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+                </td>
+                <td class="pb-2">
+                  {#if payouts.length > 1}
+                    <button type="button" onclick={() => removePayout(i)}
+                      class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">✕</button>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
 
-      <button type="button" onclick={addRow}
+      <button type="button" onclick={addPayout}
         class="self-start text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer">
         + {m.prize_structure_add_payout()}
       </button>
 
-      {#if form?.errorKey}
-        <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
+      {#if errorKey}
+        <p class="text-xs text-accent">{resolveError(errorKey)}</p>
       {/if}
 
-      <button type="submit" disabled={total !== 100}
-        class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+      <button type="button" onclick={handleCreate}
+        class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer">
         {m.prize_structure_create_button()}
       </button>
-    </form>
+    </div>
   </div>
 </div>

@@ -1,32 +1,54 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
+  import { createClient } from '$lib/supabase';
+  import { invalidateAll } from '$app/navigation';
+  import { calculatePrizePool, calculatePayouts } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
-  import { calculatePayouts } from '$lib/tournaments';
-  import type { Tournament, TournamentPlayer } from '$lib/types';
 
-  const { data, form } = $props<{
-    data: {
-      tournament: Tournament;
-      players: TournamentPlayer[];
-      availableMembers: { user_id: string; display_name: string }[];
-      prizePool: number;
-      prizeStructure: { payouts: { position: number; percentage: number }[] } | null;
+  type TournamentPlayer = {
+    id: string;
+    member_user_id: string | null;
+    guest_name: string | null;
+    rebuys: number;
+    addon: boolean;
+    finish_position: number | null;
+    payout_amount: number | null;
+    club_members: { display_name: string } | null;
+  };
+
+  type PageData = {
+    tournament: {
+      id: string;
+      club_id: string;
+      name: string;
+      date: string;
+      status: string;
+      format: string;
+      buy_in: number;
+      rebuy_amount: number | null;
+      addon_amount: number | null;
+      blind_structures: { name: string } | null;
+      prize_structures: { name: string } | null;
     };
-    form: { errorKey?: string } | null;
-  }>();
+    players: TournamentPlayer[];
+    availableMembers: { user_id: string; display_name: string }[];
+    prizePool: number;
+    prizeStructure: { payouts: { position: number; percentage: number }[] } | null;
+  };
+
+  const { data }: { data: PageData } = $props();
 
   function resolveError(key: string): string {
     const msgs = m as unknown as Record<string, (() => string) | undefined>;
     return msgs[key]?.() ?? key;
   }
 
-  function statusLabel(status: Tournament['status']): string {
+  function statusLabel(status: string): string {
     if (status === 'registration') return m.tournament_status_registration();
     if (status === 'running') return m.tournament_status_running();
     return m.tournament_status_finished();
   }
 
-  function statusClass(status: Tournament['status']): string {
+  function statusClass(status: string): string {
     if (status === 'registration') return 'bg-accent/15 text-accent';
     if (status === 'running') return 'bg-amber-500/15 text-amber-500';
     return 'bg-muted text-muted-foreground';
@@ -84,6 +106,198 @@
 
   let selectedMemberId = $state('');
   let guestName = $state('');
+
+  let loading = $state(false);
+  let errorKey = $state<string | null>(null);
+
+  async function handleAddPlayer(memberId: string | null, guestNameVal: string | null) {
+    if (loading) return;
+    if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }
+    if (memberId) {
+      const existing = data.players.find((p) => p.member_user_id === memberId);
+      if (existing) { errorKey = 'error_duplicate_player'; return; }
+    }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('tournament_players').insert({
+        tournament_id: data.tournament.id,
+        member_club_id: memberId ? data.tournament.club_id : null,
+        member_user_id: memberId,
+        guest_name: guestNameVal ?? null,
+      });
+      if (error) { errorKey = 'server_error'; return; }
+      selectedMemberId = '';
+      guestName = '';
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleRemovePlayer(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players').delete().eq('id', playerId).eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleStartTournament() {
+    if (loading) return;
+    if (data.tournament.status !== 'registration') return;
+    if (data.players.length < 2) { errorKey = 'tournament_min_players_error'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournaments').update({ status: 'running' }).eq('id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleBustPlayer(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }
+    const player = data.players.find((p) => p.id === playerId);
+    if (!player || player.finish_position !== null) return;
+    const totalPlayers = data.players.length;
+    const assigned = new Set(data.players.map((p) => p.finish_position).filter((p) => p !== null));
+    const available = Array.from({ length: totalPlayers }, (_, i) => i + 1).filter((p) => !assigned.has(p));
+    if (available.length === 0) return;
+    const nextPosition = Math.max(...available);
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players')
+        .update({ finish_position: nextPosition })
+        .eq('id', playerId)
+        .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleUnsetBust(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players')
+        .update({ finish_position: null })
+        .eq('id', playerId)
+        .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleAddRebuy(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }
+    if (data.tournament.format !== 'rebuy') return;
+    const player = data.players.find((p) => p.id === playerId)!;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players')
+        .update({ rebuys: player.rebuys + 1 })
+        .eq('id', playerId)
+        .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleRemoveRebuy(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }
+    if (data.tournament.format !== 'rebuy') return;
+    const player = data.players.find((p) => p.id === playerId)!;
+    if (player.rebuys <= 0) return;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players')
+        .update({ rebuys: player.rebuys - 1 })
+        .eq('id', playerId)
+        .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleToggleAddon(playerId: string) {
+    if (loading) return;
+    if (data.tournament.status !== 'running') { errorKey = 'error_tournament_not_running'; return; }
+    if (data.tournament.format !== 'rebuy') return;
+    const player = data.players.find((p) => p.id === playerId)!;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players')
+        .update({ addon: !player.addon })
+        .eq('id', playerId)
+        .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleFinishTournament() {
+    if (loading) return;
+    if (data.tournament.status !== 'running') return;
+    if (data.players.some((p) => p.finish_position === null)) {
+      errorKey = 'tournament_positions_incomplete'; return;
+    }
+    if (!data.prizeStructure) { errorKey = 'error_no_prize_structures'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const totalRebuys = data.players.reduce((sum, p) => sum + p.rebuys, 0);
+      const addonCount = data.players.filter((p) => p.addon).length;
+      const prizePool = calculatePrizePool(
+        data.players.length,
+        data.tournament.buy_in,
+        totalRebuys,
+        data.tournament.rebuy_amount ?? 0,
+        addonCount,
+        data.tournament.addon_amount ?? 0,
+      );
+      const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
+      await Promise.all(
+        payoutResults.map(({ playerId, amount }) =>
+          supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId).eq('tournament_id', data.tournament.id)
+        )
+      );
+      await supabase.from('tournaments').update({ status: 'finished' }).eq('id', data.tournament.id);
+      showReview = false;
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-6">
@@ -99,20 +313,19 @@
       </span>
 
       {#if t.status === 'registration'}
-        <form method="POST" action="?/start_tournament" use:enhance>
-          <button
-            type="submit"
-            disabled={data.players.length < 2}
-            title={data.players.length < 2 ? m.tournament_min_players_error() : undefined}
-            class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {m.tournament_start_button()}
-          </button>
-        </form>
+        <button
+          type="button"
+          onclick={handleStartTournament}
+          disabled={data.players.length < 2 || loading}
+          title={data.players.length < 2 ? m.tournament_min_players_error() : undefined}
+          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {m.tournament_start_button()}
+        </button>
       {:else if t.status === 'running'}
         <button
           type="button"
-          disabled={!canFinish}
+          disabled={!canFinish || loading}
           title={!data.prizeStructure ? resolveError('error_no_prize_structures') : !allPositionsAssigned ? m.tournament_positions_incomplete() : undefined}
           onclick={() => { showReview = true; }}
           class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -130,6 +343,10 @@
     </span>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>
+
+  {#if errorKey}
+    <p class="text-xs text-accent">{resolveError(errorKey)}</p>
+  {/if}
 
   <!-- Players table -->
   <div>
@@ -156,12 +373,10 @@
               <span class="text-xs text-muted-foreground">Member</span>
             {/if}
             <div class="flex justify-end">
-              <form method="POST" action="?/remove_player" use:enhance>
-                <input type="hidden" name="player_id" value={player.id} />
-                <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  {m.common_delete()}
-                </button>
-              </form>
+              <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
+                class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                {m.common_delete()}
+              </button>
             </div>
           </div>
         {/each}
@@ -193,37 +408,28 @@
             {#if t.format === 'rebuy'}
               <!-- Rebuys: − count + -->
               <div class="flex items-center gap-1">
-                <form method="POST" action="?/remove_rebuy" use:enhance>
-                  <input type="hidden" name="player_id" value={player.id} />
-                  <button type="submit" disabled={player.rebuys === 0}
-                    class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-                    −
-                  </button>
-                </form>
+                <button type="button" onclick={() => handleRemoveRebuy(player.id)} disabled={player.rebuys === 0 || loading}
+                  class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+                  −
+                </button>
                 <span class="text-sm text-foreground w-4 text-center">{player.rebuys}</span>
-                <form method="POST" action="?/add_rebuy" use:enhance>
-                  <input type="hidden" name="player_id" value={player.id} />
-                  <button type="submit"
-                    class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    +
-                  </button>
-                </form>
+                <button type="button" onclick={() => handleAddRebuy(player.id)} disabled={loading}
+                  class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30">
+                  +
+                </button>
               </div>
 
               <!-- Add-on checkbox -->
               <div class="flex justify-center">
-                <form method="POST" action="?/toggle_addon" use:enhance>
-                  <input type="hidden" name="player_id" value={player.id} />
-                  <button type="submit"
-                    class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
-                      {player.addon ? 'bg-accent border-accent' : 'border-border hover:border-accent'}">
-                    {#if player.addon}
-                      <svg class="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    {/if}
-                  </button>
-                </form>
+                <button type="button" onclick={() => handleToggleAddon(player.id)} disabled={loading}
+                  class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
+                    {player.addon ? 'bg-accent border-accent' : 'border-border hover:border-accent'}">
+                  {#if player.addon}
+                    <svg class="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  {/if}
+                </button>
               </div>
             {/if}
 
@@ -235,21 +441,15 @@
             <!-- Bust / Undo -->
             <div class="flex justify-end">
               {#if player.finish_position === null}
-                <form method="POST" action="?/bust_player" use:enhance>
-                  <input type="hidden" name="player_id" value={player.id} />
-                  <button type="submit"
-                    class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    {m.tournament_bust_button({ position: ordinal(nextBustPosition) })}
-                  </button>
-                </form>
+                <button type="button" onclick={() => handleBustPlayer(player.id)} disabled={loading}
+                  class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                  {m.tournament_bust_button({ position: ordinal(nextBustPosition) })}
+                </button>
               {:else}
-                <form method="POST" action="?/unset_bust" use:enhance>
-                  <input type="hidden" name="player_id" value={player.id} />
-                  <button type="submit"
-                    class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    {m.tournament_undo_bust()}
-                  </button>
-                </form>
+                <button type="button" onclick={() => handleUnsetBust(player.id)} disabled={loading}
+                  class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                  {m.tournament_undo_bust()}
+                </button>
               {/if}
             </div>
           </div>
@@ -286,9 +486,8 @@
   <!-- Add player (registration only) -->
   {#if t.status === 'registration'}
     <div class="flex flex-col gap-3">
-      <form method="POST" action="?/add_player" use:enhance class="flex gap-2 items-center flex-wrap">
+      <div class="flex gap-2 items-center flex-wrap">
         <select
-          name="member_id"
           bind:value={selectedMemberId}
           class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
         >
@@ -298,27 +497,20 @@
           {/each}
         </select>
         <input
-          name="guest_name"
           type="text"
           placeholder={m.tournament_guest_placeholder()}
           bind:value={guestName}
           disabled={!!selectedMemberId}
           class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
         />
-        <button type="submit"
-          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer">
+        <button type="button"
+          onclick={() => handleAddPlayer(selectedMemberId || null, guestName || null)}
+          disabled={loading || (!selectedMemberId && !guestName.trim())}
+          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
           {m.tournament_add_player_button()}
         </button>
-      </form>
-      {#if form?.errorKey}
-        <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
-      {/if}
+      </div>
     </div>
-  {/if}
-
-  <!-- Error display for running status actions (bust, rebuy, etc.) -->
-  {#if t.status === 'running' && form?.errorKey && !showReview}
-    <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
   {/if}
 
   <!-- Finish review section (running status, shown when "Finish Tournament" clicked) -->
@@ -355,21 +547,15 @@
       </div>
 
       <div class="flex items-center gap-4">
-        <form method="POST" action="?/finish_tournament" use:enhance>
-          <button type="submit"
-            class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer">
-            {m.tournament_confirm_finish()}
-          </button>
-        </form>
+        <button type="button" onclick={handleFinishTournament} disabled={loading}
+          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          {m.tournament_confirm_finish()}
+        </button>
         <button type="button" onclick={() => { showReview = false; }}
           class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
           {m.tournament_cancel_review()}
         </button>
       </div>
-
-      {#if form?.errorKey}
-        <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
-      {/if}
     </div>
   {/if}
 </div>

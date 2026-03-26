@@ -1,12 +1,17 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
+  import { createClient } from '$lib/supabase';
+  import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import * as m from '$lib/paraglide/messages';
   import type { ClubMember } from '$lib/types';
 
-  const { data, form } = $props<{
-    data: { members: ClubMember[]; invites: { id: string; created_at: string; expires_at: string }[] };
-    form: { createdInviteId?: string; errorKey?: string } | null;
+  const { data } = $props<{
+    data: {
+      club: { id: string };
+      member: { user_id: string };
+      members: ClubMember[];
+      invites: { id: string; created_at: string; expires_at: string }[];
+    };
   }>();
 
   function resolveError(key: string): string {
@@ -23,6 +28,67 @@
     await navigator.clipboard.writeText(inviteUrl(id));
     copied = id;
     setTimeout(() => { copied = null; }, 2000);
+  }
+
+  let loading = $state(false);
+  let errorKey = $state<string | null>(null);
+  let newInviteId = $state<string | null>(null);
+
+  async function handleCreateInvite() {
+    if (loading) return;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { data: invite, error } = await supabase
+        .from('club_invites')
+        .insert({ club_id: data.club.id, created_by: data.member.user_id })
+        .select('id')
+        .single();
+      if (error) { errorKey = 'server_error'; return; }
+      newInviteId = invite.id;
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleRevokeInvite(inviteId: string) {
+    if (loading) return;
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('club_invites')
+        .delete()
+        .eq('id', inviteId)
+        .eq('club_id', data.club.id);
+      if (error) { errorKey = 'server_error'; return; }
+      if (inviteId === newInviteId) newInviteId = null;
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleRemoveMember(userId: string) {
+    if (loading) return;
+    if (userId === data.member.user_id) { errorKey = 'error_cannot_remove_self'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('club_members')
+        .delete()
+        .eq('club_id', data.club.id)
+        .eq('user_id', userId);
+      if (error) { errorKey = 'server_error'; return; }
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 </script>
 
@@ -54,12 +120,9 @@
           </span>
           <div class="flex justify-end">
             {#if member.role !== 'admin'}
-              <form method="POST" action="?/remove_member" use:enhance>
-                <input type="hidden" name="user_id" value={member.user_id} />
-                <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  {m.members_remove()}
-                </button>
-              </form>
+              <button type="button" onclick={() => handleRemoveMember(member.user_id)} class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                {m.members_remove()}
+              </button>
             {/if}
           </div>
         </div>
@@ -71,45 +134,44 @@
   <div class="bg-card border border-border rounded-lg p-5 flex flex-col gap-4">
     <h2 class="text-sm font-semibold text-foreground">{m.members_invite_title()}</h2>
 
+    {#if errorKey}
+      <p class="text-xs text-accent">{resolveError(errorKey)}</p>
+    {/if}
+
     <!-- Active invites list -->
-    {#if data.invites.length > 0 || form?.createdInviteId}
+    {#if data.invites.filter((i: { id: string }) => i.id !== newInviteId).length > 0}
       <div class="flex flex-col gap-2">
-        {#if form?.createdInviteId}
-          <div class="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2">
-            <span class="text-xs text-muted-foreground font-mono truncate flex-1">{inviteUrl(form.createdInviteId)}</span>
-            <button type="button" onclick={() => copyLink(form!.createdInviteId!)}
-              class="text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer flex-shrink-0">
-              {copied === form.createdInviteId ? m.invite_link_copied() : m.invite_link_copy()}
-            </button>
-          </div>
-        {/if}
-        {#each data.invites.filter((i: { id: string }) => i.id !== form?.createdInviteId) as invite}
+        {#each data.invites.filter((i: { id: string }) => i.id !== newInviteId) as invite}
           <div class="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2">
             <span class="text-xs text-muted-foreground font-mono truncate flex-1">{inviteUrl(invite.id)}</span>
             <button type="button" onclick={() => copyLink(invite.id)}
               class="text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer flex-shrink-0">
-              {copied === invite.id ? m.invite_link_copied() : m.invite_link_copy()}
+              {copied === invite.id ? m.members_invite_copied() : m.members_invite_copy()}
             </button>
-            <form method="POST" action="?/revoke_invite" use:enhance>
-              <input type="hidden" name="invite_id" value={invite.id} />
-              <button type="submit" class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex-shrink-0">
-                {m.invite_link_revoke()}
-              </button>
-            </form>
+            <button type="button" onclick={() => handleRevokeInvite(invite.id)}
+              class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex-shrink-0">
+              {m.members_invite_revoke()}
+            </button>
           </div>
         {/each}
       </div>
     {/if}
 
-    {#if form?.errorKey}
-      <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
+    <!-- Newly created invite -->
+    {#if newInviteId}
+      <div class="flex items-center gap-2 bg-accent/10 border border-accent/30 rounded-md px-3 py-2">
+        <span class="text-xs text-muted-foreground mb-1">{m.members_invite_new_link()}</span>
+        <span class="text-xs font-mono text-foreground truncate flex-1">{inviteUrl(newInviteId)}</span>
+        <button type="button" onclick={() => copyLink(newInviteId!)}
+          class="text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer flex-shrink-0">
+          {copied === newInviteId ? m.members_invite_copied() : m.members_invite_copy()}
+        </button>
+      </div>
     {/if}
 
-    <form method="POST" action="?/create_invite" use:enhance>
-      <button type="submit"
-        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer">
-        {m.invite_link_generate()}
-      </button>
-    </form>
+    <button type="button" onclick={handleCreateInvite} disabled={loading}
+      class="self-start bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+      {m.invite_link_generate()}
+    </button>
   </div>
 </div>

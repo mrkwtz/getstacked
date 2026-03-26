@@ -3,5 +3,9 @@ import { parseTheme } from '$lib/theme';
 
 export const load: LayoutServerLoad = async ({ cookies, locals: { safeGetSession } }) => {
   const { session } = await safeGetSession();
-  return { session, theme: parseTheme(cookies.get('theme')) };
+  return {
+    theme: parseTheme(cookies.get('theme')),
+    cookies: cookies.getAll(),
+    session, // kept for app.d.ts PageData compatibility during transition
+  };
 };

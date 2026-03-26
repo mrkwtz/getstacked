@@ -34,65 +34,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      blind_structures: {
-        Row: {
-          club_id: string
-          created_at: string
-          id: string
-          levels: Json
-          name: string
-        }
-        Insert: {
-          club_id: string
-          created_at?: string
-          id?: string
-          levels?: Json
-          name: string
-        }
-        Update: {
-          club_id?: string
-          created_at?: string
-          id?: string
-          levels?: Json
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "blind_structures_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       club_invites: {
         Row: {
-          club_id: string
-          created_at: string
-          created_by: string
-          expires_at: string
           id: string
+          club_id: string
+          created_by: string
+          created_at: string
+          expires_at: string
           used_at: string | null
-          used_by_user_id: string | null
+          used_by: string | null
         }
         Insert: {
-          club_id: string
-          created_at?: string
-          created_by: string
-          expires_at?: string
           id?: string
+          club_id: string
+          created_by: string
+          created_at?: string
+          expires_at?: string
           used_at?: string | null
-          used_by_user_id?: string | null
+          used_by?: string | null
         }
         Update: {
-          club_id?: string
-          created_at?: string
-          created_by?: string
-          expires_at?: string
           id?: string
+          club_id?: string
+          created_by?: string
+          created_at?: string
+          expires_at?: string
           used_at?: string | null
-          used_by_user_id?: string | null
+          used_by?: string | null
         }
         Relationships: [
           {
@@ -160,27 +128,59 @@ export type Database = {
         }
         Relationships: []
       }
-      prize_structures: {
+      blind_structures: {
         Row: {
-          club_id: string
-          created_at: string
           id: string
+          club_id: string
           name: string
-          payouts: Json
+          levels: Json
+          created_at: string
         }
         Insert: {
-          club_id: string
-          created_at?: string
           id?: string
+          club_id: string
           name: string
-          payouts?: Json
+          levels?: Json
+          created_at?: string
         }
         Update: {
-          club_id?: string
-          created_at?: string
           id?: string
+          club_id?: string
+          name?: string
+          levels?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blind_structures_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prize_structures: {
+        Row: {
+          id: string
+          club_id: string
+          name: string
+          payouts: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          club_id: string
+          name: string
+          payouts?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          club_id?: string
           name?: string
           payouts?: Json
+          created_at?: string
         }
         Relationships: [
           {
@@ -192,111 +192,50 @@ export type Database = {
           },
         ]
       }
-      tournament_players: {
-        Row: {
-          addon: boolean
-          created_at: string
-          finish_position: number | null
-          guest_name: string | null
-          id: string
-          member_club_id: string | null
-          member_user_id: string | null
-          payout_amount: number | null
-          rebuys: number
-          tournament_id: string
-        }
-        Insert: {
-          addon?: boolean
-          created_at?: string
-          finish_position?: number | null
-          guest_name?: string | null
-          id?: string
-          member_club_id?: string | null
-          member_user_id?: string | null
-          payout_amount?: number | null | undefined
-          rebuys?: number
-          tournament_id: string
-        }
-        Update: {
-          addon?: boolean
-          created_at?: string
-          finish_position?: number | null
-          guest_name?: string | null
-          id?: string
-          member_club_id?: string | null
-          member_user_id?: string | null
-          payout_amount?: number | null | undefined
-          rebuys?: number
-          tournament_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_players_member_club_id_member_user_id_fkey"
-            columns: ["member_club_id", "member_user_id"]
-            isOneToOne: false
-            referencedRelation: "club_members"
-            referencedColumns: ["club_id", "user_id"]
-          },
-          {
-            foreignKeyName: "tournament_players_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: false
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tournaments: {
         Row: {
+          id: string
+          club_id: string
+          name: string
+          date: string
+          format: string
+          buy_in: number
+          rebuy_amount: number | null
           addon_amount: number | null
           blind_structure_id: string | null
-          buy_in: number
-          club_id: string
-          created_at: string
-          date: string
-          format: string
-          id: string
-          name: string
           prize_structure_id: string | null
-          rebuy_amount: number | null
           status: string
+          created_at: string
         }
         Insert: {
-          addon_amount?: number | null
-          blind_structure_id?: string | null
-          buy_in: number
+          id?: string
           club_id: string
-          created_at?: string
+          name: string
           date: string
           format: string
-          id?: string
-          name: string
-          prize_structure_id?: string | null
+          buy_in: number
           rebuy_amount?: number | null
-          status?: string
-        }
-        Update: {
           addon_amount?: number | null
           blind_structure_id?: string | null
-          buy_in?: number
-          club_id?: string
+          prize_structure_id?: string | null
+          status?: string
           created_at?: string
+        }
+        Update: {
+          id?: string
+          club_id?: string
+          name?: string
           date?: string
           format?: string
-          id?: string
-          name?: string
-          prize_structure_id?: string | null
+          buy_in?: number
           rebuy_amount?: number | null
+          addon_amount?: number | null
+          blind_structure_id?: string | null
+          prize_structure_id?: string | null
           status?: string
+          created_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "tournaments_blind_structure_id_fkey"
-            columns: ["blind_structure_id"]
-            isOneToOne: false
-            referencedRelation: "blind_structures"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tournaments_club_id_fkey"
             columns: ["club_id"]
@@ -305,11 +244,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tournaments_blind_structure_id_fkey"
+            columns: ["blind_structure_id"]
+            isOneToOne: false
+            referencedRelation: "blind_structures"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tournaments_prize_structure_id_fkey"
             columns: ["prize_structure_id"]
             isOneToOne: false
             referencedRelation: "prize_structures"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_players: {
+        Row: {
+          id: string
+          tournament_id: string
+          member_club_id: string | null
+          member_user_id: string | null
+          guest_name: string | null
+          rebuys: number
+          addon: boolean
+          finish_position: number | null
+          payout_amount: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          member_club_id?: string | null
+          member_user_id?: string | null
+          guest_name?: string | null
+          rebuys?: number
+          addon?: boolean
+          finish_position?: number | null
+          payout_amount?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          member_club_id?: string | null
+          member_user_id?: string | null
+          guest_name?: string | null
+          rebuys?: number
+          addon?: boolean
+          finish_position?: number | null
+          payout_amount?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_players_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_players_member_club_id_member_user_id_fkey"
+            columns: ["member_club_id", "member_user_id"]
+            isOneToOne: false
+            referencedRelation: "club_members"
+            referencedColumns: ["club_id", "user_id"]
           },
         ]
       }
@@ -470,11 +470,23 @@ export type ClubContext = {
   role: Role;
 };
 
+export interface BlindLevel {
+  small_blind: number;
+  big_blind: number;
+  ante: number;
+  duration_minutes: number;
+}
+
+export interface Payout {
+  position: number;
+  percentage: number;
+}
+
 export interface BlindStructure {
   id: string;
   club_id: string;
   name: string;
-  levels: import('./tournaments').BlindLevel[];
+  levels: BlindLevel[];
   created_at: string;
 }
 
@@ -482,7 +494,7 @@ export interface PrizeStructure {
   id: string;
   club_id: string;
   name: string;
-  payouts: import('./tournaments').Payout[];
+  payouts: Payout[];
   created_at: string;
 }
 
