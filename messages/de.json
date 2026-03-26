@@ -55,5 +55,15 @@
   "blind_structure_create_button": "Erstellen",
   "blind_structure_empty": "Noch keine Blind-Strukturen.",
   "blind_structure_in_use": "In Verwendung",
-  "error_structure_in_use": "Diese Struktur wird von einem bestehenden Turnier verwendet."
+  "error_structure_in_use": "Diese Struktur wird von einem bestehenden Turnier verwendet.",
+  "tournament_new_title": "Neues Turnier",
+  "tournament_name_label": "Name",
+  "tournament_date_label": "Datum",
+  "tournament_buy_in_label": "Buy-in",
+  "tournament_rebuy_label": "Rebuy-Betrag (optional)",
+  "tournament_addon_label": "Add-on-Betrag (optional)",
+  "tournament_blind_structure_label": "Blind-Struktur (optional)",
+  "tournament_prize_structure_label": "Preisstruktur (optional)",
+  "tournament_create_button": "Turnier erstellen",
+  "tournament_none_option": "Keine"
 }
