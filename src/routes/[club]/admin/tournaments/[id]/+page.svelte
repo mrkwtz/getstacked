@@ -221,7 +221,7 @@
       const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
       await Promise.all(
         payoutResults.map(({ playerId, amount }) =>
-          supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId)
+          supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId).eq('tournament_id', data.tournament.id)
         )
       );
       await supabase.from('tournaments').update({ status: 'finished' }).eq('id', data.tournament.id);
