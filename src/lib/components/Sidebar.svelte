@@ -1,6 +1,7 @@
 <script lang="ts">
   import { isAdmin } from '$lib/members';
   import ThemeToggle from './ThemeToggle.svelte';
+  import LanguageSwitcher from './LanguageSwitcher.svelte';
   import type { Club, ClubMember } from '$lib/types';
 
   const { club, member, currentPath } = $props<{
@@ -82,6 +83,7 @@
   <div class="px-3 py-3 border-t border-border flex items-center justify-between gap-2">
     <span class="text-xs text-muted-foreground truncate">{member.display_name}</span>
     <div class="flex items-center gap-1 flex-shrink-0">
+      <LanguageSwitcher />
       <ThemeToggle />
       <form method="POST" action="/auth/logout">
         <button type="submit" title="Sign out" class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer">
