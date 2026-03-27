@@ -125,7 +125,7 @@
         <input
           id="t-date" type="date" name="date"
           onchange={() => clearFieldError('date')}
-          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.date ? 'border-accent' : 'border-input'}"
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.date ? 'ring-2 ring-accent' : ''}"
         />
       </div>
 
@@ -150,7 +150,7 @@
         <input
           id="t-buyin" type="number" name="buy_in" min="0" step="0.01"
           oninput={() => clearFieldError('buy_in')}
-          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in ? 'border-accent' : 'border-input'}"
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in ? 'ring-2 ring-accent' : ''}"
         />
       </div>
 
@@ -162,7 +162,7 @@
           <input
             id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
             oninput={() => clearFieldError('rebuy_amount')}
-            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'border-accent' : 'border-input'}"
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'ring-2 ring-accent' : ''}"
           />
         </div>
 
@@ -173,7 +173,7 @@
           <input
             id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
             oninput={() => clearFieldError('addon_amount')}
-            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'border-accent' : 'border-input'}"
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
           />
         </div>
       {/if}
