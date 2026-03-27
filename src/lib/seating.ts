@@ -135,15 +135,19 @@ export function suggestRebalanceMove(
   const count: Map<string, number> = new Map(tables.map((t) => [t.id, 0]));
   for (const p of active) count.set(p.tableId, (count.get(p.tableId) ?? 0) + 1);
 
-  const vals = [...count.values()];
-  if (Math.max(...vals) - Math.min(...vals) < 2) return null;
+  // Only consider tables that are in use — empty tables should not skew the balance check
+  const activeTables = tables.filter((t) => (count.get(t.id) ?? 0) > 0);
+  if (activeTables.length < 2) return null;
 
-  const largest = [...tables].sort((a, b) => {
+  const activeVals = activeTables.map((t) => count.get(t.id)!);
+  if (Math.max(...activeVals) - Math.min(...activeVals) < 2) return null;
+
+  const largest = [...activeTables].sort((a, b) => {
     const diff = (count.get(b.id) ?? 0) - (count.get(a.id) ?? 0);
     return diff !== 0 ? diff : a.number - b.number;
   })[0];
 
-  const smallest = [...tables]
+  const smallest = [...activeTables]
     .filter((t) => t.id !== largest.id)
     .sort((a, b) => {
       const diff = (count.get(a.id) ?? 0) - (count.get(b.id) ?? 0);

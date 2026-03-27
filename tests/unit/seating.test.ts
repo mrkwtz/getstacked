@@ -167,8 +167,9 @@ describe('suggestRebalanceMove', () => {
     const tables = makeTables(2, 5);
     const active = [
       ap('p1', 't1', 1, 1),
-      ap('p2', 't1', 1, 4), // highest seat
+      ap('p2', 't1', 1, 4), // highest seat on t1
       ap('p3', 't1', 1, 2),
+      ap('p4', 't2', 2, 1), // t2 has 1 player → diff = 2, suggestion fires
     ];
     const move = suggestRebalanceMove(active, tables);
     expect(move!.playerId).toBe('p2');
@@ -178,6 +179,32 @@ describe('suggestRebalanceMove', () => {
     const tables = makeTables(1, 5);
     const active = [ap('p1', 't1', 1, 1)];
     expect(suggestRebalanceMove(active, tables)).toBeNull();
+  });
+
+  it('returns null when active tables are balanced but empty table skews min count', () => {
+    // 3 tables: t1=2, t2=2, t3=0 — the two active tables are balanced
+    const tables = makeTables(3, 4);
+    const active = [
+      ap('p1', 't1', 1, 1),
+      ap('p2', 't1', 1, 2),
+      ap('p3', 't2', 2, 1),
+      ap('p4', 't2', 2, 2),
+    ];
+    expect(suggestRebalanceMove(active, tables)).toBeNull();
+  });
+
+  it('still moves to an in-use table when another table is empty and active tables are unbalanced', () => {
+    // 3 tables: t1=3, t2=1, t3=0 — suggest moving from t1 to t2 (not t3)
+    const tables = makeTables(3, 4);
+    const active = [
+      ap('p1', 't1', 1, 1),
+      ap('p2', 't1', 1, 2),
+      ap('p3', 't1', 1, 3),
+      ap('p4', 't2', 2, 1),
+    ];
+    const move = suggestRebalanceMove(active, tables);
+    expect(move).not.toBeNull();
+    expect(move!.toTableNumber).toBe(2); // moves to t2, not t3
   });
 });
 
