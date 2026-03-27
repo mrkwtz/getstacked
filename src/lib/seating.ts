@@ -201,7 +201,7 @@ export function suggestTableBreak(
   if (!player) return null;
 
   const target = [...tables]
-    .filter((t) => t.id !== breakTable.id && (count.get(t.id) ?? 0) < t.max_seats)
+    .filter((t) => t.id !== breakTable.id && (count.get(t.id) ?? 0) > 0 && (count.get(t.id) ?? 0) < t.max_seats)
     .sort((a, b) => {
       const diff = (count.get(a.id) ?? 0) - (count.get(b.id) ?? 0);
       return diff !== 0 ? diff : a.number - b.number;

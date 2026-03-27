@@ -244,6 +244,26 @@ describe('suggestTableBreak', () => {
     const active = [ap('p1', 't1', 1, 1)];
     expect(suggestTableBreak(active, tables)).toBeNull();
   });
+
+  it('moves single-player table to another active table, not to an empty table', () => {
+    // t1=1, t2=1, t3=0 — should consolidate t1 into t2, not t3
+    const tables = makeTables(3, 3);
+    const active = [
+      ap('p1', 't1', 1, 1),
+      ap('p2', 't2', 2, 1),
+    ];
+    const move = suggestTableBreak(active, tables);
+    expect(move).not.toBeNull();
+    expect(move!.fromTableNumber).toBe(1);
+    expect(move!.toTableNumber).toBe(2); // t2, not t3
+  });
+
+  it('returns null when the only other tables are empty', () => {
+    // t1=1, t2=0, t3=0 — nowhere useful to move
+    const tables = makeTables(3, 3);
+    const active = [ap('p1', 't1', 1, 1)];
+    expect(suggestTableBreak(active, tables)).toBeNull();
+  });
 });
 
 describe('busted-seat occupancy (regression)', () => {
@@ -286,10 +306,11 @@ describe('busted-seat occupancy (regression)', () => {
       ap('p1', 't1', 1, 1),
       ap('p2', 't2', 2, 1),
     ];
-    // t3 has 0 active — both its seats are available regardless of any busted DB records
+    // t3 is empty — should move p1 from t1 into t2 (active table), not t3
     const move = suggestTableBreak(active, tables);
     expect(move).not.toBeNull();
-    expect(['p1', 'p2']).toContain(move!.playerId);
-    expect(move!.toSeatNumber).toBe(1); // first seat on the empty table
+    expect(move!.playerId).toBe('p1'); // t1 is break table (lowest number)
+    expect(move!.toTableNumber).toBe(2); // t2, not t3
+    expect(move!.toSeatNumber).toBe(2); // seat 2 is free on t2
   });
 });
