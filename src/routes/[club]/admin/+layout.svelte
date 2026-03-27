@@ -35,18 +35,6 @@
     >
       {m.settings_title()}
     </a>
-    <a
-      href="{base}/tournaments"
-      class="px-4 py-3 text-sm transition-colors -mb-px {
-        page.url.pathname.startsWith(`${base}/tournaments`) ||
-        page.url.pathname.startsWith(`${base}/blind-structures`) ||
-        page.url.pathname.startsWith(`${base}/prize-structures`)
-          ? 'border-b-2 border-accent text-foreground font-medium'
-          : 'text-muted-foreground hover:text-foreground'
-      }"
-    >
-      {m.nav_tournaments()}
-    </a>
   </div>
 
   <!-- Page content -->

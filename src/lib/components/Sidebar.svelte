@@ -44,6 +44,18 @@
 
     {#if isAdmin(member)}
       <a
+        href="{clubPath}/admin/tournaments"
+        class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
+          isActive(`${clubPath}/admin/tournaments`) ||
+          isActive(`${clubPath}/admin/blind-structures`) ||
+          isActive(`${clubPath}/admin/prize-structures`)
+            ? 'bg-accent/10 border-l-2 border-accent text-foreground font-medium pl-[10px]'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+        }"
+      >
+        Tournaments
+      </a>
+      <a
         href="{clubPath}/admin/members"
         class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
           isActive(`${clubPath}/admin/members`)
