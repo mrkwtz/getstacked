@@ -286,13 +286,19 @@
 
   async function handleSetLock(playerId: string, preferredTable: number | null) {
     if (loading) return;
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('tournament_players')
-      .update({ preferred_table: preferredTable })
-      .eq('id', playerId);
-    if (error) { seatingError = error.message; return; }
-    await invalidateAll();
+    loading = true;
+    seatingError = null;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('tournament_players')
+        .update({ preferred_table: preferredTable })
+        .eq('id', playerId);
+      if (error) { seatingError = error.message; return; }
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 
   async function handleDrawSeats() {
