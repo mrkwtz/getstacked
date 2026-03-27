@@ -3,6 +3,8 @@
   import { invalidateAll } from '$app/navigation';
   import { calculatePrizePool, calculatePayouts } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
+  import { drawSeats, autoSeat } from '$lib/seating';
+  import type { TournamentTable } from '$lib/types';
 
   type TournamentPlayer = {
     id: string;
@@ -13,6 +15,9 @@
     finish_position: number | null;
     payout_amount: number | null;
     club_members: { display_name: string } | null;
+    table_id: string | null;
+    seat_number: number | null;
+    preferred_table: number | null;
   };
 
   type PageData = {
@@ -33,6 +38,7 @@
     availableMembers: { user_id: string; display_name: string }[];
     prizePool: number;
     prizeStructure: { payouts: { position: number; percentage: number }[] } | null;
+    tables: TournamentTable[];
   };
 
   const { data }: { data: PageData } = $props();
@@ -109,6 +115,13 @@
 
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
+
+  // Seating state
+  let numTables = $state('');
+  let seatsPerTable = $state('');
+  let seatingError = $state<string | null>(null);
+  let confirmReset = $state(false);
+  let dismissedSuggestion = $state(false);
 
   async function handleAddPlayer(memberId: string | null, guestNameVal: string | null) {
     if (loading) return;
@@ -258,6 +271,142 @@
         .update({ addon: !player.addon })
         .eq('id', playerId)
         .eq('tournament_id', data.tournament.id);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  // --- Seating handlers ---
+
+  async function handleSetTables(e: SubmitEvent) {
+    e.preventDefault();
+    if (loading) return;
+    const n = parseInt(numTables);
+    const s = parseInt(seatsPerTable);
+    if (!n || n < 1 || !s || s < 1) { seatingError = m.seating_error_invalid_config(); return; }
+
+    if (data.tables.length > 0) {
+      if (!confirmReset) { confirmReset = true; return; }
+    }
+
+    loading = true;
+    seatingError = null;
+    confirmReset = false;
+    try {
+      const supabase = createClient();
+      // Delete existing tables (cascades to clear table_id/seat_number on players)
+      if (data.tables.length > 0) {
+        await supabase.from('tournament_tables').delete().eq('tournament_id', data.tournament.id);
+        // Clear preferred_table on all players
+        await supabase
+          .from('tournament_players')
+          .update({ preferred_table: null })
+          .eq('tournament_id', data.tournament.id);
+      }
+      // Insert new tables
+      const rows = Array.from({ length: n }, (_, i) => ({
+        tournament_id: data.tournament.id,
+        number: i + 1,
+        max_seats: s,
+      }));
+      const { error } = await supabase.from('tournament_tables').insert(rows);
+      if (error) { seatingError = error.message; return; }
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleSetLock(playerId: string, preferredTable: number | null) {
+    if (loading) return;
+    const supabase = createClient();
+    await supabase
+      .from('tournament_players')
+      .update({ preferred_table: preferredTable })
+      .eq('id', playerId);
+    await invalidateAll();
+  }
+
+  async function handleDrawSeats() {
+    if (loading) return;
+    seatingError = null;
+    const players = data.players.map((p) => ({ id: p.id, preferred_table: p.preferred_table ?? null }));
+    const tables = data.tables.map((t) => ({ id: t.id, number: t.number, max_seats: t.max_seats }));
+    const result = drawSeats(players, tables);
+    if (result.error) { seatingError = result.error; return; }
+
+    loading = true;
+    try {
+      const supabase = createClient();
+      // Reset all seats first
+      await supabase
+        .from('tournament_players')
+        .update({ table_id: null, seat_number: null })
+        .eq('tournament_id', data.tournament.id);
+      // Apply assignments
+      await Promise.all(
+        result.assignments.map((a) =>
+          supabase
+            .from('tournament_players')
+            .update({ table_id: a.tableId, seat_number: a.seatNumber })
+            .eq('id', a.playerId),
+        ),
+      );
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleAutoSeat() {
+    if (loading) return;
+    seatingError = null;
+    const unseated = data.players
+      .filter((p) => p.table_id === null)
+      .map((p) => ({ id: p.id, preferred_table: p.preferred_table ?? null }));
+    const tables = data.tables.map((t) => ({ id: t.id, number: t.number, max_seats: t.max_seats }));
+    const existing = data.players
+      .filter((p) => p.table_id !== null)
+      .map((p) => ({ playerId: p.id, tableId: p.table_id!, seatNumber: p.seat_number! }));
+    const assignments = autoSeat(unseated, tables, existing);
+
+    loading = true;
+    try {
+      const supabase = createClient();
+      await Promise.all(
+        assignments.map((a) =>
+          supabase
+            .from('tournament_players')
+            .update({ table_id: a.tableId, seat_number: a.seatNumber })
+            .eq('id', a.playerId),
+        ),
+      );
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleManualSeat(playerId: string, tableId: string, seatNumber: number) {
+    if (loading) return;
+    seatingError = null;
+    // Check seat not already taken
+    const taken = data.players.some(
+      (p) => p.table_id === tableId && p.seat_number === seatNumber && p.id !== playerId,
+    );
+    if (taken) {
+      const tNum = data.tables.find((t) => t.id === tableId)?.number ?? '?';
+      seatingError = m.seating_error_seat_taken({ seat: String(seatNumber), table: String(tNum) });
+      return;
+    }
+    loading = true;
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('tournament_players')
+        .update({ table_id: tableId, seat_number: seatNumber })
+        .eq('id', playerId);
       await invalidateAll();
     } finally {
       loading = false;
@@ -510,6 +659,155 @@
           {m.tournament_add_player_button()}
         </button>
       </div>
+    </div>
+  {/if}
+
+  <!-- Seating configuration (registration only) -->
+  {#if t.status === 'registration'}
+    <!-- ── Seating configuration ── -->
+    <div class="flex flex-col gap-4">
+      <h2 class="text-sm font-semibold text-foreground">{m.seating_title()}</h2>
+
+      <!-- Configure tables form -->
+      <form onsubmit={handleSetTables} class="flex gap-2 items-end">
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_tables_label()}</label>
+          <input
+            type="number" min="1" required bind:value={numTables}
+            class="w-20 px-2 py-1.5 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_seats_per_table_label()}</label>
+          <input
+            type="number" min="1" required bind:value={seatsPerTable}
+            class="w-20 px-2 py-1.5 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
+          />
+        </div>
+        {#if confirmReset}
+          <div class="flex flex-col gap-1">
+            <p class="text-xs text-accent">{m.seating_reset_warning()}</p>
+            <button type="submit" disabled={loading}
+              class="self-start bg-accent text-accent-foreground text-xs font-medium px-3 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50">
+              {m.seating_confirm_reset_button()}
+            </button>
+          </div>
+        {:else}
+          <button type="submit" disabled={loading}
+            class="bg-accent text-accent-foreground text-sm font-medium px-3 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50">
+            {m.seating_set_tables_button()}
+          </button>
+        {/if}
+      </form>
+
+      {#if seatingError}
+        <p class="text-xs text-accent">{seatingError}</p>
+      {/if}
+
+      {#if data.tables.length > 0}
+        <!-- Per-player lock dropdowns -->
+        {#if data.players.length > 0}
+          <div class="bg-card border border-border rounded-lg overflow-hidden">
+            <div class="grid grid-cols-[1fr_auto] text-xs font-medium text-muted-foreground px-4 py-2 border-b border-border uppercase tracking-wide">
+              <span>Player</span><span>{m.seating_lock_label()}</span>
+            </div>
+            {#each data.players as player}
+              <div class="grid grid-cols-[1fr_auto] items-center px-4 py-2 border-b border-border last:border-0">
+                <span class="text-sm text-foreground">
+                  {player.club_members?.display_name ?? player.guest_name ?? '—'}
+                </span>
+                <select
+                  class="bg-background border border-input rounded-md text-xs px-2 py-1 text-foreground"
+                  value={player.preferred_table ?? ''}
+                  onchange={(e) => {
+                    const val = (e.currentTarget as HTMLSelectElement).value;
+                    handleSetLock(player.id, val ? parseInt(val) : null);
+                  }}
+                >
+                  <option value="">{m.seating_lock_any()}</option>
+                  {#each data.tables as table}
+                    <option value={table.number}>{m.seating_table_label({ number: String(table.number) })}</option>
+                  {/each}
+                </select>
+              </div>
+            {/each}
+          </div>
+        {/if}
+
+        <!-- Draw / re-draw button -->
+        <div class="flex gap-2">
+          <button
+            type="button"
+            disabled={loading || data.players.length < 2}
+            onclick={handleDrawSeats}
+            class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {data.players.some(p => p.table_id !== null) ? m.seating_redraw_button() : m.seating_draw_button()}
+          </button>
+        </div>
+
+        <!-- Seating grid (after draw) -->
+        {#if data.players.some((p) => p.table_id !== null)}
+          <div class="grid grid-cols-2 gap-3">
+            {#each data.tables as table}
+              {@const seated = data.players.filter((p) => p.table_id === table.id).sort((a, b) => (a.seat_number ?? 0) - (b.seat_number ?? 0))}
+              <div class="bg-card border border-border rounded-lg p-3">
+                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  {m.seating_table_label({ number: String(table.number) })}
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-xs">
+                  {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
+                    {@const player = seated.find((p) => p.seat_number === seat)}
+                    <div class="px-2 py-1 rounded {player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
+                      {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/each}
+          </div>
+
+          <!-- Unseated players -->
+          {@const unseated = data.players.filter((p) => p.table_id === null)}
+          {#if unseated.length > 0}
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{m.seating_unseated_title()}</h3>
+                <button
+                  type="button"
+                  onclick={handleAutoSeat}
+                  disabled={loading}
+                  class="text-xs bg-accent text-accent-foreground px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {m.seating_auto_seat_button()}
+                </button>
+              </div>
+              {#each unseated as player}
+                <div class="flex items-center gap-2 text-sm text-foreground">
+                  <span class="flex-1">{player.club_members?.display_name ?? player.guest_name ?? '?'}</span>
+                  <select
+                    class="bg-background border border-input rounded-md text-xs px-2 py-1"
+                    onchange={(e) => {
+                      const [tableId, seatStr] = (e.currentTarget as HTMLSelectElement).value.split(':');
+                      if (tableId && seatStr) handleManualSeat(player.id, tableId, parseInt(seatStr));
+                    }}
+                  >
+                    <option value="">{m.seating_assign_seat_placeholder()}</option>
+                    {#each data.tables as table}
+                      {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
+                        {@const taken = data.players.some((p) => p.table_id === table.id && p.seat_number === seat && p.id !== player.id)}
+                        {#if !taken}
+                          <option value="{table.id}:{seat}">T{table.number} S{seat}</option>
+                        {/if}
+                      {/each}
+                    {/each}
+                  </select>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        {/if}
+      {/if}
     </div>
   {/if}
 
