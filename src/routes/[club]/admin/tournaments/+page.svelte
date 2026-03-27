@@ -30,7 +30,7 @@
     <h1 class="text-base font-semibold text-foreground">{m.tournament_list_title()}</h1>
     <a
       href="/{data.club.slug}/admin/tournaments/new"
-      class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors"
+      class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors"
     >
       {m.tournament_new_button()}
     </a>
