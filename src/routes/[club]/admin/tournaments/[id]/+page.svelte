@@ -104,16 +104,10 @@
       })),
   );
 
-  const bustedSeats = $derived(
-    data.players
-      .filter((p) => p.finish_position !== null && p.table_id !== null && p.seat_number !== null)
-      .map((p) => ({ tableId: p.table_id!, seatNumber: p.seat_number! })),
-  );
-
   const rebalanceMove = $derived(
     !dismissedSuggestion && t.status === 'running' && data.tables.length > 0
-      ? suggestTableBreak(activePlayers, data.tables, bustedSeats) ??
-        suggestRebalanceMove(activePlayers, data.tables, bustedSeats)
+      ? suggestTableBreak(activePlayers, data.tables) ??
+        suggestRebalanceMove(activePlayers, data.tables)
       : null,
   );
 
@@ -926,7 +920,7 @@
               <!-- Seat grid -->
               <div class="grid grid-cols-2 gap-1 text-xs">
                 {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
-                  {@const player = tablePlayers.find((p) => p.seat_number === seat)}
+                  {@const player = tablePlayers.find((p) => p.seat_number === seat && p.finish_position === null) ?? tablePlayers.find((p) => p.seat_number === seat)}
                   {@const busted = player && player.finish_position !== null}
                   <div class="px-2 py-1 rounded {busted ? 'bg-muted text-muted-foreground line-through opacity-50' : player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
                     {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}

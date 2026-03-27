@@ -224,7 +224,7 @@ describe('busted-seat occupancy (regression)', () => {
     return { id, name: `Player ${id}`, tableId, tableNumber, seatNumber };
   }
 
-  it('suggestRebalanceMove skips seats held by busted players', () => {
+  it('suggestRebalanceMove treats busted-player seats as available for reassignment', () => {
     const tables = makeTables(2, 3); // 3 seats each
     const active = [
       ap('p1', 't1', 1, 1),
@@ -232,24 +232,37 @@ describe('busted-seat occupancy (regression)', () => {
       ap('p3', 't1', 1, 3),
       ap('p4', 't2', 2, 1), // only active player on t2
     ];
-    // Busted player still occupies seat 2 on t2
-    const bustedSeats = [{ tableId: 't2', seatNumber: 2 }];
-    const move = suggestRebalanceMove(active, tables, bustedSeats);
+    // Busted player's DB record still has seat 2 on t2, but the seat is reassignable
+    const move = suggestRebalanceMove(active, tables);
     expect(move).not.toBeNull();
-    expect(move!.toSeatNumber).toBe(3); // seat 2 is busted-occupied, must pick seat 3
+    expect(move!.toSeatNumber).toBe(2); // seat 2 is the first available (busted record ignored)
   });
 
-  it('suggestTableBreak skips seats held by busted players', () => {
+  it('suggestTableBreak returns a move even when busted players have seats at the target table', () => {
     const tables = makeTables(2, 3);
     const active = [
-      ap('p1', 't1', 1, 1), // only active player on t1
+      ap('p1', 't1', 1, 1), // only active player on t1 — break candidate
       ap('p2', 't2', 2, 1),
       ap('p3', 't2', 2, 2),
     ];
-    // Busted player still occupies seat 3 on t2
-    const bustedSeats = [{ tableId: 't2', seatNumber: 3 }];
-    // t2 has seats 1, 2 active + seat 3 busted — all seats taken
-    const move = suggestTableBreak(active, tables, bustedSeats);
-    expect(move).toBeNull(); // no room on t2 once busted seat is counted
+    // Busted player's DB record still occupies seat 3 on t2, but that seat is reassignable
+    // t2 active count = 2, max_seats = 3 → room exists at seat 3
+    const move = suggestTableBreak(active, tables);
+    expect(move).not.toBeNull();
+    expect(move!.playerId).toBe('p1');
+    expect(move!.toSeatNumber).toBe(3); // first available seat at t2
+  });
+
+  it('consolidates 2 remaining players on different tables', () => {
+    const tables = makeTables(3, 2); // 3 tables, 2 seats each
+    const active = [
+      ap('p1', 't1', 1, 1),
+      ap('p2', 't2', 2, 1),
+    ];
+    // t3 has 0 active — both its seats are available regardless of any busted DB records
+    const move = suggestTableBreak(active, tables);
+    expect(move).not.toBeNull();
+    expect(['p1', 'p2']).toContain(move!.playerId);
+    expect(move!.toSeatNumber).toBe(1); // first seat on the empty table
   });
 });
