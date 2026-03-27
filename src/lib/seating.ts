@@ -193,7 +193,8 @@ export function suggestTableBreak(
     .find((t) => count.get(t.id) === 1);
   if (!breakTable) return null;
 
-  const player = active.find((p) => p.tableId === breakTable.id)!;
+  const player = active.find((p) => p.tableId === breakTable.id);
+  if (!player) return null;
 
   const target = [...tables]
     .filter((t) => t.id !== breakTable.id && (count.get(t.id) ?? 0) < t.max_seats)
