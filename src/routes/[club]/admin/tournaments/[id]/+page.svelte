@@ -978,49 +978,58 @@
     {/if}
   {/if}
 
-  <!-- Finish review section (running status, shown when "Finish Tournament" clicked) -->
-  {#if t.status === 'running' && showReview}
-    <div class="bg-card border border-border rounded-lg p-5 flex flex-col gap-4">
-      <h2 class="text-sm font-semibold text-foreground">{m.tournament_review_title()}</h2>
-
-      <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right">{m.tournament_payout_col()}</span>
-        </div>
-        {#each [...reviewPayouts].sort((a, b) => {
-          const posA = data.players.find(p => p.id === a.playerId)?.finish_position ?? 999;
-          const posB = data.players.find(p => p.id === b.playerId)?.finish_position ?? 999;
-          return posA - posB;
-        }) as payout}
-          {@const player = data.players.find(p => p.id === payout.playerId)!}
-          <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
-            <span class="text-sm font-medium text-foreground">
-              {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
-            </span>
-            <span class="text-sm text-foreground">
-              {player.guest_name
-                ? `${player.guest_name} ${m.tournament_guest_suffix()}`
-                : (player.club_members?.display_name ?? '—')}
-            </span>
-            <span class="text-sm text-right {payout.amount > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
-              {payout.amount > 0 ? `€${(payout.amount / 100).toFixed(2)}` : '—'}
-            </span>
-          </div>
-        {/each}
-      </div>
-
-      <div class="flex items-center gap-4">
-        <button type="button" onclick={handleFinishTournament} disabled={loading}
-          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          {m.tournament_confirm_finish()}
-        </button>
-        <button type="button" onclick={() => { showReview = false; }}
-          class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-          {m.tournament_cancel_review()}
-        </button>
-      </div>
-    </div>
-  {/if}
 </div>
+
+<!-- Finish review modal -->
+{#if t.status === 'running' && showReview}
+  <!-- Backdrop -->
+  <div
+    class="fixed inset-0 z-40 bg-black/60"
+    role="presentation"
+    onclick={() => { showReview = false; }}
+  ></div>
+
+  <!-- Modal -->
+  <div class="fixed inset-x-4 top-1/2 z-50 -translate-y-1/2 max-w-md mx-auto bg-card border border-border rounded-xl shadow-xl flex flex-col gap-4 p-5">
+    <h2 class="text-base font-semibold text-foreground">{m.tournament_review_title()}</h2>
+
+    <div class="border border-border rounded-lg overflow-hidden">
+      <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right">{m.tournament_payout_col()}</span>
+      </div>
+      {#each [...reviewPayouts].sort((a, b) => {
+        const posA = data.players.find(p => p.id === a.playerId)?.finish_position ?? 999;
+        const posB = data.players.find(p => p.id === b.playerId)?.finish_position ?? 999;
+        return posA - posB;
+      }) as payout}
+        {@const player = data.players.find(p => p.id === payout.playerId)!}
+        <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
+          <span class="text-sm font-medium text-foreground">
+            {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
+          </span>
+          <span class="text-sm text-foreground">
+            {player.guest_name
+              ? `${player.guest_name} ${m.tournament_guest_suffix()}`
+              : (player.club_members?.display_name ?? '—')}
+          </span>
+          <span class="text-sm text-right {payout.amount > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
+            {payout.amount > 0 ? `€${(payout.amount / 100).toFixed(2)}` : '—'}
+          </span>
+        </div>
+      {/each}
+    </div>
+
+    <div class="flex items-center gap-4">
+      <button type="button" onclick={handleFinishTournament} disabled={loading}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        {m.tournament_confirm_finish()}
+      </button>
+      <button type="button" onclick={() => { showReview = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </div>
+{/if}
