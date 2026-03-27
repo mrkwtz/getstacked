@@ -91,6 +91,7 @@
   let seatingError = $state<string | null>(null);
   let confirmReset = $state(false);
   let dismissedSuggestion = $state(false);
+  let movingPlayerId = $state<string | null>(null);
 
   const activePlayers = $derived(
     data.players
@@ -439,6 +440,7 @@
         .eq('id', move.playerId);
       if (error) { seatingError = error.message; return; }
       dismissedSuggestion = false;
+      movingPlayerId = null;
       await invalidateAll();
     } finally {
       loading = false;
@@ -892,6 +894,23 @@
           </div>
         {/if}
 
+        <!-- Manual move hint / cancel -->
+        {#if movingPlayerId}
+          {@const movingPlayer = data.players.find((p) => p.id === movingPlayerId)}
+          <div class="flex items-center justify-between gap-3 bg-muted border border-border rounded-lg px-4 py-3">
+            <span class="text-sm text-foreground">
+              {m.seating_move_hint({ name: movingPlayer?.club_members?.display_name ?? movingPlayer?.guest_name ?? '?' })}
+            </span>
+            <button
+              type="button"
+              onclick={() => { movingPlayerId = null; }}
+              class="text-xs border border-border text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer shrink-0"
+            >
+              {m.seating_cancel_move()}
+            </button>
+          </div>
+        {/if}
+
         <!-- Table cards grid -->
         <div class="grid grid-cols-2 gap-3">
           {#each data.tables as table}
@@ -922,9 +941,34 @@
                 {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
                   {@const player = tablePlayers.find((p) => p.seat_number === seat && p.finish_position === null) ?? tablePlayers.find((p) => p.seat_number === seat)}
                   {@const busted = player && player.finish_position !== null}
-                  <div class="px-2 py-1 rounded {busted ? 'bg-muted text-muted-foreground line-through opacity-50' : player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
+                  {@const isSelected = player && player.id === movingPlayerId}
+                  {@const isTarget = movingPlayerId && !isSelected && (!player || busted)}
+                  <button
+                    type="button"
+                    disabled={loading || (!isSelected && !isTarget && !!movingPlayerId)}
+                    onclick={() => {
+                      if (isSelected) { movingPlayerId = null; return; }
+                      if (movingPlayerId && isTarget) {
+                        handleConfirmMove({ playerId: movingPlayerId, toTableId: table.id, toSeatNumber: seat });
+                        return;
+                      }
+                      if (!movingPlayerId && player && !busted) {
+                        movingPlayerId = player.id;
+                      }
+                    }}
+                    class="px-2 py-1 rounded text-left w-full transition-colors
+                      {isSelected
+                        ? 'bg-accent text-accent-foreground ring-2 ring-accent cursor-pointer'
+                        : isTarget
+                          ? 'bg-accent/10 text-muted-foreground border border-dashed border-accent/50 cursor-pointer hover:bg-accent/20'
+                          : busted
+                            ? 'bg-muted text-muted-foreground line-through opacity-50 cursor-default'
+                            : player
+                              ? 'bg-accent/20 text-foreground cursor-pointer hover:bg-accent/30'
+                              : 'bg-muted text-muted-foreground cursor-default'}"
+                  >
                     {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}
-                  </div>
+                  </button>
                 {/each}
               </div>
             </div>

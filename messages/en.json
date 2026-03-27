@@ -148,5 +148,7 @@
   "seating_active_count": "{count} active",
   "seating_table_label": "Table {number}",
   "seating_assign_seat_placeholder": "Assign seat…",
-  "seating_error_invalid_config": "Please enter a valid number of tables and seats."
+  "seating_error_invalid_config": "Please enter a valid number of tables and seats.",
+  "seating_move_hint": "Tap an empty seat to move {name} there",
+  "seating_cancel_move": "Cancel move"
 }

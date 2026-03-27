@@ -148,5 +148,7 @@
   "seating_active_count": "{count} aktiv",
   "seating_table_label": "Tisch {number}",
   "seating_assign_seat_placeholder": "Platz zuweisen…",
-  "seating_error_invalid_config": "Bitte gültige Anzahl von Tischen und Plätzen eingeben."
+  "seating_error_invalid_config": "Bitte gültige Anzahl von Tischen und Plätzen eingeben.",
+  "seating_move_hint": "{name} hierher verschieben: freien Platz antippen",
+  "seating_cancel_move": "Verschieben abbrechen"
 }
