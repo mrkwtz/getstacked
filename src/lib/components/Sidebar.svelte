@@ -2,6 +2,7 @@
   import { isAdmin } from '$lib/members';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
+  import * as m from '$lib/paraglide/messages';
   import type { Club, ClubMember } from '$lib/types';
 
   const { club, member, currentPath } = $props<{
@@ -40,7 +41,7 @@
           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
       }"
     >
-      Dashboard
+      {m.nav_dashboard()}
     </a>
 
     {#if isAdmin(member)}
@@ -54,7 +55,7 @@
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }"
       >
-        Tournaments
+        {m.nav_tournaments()}
       </a>
       <a
         href="{clubPath}/admin/members"
@@ -64,7 +65,7 @@
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }"
       >
-        Members
+        {m.nav_members()}
       </a>
       <a
         href="{clubPath}/admin/settings"
@@ -74,7 +75,7 @@
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }"
       >
-        Settings
+        {m.nav_settings()}
       </a>
     {/if}
   </nav>
