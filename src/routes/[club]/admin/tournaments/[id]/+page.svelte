@@ -104,10 +104,16 @@
       })),
   );
 
+  const bustedSeats = $derived(
+    data.players
+      .filter((p) => p.finish_position !== null && p.table_id !== null && p.seat_number !== null)
+      .map((p) => ({ tableId: p.table_id!, seatNumber: p.seat_number! })),
+  );
+
   const rebalanceMove = $derived(
     !dismissedSuggestion && t.status === 'running' && data.tables.length > 0
-      ? suggestTableBreak(activePlayers, data.tables) ??
-        suggestRebalanceMove(activePlayers, data.tables)
+      ? suggestTableBreak(activePlayers, data.tables, bustedSeats) ??
+        suggestRebalanceMove(activePlayers, data.tables, bustedSeats)
       : null,
   );
 

@@ -129,6 +129,7 @@ export interface RebalanceMove {
 export function suggestRebalanceMove(
   active: ActivePlayer[],
   tables: SeatingTable[],
+  occupiedSeats?: { tableId: string; seatNumber: number }[],
 ): RebalanceMove | null {
   if (tables.length < 2) return null;
 
@@ -154,7 +155,10 @@ export function suggestRebalanceMove(
     .filter((p) => p.tableId === largest.id)
     .sort((a, b) => b.seatNumber - a.seatNumber)[0];
 
-  const occupied = new Set(active.filter((p) => p.tableId === smallest.id).map((p) => p.seatNumber));
+  const occupied = new Set([
+    ...active.filter((p) => p.tableId === smallest.id).map((p) => p.seatNumber),
+    ...(occupiedSeats ?? []).filter((p) => p.tableId === smallest.id).map((p) => p.seatNumber),
+  ]);
   const toSeat = emptySeats(smallest.max_seats, occupied)[0];
 
   if (!player || toSeat === undefined) return null;
@@ -182,6 +186,7 @@ export interface TableBreakMove {
 export function suggestTableBreak(
   active: ActivePlayer[],
   tables: SeatingTable[],
+  occupiedSeats?: { tableId: string; seatNumber: number }[],
 ): TableBreakMove | null {
   if (tables.length < 2) return null;
 
@@ -205,7 +210,10 @@ export function suggestTableBreak(
 
   if (!target) return null;
 
-  const occupied = new Set(active.filter((p) => p.tableId === target.id).map((p) => p.seatNumber));
+  const occupied = new Set([
+    ...active.filter((p) => p.tableId === target.id).map((p) => p.seatNumber),
+    ...(occupiedSeats ?? []).filter((p) => p.tableId === target.id).map((p) => p.seatNumber),
+  ]);
   const toSeat = emptySeats(target.max_seats, occupied)[0];
   if (toSeat === undefined) return null;
 

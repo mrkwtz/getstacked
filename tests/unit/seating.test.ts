@@ -218,3 +218,38 @@ describe('suggestTableBreak', () => {
     expect(suggestTableBreak(active, tables)).toBeNull();
   });
 });
+
+describe('busted-seat occupancy (regression)', () => {
+  function ap(id: string, tableId: string, tableNumber: number, seatNumber: number) {
+    return { id, name: `Player ${id}`, tableId, tableNumber, seatNumber };
+  }
+
+  it('suggestRebalanceMove skips seats held by busted players', () => {
+    const tables = makeTables(2, 3); // 3 seats each
+    const active = [
+      ap('p1', 't1', 1, 1),
+      ap('p2', 't1', 1, 2),
+      ap('p3', 't1', 1, 3),
+      ap('p4', 't2', 2, 1), // only active player on t2
+    ];
+    // Busted player still occupies seat 2 on t2
+    const bustedSeats = [{ tableId: 't2', seatNumber: 2 }];
+    const move = suggestRebalanceMove(active, tables, bustedSeats);
+    expect(move).not.toBeNull();
+    expect(move!.toSeatNumber).toBe(3); // seat 2 is busted-occupied, must pick seat 3
+  });
+
+  it('suggestTableBreak skips seats held by busted players', () => {
+    const tables = makeTables(2, 3);
+    const active = [
+      ap('p1', 't1', 1, 1), // only active player on t1
+      ap('p2', 't2', 2, 1),
+      ap('p3', 't2', 2, 2),
+    ];
+    // Busted player still occupies seat 3 on t2
+    const bustedSeats = [{ tableId: 't2', seatNumber: 3 }];
+    // t2 has seats 1, 2 active + seat 3 busted — all seats taken
+    const move = suggestTableBreak(active, tables, bustedSeats);
+    expect(move).toBeNull(); // no room on t2 once busted seat is counted
+  });
+});
