@@ -3,7 +3,7 @@
   import { invalidateAll } from '$app/navigation';
   import { calculatePrizePool, calculatePayouts } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
-  import { drawSeats, autoSeat } from '$lib/seating';
+  import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
   import type { PageData } from './$types';
 
@@ -88,6 +88,31 @@
   let seatingError = $state<string | null>(null);
   let confirmReset = $state(false);
   let dismissedSuggestion = $state(false);
+
+  const activePlayers = $derived(
+    data.players
+      .filter((p) => p.finish_position === null && p.table_id !== null)
+      .map((p) => ({
+        id: p.id,
+        name: p.club_members?.display_name ?? p.guest_name ?? '?',
+        tableId: p.table_id!,
+        tableNumber: data.tables.find((t) => t.id === p.table_id)?.number ?? 0,
+        seatNumber: p.seat_number!,
+      })),
+  );
+
+  const rebalanceMove = $derived(
+    !dismissedSuggestion && t.status === 'running' && data.tables.length > 0
+      ? suggestTableBreak(activePlayers, data.tables) ??
+        suggestRebalanceMove(activePlayers, data.tables)
+      : null,
+  );
+
+  $effect(() => {
+    // Reset dismiss flag when player state changes (new bust = new suggestion opportunity)
+    void data.players;
+    dismissedSuggestion = false;
+  });
 
   async function handleAddPlayer(memberId: string | null, guestNameVal: string | null) {
     if (loading) return;
@@ -380,6 +405,28 @@
         .from('tournament_players')
         .update({ table_id: tableId, seat_number: seatNumber })
         .eq('id', playerId);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleUpdateDealer(tableId: string, dealer: string) {
+    const supabase = createClient();
+    await supabase.from('tournament_tables').update({ dealer: dealer || null }).eq('id', tableId);
+    await invalidateAll();
+  }
+
+  async function handleConfirmMove(move: { playerId: string; toTableId: string; toSeatNumber: number }) {
+    if (loading) return;
+    loading = true;
+    dismissedSuggestion = false;
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('tournament_players')
+        .update({ table_id: move.toTableId, seat_number: move.toSeatNumber })
+        .eq('id', move.playerId);
       await invalidateAll();
     } finally {
       loading = false;
@@ -782,6 +829,89 @@
         {/if}
       {/if}
     </div>
+  {/if}
+
+  <!-- Running seating grid -->
+  {#if t.status === 'running'}
+    {#if data.tables.length > 0}
+      <!-- ── Seating grid ── -->
+      <div class="flex flex-col gap-4">
+        <h2 class="text-sm font-semibold text-foreground">{m.seating_title()}</h2>
+
+        <!-- Rebalance / break suggestion banner -->
+        {#if rebalanceMove}
+          <div class="flex items-center justify-between gap-3 bg-accent/10 border border-accent/30 rounded-lg px-4 py-3">
+            <span class="text-sm text-foreground">
+              {#if 'fromSeatNumber' in rebalanceMove}
+                Move <strong>{rebalanceMove.playerName}</strong>
+                T{rebalanceMove.fromTableNumber} S{rebalanceMove.fromSeatNumber}
+                → T{rebalanceMove.toTableNumber} S{rebalanceMove.toSeatNumber}
+              {:else}
+                Break Table <strong>{rebalanceMove.fromTableNumber}</strong>
+                — move <strong>{rebalanceMove.playerName}</strong>
+                to T{rebalanceMove.toTableNumber} S{rebalanceMove.toSeatNumber}
+              {/if}
+            </span>
+            <div class="flex gap-2 shrink-0">
+              <button
+                type="button"
+                onclick={() => handleConfirmMove(rebalanceMove as { playerId: string; toTableId: string; toSeatNumber: number })}
+                disabled={loading}
+                class="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {m.seating_confirm_move_button()}
+              </button>
+              <button
+                type="button"
+                onclick={() => { dismissedSuggestion = true; }}
+                class="text-xs border border-border text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
+              >
+                {m.seating_dismiss_button()}
+              </button>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Table cards grid -->
+        <div class="grid grid-cols-2 gap-3">
+          {#each data.tables as table}
+            {@const tablePlayers = data.players
+              .filter((p) => p.table_id === table.id)
+              .sort((a, b) => (a.seat_number ?? 0) - (b.seat_number ?? 0))}
+            {@const activeCount = tablePlayers.filter((p) => p.finish_position === null).length}
+            <div class="bg-card border border-border rounded-lg p-3 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {m.seating_table_label({ number: String(table.number) })}
+                </span>
+                <span class="text-xs text-muted-foreground">{m.seating_active_count({ count: String(activeCount) })}</span>
+              </div>
+              <!-- Dealer field -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-muted-foreground">{m.seating_dealer_label()}:</span>
+                <input
+                  type="text"
+                  value={table.dealer ?? ''}
+                  placeholder="—"
+                  class="flex-1 text-xs bg-background border border-input rounded px-1.5 py-0.5 text-foreground focus:outline-none focus:border-accent"
+                  onchange={(e) => handleUpdateDealer(table.id, (e.currentTarget as HTMLInputElement).value)}
+                />
+              </div>
+              <!-- Seat grid -->
+              <div class="grid grid-cols-2 gap-1 text-xs">
+                {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
+                  {@const player = tablePlayers.find((p) => p.seat_number === seat)}
+                  {@const busted = player && player.finish_position !== null}
+                  <div class="px-2 py-1 rounded {busted ? 'bg-muted text-muted-foreground line-through opacity-50' : player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
+                    {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
   {/if}
 
   <!-- Finish review section (running status, shown when "Finish Tournament" clicked) -->
