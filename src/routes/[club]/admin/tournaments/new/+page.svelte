@@ -19,12 +19,18 @@
   let format = $state('freezeout');
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
+  let fieldErrors = $state<Record<string, boolean>>({});
+
+  function clearFieldError(field: string) {
+    if (fieldErrors[field]) fieldErrors = { ...fieldErrors, [field]: false };
+  }
 
   async function handleCreate(e: SubmitEvent) {
     e.preventDefault();
     if (loading) return;
     loading = true;
     errorKey = null;
+    fieldErrors = {};
     try {
       const formData = new FormData(e.currentTarget as HTMLFormElement);
       const name = formData.get('name')?.toString().trim() ?? '';
@@ -36,22 +42,28 @@
       const blindStructureId = formData.get('blind_structure_id')?.toString() ?? '';
       const prizeStructureId = formData.get('prize_structure_id')?.toString() ?? '';
 
-      if (!name || !date || !buyInRaw) { errorKey = 'error_required'; return; }
-      if (!['freezeout', 'rebuy'].includes(formatVal)) { errorKey = 'error_required'; return; }
-
       const buyIn = Math.round(parseFloat(buyInRaw) * 100);
-      if (buyIn <= 0) { errorKey = 'error_required'; return; }
+      const errors: Record<string, boolean> = {};
+      if (!name) errors.name = true;
+      if (!date) errors.date = true;
+      if (!buyInRaw || buyIn <= 0) errors.buy_in = true;
 
       let rebuyAmount: number | null = null;
       let addonAmount: number | null = null;
       if (formatVal === 'rebuy') {
-        if (!rebuyRaw) { errorKey = 'error_required'; return; }
-        rebuyAmount = Math.round(parseFloat(rebuyRaw) * 100);
-        if (rebuyAmount <= 0) { errorKey = 'error_required'; return; }
+        const rebuyVal = Math.round(parseFloat(rebuyRaw) * 100);
+        if (!rebuyRaw || rebuyVal <= 0) errors.rebuy_amount = true;
+        else rebuyAmount = rebuyVal;
         if (addonRaw) {
           addonAmount = Math.round(parseFloat(addonRaw) * 100);
-          if (addonAmount <= 0) { errorKey = 'error_required'; return; }
+          if (addonAmount <= 0) { errors.addon_amount = true; addonAmount = null; }
         }
+      }
+
+      if (Object.values(errors).some(Boolean)) {
+        fieldErrors = errors;
+        errorKey = 'error_required';
+        return;
       }
 
       const supabase = createClient();
@@ -101,7 +113,8 @@
         </label>
         <input
           id="t-name" type="text" name="name"
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+          oninput={() => clearFieldError('name')}
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors {fieldErrors.name ? 'border-accent' : 'border-input'}"
         />
       </div>
 
@@ -111,7 +124,8 @@
         </label>
         <input
           id="t-date" type="date" name="date"
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          onchange={() => clearFieldError('date')}
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {fieldErrors.date ? 'border-accent' : 'border-input'}"
         />
       </div>
 
@@ -135,7 +149,8 @@
         </label>
         <input
           id="t-buyin" type="number" name="buy_in" min="0" step="0.01"
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          oninput={() => clearFieldError('buy_in')}
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {fieldErrors.buy_in ? 'border-accent' : 'border-input'}"
         />
       </div>
 
@@ -146,7 +161,8 @@
           </label>
           <input
             id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
-            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+            oninput={() => clearFieldError('rebuy_amount')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {fieldErrors.rebuy_amount ? 'border-accent' : 'border-input'}"
           />
         </div>
 
@@ -156,7 +172,8 @@
           </label>
           <input
             id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
-            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+            oninput={() => clearFieldError('addon_amount')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {fieldErrors.addon_amount ? 'border-accent' : 'border-input'}"
           />
         </div>
       {/if}
