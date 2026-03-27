@@ -700,16 +700,16 @@
       <!-- Configure tables form -->
       <form onsubmit={handleSetTables} class="flex gap-2 items-end">
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_tables_label()}</label>
+          <label for="num-tables" class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_tables_label()}</label>
           <input
-            type="number" min="1" required bind:value={numTables}
+            id="num-tables" type="number" min="1" required bind:value={numTables}
             class="w-20 px-2 py-1.5 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_seats_per_table_label()}</label>
+          <label for="seats-per-table" class="block text-xs font-medium text-muted-foreground mb-1">{m.seating_seats_per_table_label()}</label>
           <input
-            type="number" min="1" required bind:value={seatsPerTable}
+            id="seats-per-table" type="number" min="1" required bind:value={seatsPerTable}
             class="w-20 px-2 py-1.5 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
           />
         </div>
