@@ -60,7 +60,7 @@
     data.players.length > 0 && data.players.every((p) => p.finish_position !== null)
   );
 
-  const canFinish = $derived(allPositionsAssigned && data.prizeStructure !== null);
+  const canFinish = $derived(allPositionsAssigned);
 
   // Finish review state
   let showReview = $state(false);
@@ -453,27 +453,28 @@
     if (data.players.some((p) => p.finish_position === null)) {
       errorKey = 'tournament_positions_incomplete'; return;
     }
-    if (!data.prizeStructure) { errorKey = 'error_no_prize_structures'; return; }
     loading = true;
     errorKey = null;
     try {
       const supabase = createClient();
-      const totalRebuys = data.players.reduce((sum, p) => sum + p.rebuys, 0);
-      const addonCount = data.players.filter((p) => p.addon).length;
-      const prizePool = calculatePrizePool(
-        data.players.length,
-        data.tournament.buy_in,
-        totalRebuys,
-        data.tournament.rebuy_amount ?? 0,
-        addonCount,
-        data.tournament.addon_amount ?? 0,
-      );
-      const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
-      await Promise.all(
-        payoutResults.map(({ playerId, amount }) =>
-          supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId).eq('tournament_id', data.tournament.id)
-        )
-      );
+      if (data.prizeStructure) {
+        const totalRebuys = data.players.reduce((sum, p) => sum + p.rebuys, 0);
+        const addonCount = data.players.filter((p) => p.addon).length;
+        const prizePool = calculatePrizePool(
+          data.players.length,
+          data.tournament.buy_in,
+          totalRebuys,
+          data.tournament.rebuy_amount ?? 0,
+          addonCount,
+          data.tournament.addon_amount ?? 0,
+        );
+        const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
+        await Promise.all(
+          payoutResults.map(({ playerId, amount }) =>
+            supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId).eq('tournament_id', data.tournament.id)
+          )
+        );
+      }
       await supabase.from('tournaments').update({ status: 'finished' }).eq('id', data.tournament.id);
       showReview = false;
       await invalidateAll();
@@ -509,7 +510,7 @@
         <button
           type="button"
           disabled={!canFinish || loading}
-          title={!data.prizeStructure ? resolveError('error_no_prize_structures') : !allPositionsAssigned ? m.tournament_positions_incomplete() : undefined}
+          title={!allPositionsAssigned ? m.tournament_positions_incomplete() : undefined}
           onclick={() => { showReview = true; }}
           class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -993,6 +994,9 @@
   <div class="fixed inset-x-4 top-1/2 z-50 -translate-y-1/2 max-w-md mx-auto bg-card border border-border rounded-xl shadow-xl flex flex-col gap-4 p-5">
     <h2 class="text-base font-semibold text-foreground">{m.tournament_review_title()}</h2>
 
+    {#if !data.prizeStructure}
+      <p class="text-xs text-muted-foreground">{m.tournament_no_prize_structure_note()}</p>
+    {:else}
     <div class="border border-border rounded-lg overflow-hidden">
       <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
@@ -1020,6 +1024,7 @@
         </div>
       {/each}
     </div>
+    {/if}
 
     <div class="flex items-center gap-4">
       <button type="button" onclick={handleFinishTournament} disabled={loading}
