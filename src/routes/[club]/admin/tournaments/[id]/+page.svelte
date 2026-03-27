@@ -495,21 +495,21 @@
 <div class="flex flex-col gap-6">
   <!-- Header -->
   <div class="flex items-start justify-between">
-    <div class="flex items-start gap-2">
-      <div>
-        <h1 class="text-base font-semibold text-foreground">{t.name}</h1>
-        <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
-      </div>
-      {#if t.status !== 'finished'}
-        <button
-          type="button"
-          onclick={() => { showEditModal = true; }}
-          class="mt-0.5 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          title="Edit tournament settings"
-        >
-          <Pencil size={14} />
-        </button>
-      {/if}
+    <div>
+      <h1 class="text-base font-semibold text-foreground flex items-center gap-1.5">
+        {t.name}
+        {#if t.status !== 'finished'}
+          <button
+            type="button"
+            onclick={() => { showEditModal = true; }}
+            class="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            title="Edit tournament settings"
+          >
+            <Pencil size={12} />
+          </button>
+        {/if}
+      </h1>
+      <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
     </div>
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(t.status)}">
