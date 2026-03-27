@@ -270,6 +270,9 @@ export type Database = {
           addon: boolean
           finish_position: number | null
           payout_amount: number | null
+          table_id: string | null
+          seat_number: number | null
+          preferred_table: number | null
           created_at: string
         }
         Insert: {
@@ -282,6 +285,9 @@ export type Database = {
           addon?: boolean
           finish_position?: number | null
           payout_amount?: number | null
+          table_id?: string | null
+          seat_number?: number | null
+          preferred_table?: number | null
           created_at?: string
         }
         Update: {
@@ -294,6 +300,9 @@ export type Database = {
           addon?: boolean
           finish_position?: number | null
           payout_amount?: number | null
+          table_id?: string | null
+          seat_number?: number | null
+          preferred_table?: number | null
           created_at?: string
         }
         Relationships: [
@@ -310,6 +319,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "club_members"
             referencedColumns: ["club_id", "user_id"]
+          },
+          {
+            foreignKeyName: "tournament_players_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_tables: {
+        Row: {
+          id: string
+          tournament_id: string
+          number: number
+          max_seats: number
+          dealer: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          number: number
+          max_seats: number
+          dealer?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          number?: number
+          max_seats?: number
+          dealer?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_tables_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -527,6 +578,19 @@ export interface TournamentPlayer {
   payout_amount: number | null;
   created_at: string;
   club_members?: { display_name: string } | null;
+  table_id: string | null;
+  seat_number: number | null;
+  preferred_table: number | null;
+  tournament_tables?: { number: number; max_seats: number } | null;
 }
 
 export type ClubInvite = Database['public']['Tables']['club_invites']['Row'];
+
+export interface TournamentTable {
+  id: string;
+  tournament_id: string;
+  number: number;
+  max_seats: number;
+  dealer: string | null;
+  created_at: string;
+}
