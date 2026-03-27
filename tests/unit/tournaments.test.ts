@@ -138,23 +138,37 @@ describe('calculatePayouts', () => {
 });
 
 describe('formatPrizePoolBreakdown', () => {
-  it('freezeout: shows only player count × buy-in', () => {
-    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 0, 0)).toBe('4 × €20');
+  it('freezeout: returns only buyin part', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 0, 0)).toEqual([
+      { count: 4, amountCents: 2000, type: 'buyin' },
+    ]);
   });
 
-  it('with rebuys: appends rebuy segment', () => {
-    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 0, 0)).toBe('4 × €20 + 3 × €10');
+  it('with rebuys: appends rebuy part', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 0, 0)).toEqual([
+      { count: 4, amountCents: 2000, type: 'buyin' },
+      { count: 3, amountCents: 1000, type: 'rebuy' },
+    ]);
   });
 
-  it('with addons: appends addon segment', () => {
-    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 2, 500)).toBe('4 × €20 + 2 × €5');
+  it('with addons: appends addon part', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 2, 500)).toEqual([
+      { count: 4, amountCents: 2000, type: 'buyin' },
+      { count: 2, amountCents: 500, type: 'addon' },
+    ]);
   });
 
-  it('with rebuys and addons: appends both segments in order', () => {
-    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 2, 500)).toBe('4 × €20 + 3 × €10 + 2 × €5');
+  it('with rebuys and addons: returns all three parts in order', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 2, 500)).toEqual([
+      { count: 4, amountCents: 2000, type: 'buyin' },
+      { count: 3, amountCents: 1000, type: 'rebuy' },
+      { count: 2, amountCents: 500, type: 'addon' },
+    ]);
   });
 
   it('zero rebuys are omitted even when rebuy amount is set', () => {
-    expect(formatPrizePoolBreakdown(4, 2000, 0, 1000, 0, 500)).toBe('4 × €20');
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 1000, 0, 500)).toEqual([
+      { count: 4, amountCents: 2000, type: 'buyin' },
+    ]);
   });
 });

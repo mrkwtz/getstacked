@@ -518,10 +518,18 @@
   </div>
 
   <!-- Prize pool callout -->
-  <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-center">
-    <span class="text-xs text-muted-foreground">
-      {m.tournament_prize_pool_label()} · {formatPrizePoolBreakdown(data.players.length, t.buy_in, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0)}
-    </span>
+  <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-start">
+    <div class="flex flex-col gap-0.5">
+      <span class="text-xs font-medium text-muted-foreground">{m.tournament_prize_pool_label()}</span>
+      {#each formatPrizePoolBreakdown(data.players.length, t.buy_in, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0) as part}
+        <span class="text-xs text-muted-foreground">
+          {part.count} × €{(part.amountCents / 100).toFixed(0)}
+          <span class="opacity-60">
+            {part.type === 'buyin' ? m.tournament_buy_in_label() : part.type === 'rebuy' ? m.tournament_rebuy_col() : m.tournament_addon_col()}
+          </span>
+        </span>
+      {/each}
+    </div>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>
 

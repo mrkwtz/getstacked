@@ -21,6 +21,12 @@ export function calculatePrizePool(
   return playerCount * buyIn + totalRebuys * rebuyAmount + addonCount * addonAmount;
 }
 
+export interface PrizePoolPart {
+  count: number;
+  amountCents: number;
+  type: 'buyin' | 'rebuy' | 'addon';
+}
+
 export function formatPrizePoolBreakdown(
   playerCount: number,
   buyIn: number,
@@ -28,12 +34,11 @@ export function formatPrizePoolBreakdown(
   rebuyAmount: number,
   addonCount: number,
   addonAmount: number,
-): string {
-  const fmt = (cents: number) => `€${(cents / 100).toFixed(0)}`;
-  const parts = [`${playerCount} × ${fmt(buyIn)}`];
-  if (totalRebuys > 0) parts.push(`${totalRebuys} × ${fmt(rebuyAmount)}`);
-  if (addonCount > 0) parts.push(`${addonCount} × ${fmt(addonAmount)}`);
-  return parts.join(' + ');
+): PrizePoolPart[] {
+  const parts: PrizePoolPart[] = [{ count: playerCount, amountCents: buyIn, type: 'buyin' }];
+  if (totalRebuys > 0) parts.push({ count: totalRebuys, amountCents: rebuyAmount, type: 'rebuy' });
+  if (addonCount > 0) parts.push({ count: addonCount, amountCents: addonAmount, type: 'addon' });
+  return parts;
 }
 
 export function calculatePayouts(
