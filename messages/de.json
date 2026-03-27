@@ -151,5 +151,9 @@
   "seating_assign_seat_placeholder": "Platz zuweisen…",
   "seating_error_invalid_config": "Bitte gültige Anzahl von Tischen und Plätzen eingeben.",
   "seating_move_hint": "{name} hierher verschieben: freien Platz antippen",
-  "seating_cancel_move": "Verschieben abbrechen"
+  "seating_cancel_move": "Verschieben abbrechen",
+  "dashboard_stat_members": "Mitglieder",
+  "dashboard_stat_tournaments": "Turniere",
+  "dashboard_stat_balance": "Guthaben",
+  "dashboard_next_game": "Nächstes Spiel"
 }

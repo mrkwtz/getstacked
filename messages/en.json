@@ -151,5 +151,9 @@
   "seating_assign_seat_placeholder": "Assign seat…",
   "seating_error_invalid_config": "Please enter a valid number of tables and seats.",
   "seating_move_hint": "Tap an empty seat to move {name} there",
-  "seating_cancel_move": "Cancel move"
+  "seating_cancel_move": "Cancel move",
+  "dashboard_stat_members": "Members",
+  "dashboard_stat_tournaments": "Tournaments",
+  "dashboard_stat_balance": "Balance",
+  "dashboard_next_game": "Next game"
 }

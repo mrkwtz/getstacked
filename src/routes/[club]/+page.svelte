@@ -11,22 +11,22 @@
   <!-- Stat cards -->
   <div class="grid grid-cols-3 gap-4">
     <div class="bg-card border border-border rounded-lg p-4">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Members</p>
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_members()}</p>
       <p class="text-3xl font-light text-foreground">{data.memberCount}</p>
     </div>
     <div class="bg-card border border-border rounded-lg p-4">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Tournaments</p>
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_tournaments()}</p>
       <p class="text-3xl font-light text-foreground">{data.tournamentCount}</p>
     </div>
     <div class="bg-card border border-border rounded-lg p-4">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Balance</p>
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_balance()}</p>
       <p class="text-3xl font-light text-accent">—</p>
     </div>
   </div>
 
   <!-- Next game placeholder -->
   <div class="bg-card border border-border rounded-lg p-4">
-    <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Next game</p>
+    <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">{m.dashboard_next_game()}</p>
     <p class="text-sm text-muted-foreground">{m.club_home_placeholder()}</p>
   </div>
 </div>
