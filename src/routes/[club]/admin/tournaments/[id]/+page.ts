@@ -13,7 +13,7 @@ export const load: PageLoad = async ({ params, parent }) => {
     .single();
   if (!tournament) throw error(404, 'Tournament not found');
 
-  const [{ data: players }, { data: members }, { data: tables }] = await Promise.all([
+  const [{ data: players }, { data: members }, { data: tables }, { data: prizeStructures }, { data: blindStructures }] = await Promise.all([
     supabase
       .from('tournament_players')
       .select('*, club_members!tournament_players_member_club_id_member_user_id_fkey(display_name)')
@@ -29,6 +29,8 @@ export const load: PageLoad = async ({ params, parent }) => {
       .select('*')
       .eq('tournament_id', params.id)
       .order('number'),
+    supabase.from('prize_structures').select('id, name').eq('club_id', club.id).order('name'),
+    supabase.from('blind_structures').select('id, name').eq('club_id', club.id).order('name'),
   ]);
 
   const allPlayers = players ?? [];
@@ -50,5 +52,5 @@ export const load: PageLoad = async ({ params, parent }) => {
     ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
     : null;
 
-  return { tournament, players: allPlayers, availableMembers, prizePool, prizeStructure, tables: tables ?? [] };
+  return { tournament, players: allPlayers, availableMembers, prizePool, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
 };

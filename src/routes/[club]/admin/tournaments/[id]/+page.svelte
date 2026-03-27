@@ -447,6 +447,12 @@
     }
   }
 
+  async function handleUpdateStructure(field: 'prize_structure_id' | 'blind_structure_id', value: string) {
+    const supabase = createClient();
+    await supabase.from('tournaments').update({ [field]: value || null }).eq('id', t.id);
+    await invalidateAll();
+  }
+
   async function handleFinishTournament() {
     if (loading) return;
     if (data.tournament.status !== 'running') return;
@@ -535,6 +541,38 @@
     </div>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>
+
+  <!-- Structure selectors (editable while not finished) -->
+  {#if t.status !== 'finished'}
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-muted-foreground w-28 shrink-0">{m.tournament_blind_structure_label()}</span>
+        <select
+          value={t.blind_structure_id ?? ''}
+          onchange={(e) => handleUpdateStructure('blind_structure_id', (e.currentTarget as HTMLSelectElement).value)}
+          class="flex-1 text-xs bg-background border border-input rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="">{m.tournament_none_option()}</option>
+          {#each data.blindStructures as bs}
+            <option value={bs.id}>{bs.name}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-muted-foreground w-28 shrink-0">{m.tournament_prize_structure_label()}</span>
+        <select
+          value={t.prize_structure_id ?? ''}
+          onchange={(e) => handleUpdateStructure('prize_structure_id', (e.currentTarget as HTMLSelectElement).value)}
+          class="flex-1 text-xs bg-background border border-input rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="">{m.tournament_none_option()}</option>
+          {#each data.prizeStructures as ps}
+            <option value={ps.id}>{ps.name}</option>
+          {/each}
+        </select>
+      </div>
+    </div>
+  {/if}
 
   {#if errorKey}
     <p class="text-xs text-accent">{resolveError(errorKey)}</p>
