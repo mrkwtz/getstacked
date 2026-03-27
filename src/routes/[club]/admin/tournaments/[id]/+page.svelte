@@ -5,41 +5,7 @@
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
-
-  type TournamentPlayer = {
-    id: string;
-    member_user_id: string | null;
-    guest_name: string | null;
-    rebuys: number;
-    addon: boolean;
-    finish_position: number | null;
-    payout_amount: number | null;
-    club_members: { display_name: string } | null;
-    table_id: string | null;
-    seat_number: number | null;
-    preferred_table: number | null;
-  };
-
-  type PageData = {
-    tournament: {
-      id: string;
-      club_id: string;
-      name: string;
-      date: string;
-      status: string;
-      format: string;
-      buy_in: number;
-      rebuy_amount: number | null;
-      addon_amount: number | null;
-      blind_structures: { name: string } | null;
-      prize_structures: { name: string } | null;
-    };
-    players: TournamentPlayer[];
-    availableMembers: { user_id: string; display_name: string }[];
-    prizePool: number;
-    prizeStructure: { payouts: { position: number; percentage: number }[] } | null;
-    tables: TournamentTable[];
-  };
+  import type { PageData } from './$types';
 
   const { data }: { data: PageData } = $props();
 
@@ -321,10 +287,11 @@
   async function handleSetLock(playerId: string, preferredTable: number | null) {
     if (loading) return;
     const supabase = createClient();
-    await supabase
+    const { error } = await supabase
       .from('tournament_players')
       .update({ preferred_table: preferredTable })
       .eq('id', playerId);
+    if (error) { seatingError = error.message; return; }
     await invalidateAll();
   }
 
