@@ -91,7 +91,7 @@
 
   const activePlayers = $derived(
     data.players
-      .filter((p) => p.finish_position === null && p.table_id !== null)
+      .filter((p) => p.finish_position === null && p.table_id !== null && p.seat_number !== null)
       .map((p) => ({
         id: p.id,
         name: p.club_members?.display_name ?? p.guest_name ?? '?',
@@ -412,21 +412,30 @@
   }
 
   async function handleUpdateDealer(tableId: string, dealer: string) {
-    const supabase = createClient();
-    await supabase.from('tournament_tables').update({ dealer: dealer || null }).eq('id', tableId);
-    await invalidateAll();
+    if (loading) return;
+    loading = true;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('tournament_tables').update({ dealer: dealer || null }).eq('id', tableId);
+      if (error) { seatingError = error.message; return; }
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 
   async function handleConfirmMove(move: { playerId: string; toTableId: string; toSeatNumber: number }) {
     if (loading) return;
     loading = true;
-    dismissedSuggestion = false;
+    seatingError = null;
     try {
       const supabase = createClient();
-      await supabase
+      const { error } = await supabase
         .from('tournament_players')
         .update({ table_id: move.toTableId, seat_number: move.toSeatNumber })
         .eq('id', move.playerId);
+      if (error) { seatingError = error.message; return; }
+      dismissedSuggestion = false;
       await invalidateAll();
     } finally {
       loading = false;
