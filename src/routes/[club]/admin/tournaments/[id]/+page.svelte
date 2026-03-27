@@ -6,6 +6,7 @@
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
   import type { PageData } from './$types';
+  import { Pencil } from '@lucide/svelte';
 
   const { data }: { data: PageData } = $props();
 
@@ -64,6 +65,7 @@
 
   // Finish review state
   let showReview = $state(false);
+  let showEditModal = $state(false);
 
   const totalRebuys = $derived(data.players.reduce((sum, p) => sum + p.rebuys, 0));
   const addonCount = $derived(data.players.filter((p) => p.addon).length);
@@ -493,9 +495,21 @@
 <div class="flex flex-col gap-6">
   <!-- Header -->
   <div class="flex items-start justify-between">
-    <div>
-      <h1 class="text-base font-semibold text-foreground">{t.name}</h1>
-      <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
+    <div class="flex items-start gap-2">
+      <div>
+        <h1 class="text-base font-semibold text-foreground">{t.name}</h1>
+        <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
+      </div>
+      {#if t.status !== 'finished'}
+        <button
+          type="button"
+          onclick={() => { showEditModal = true; }}
+          class="mt-0.5 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          title="Edit tournament settings"
+        >
+          <Pencil size={14} />
+        </button>
+      {/if}
     </div>
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(t.status)}">
@@ -541,38 +555,6 @@
     </div>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>
-
-  <!-- Structure selectors (editable while not finished) -->
-  {#if t.status !== 'finished'}
-    <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground w-28 shrink-0">{m.tournament_blind_structure_label()}</span>
-        <select
-          value={t.blind_structure_id ?? ''}
-          onchange={(e) => handleUpdateStructure('blind_structure_id', (e.currentTarget as HTMLSelectElement).value)}
-          class="flex-1 text-xs bg-background border border-input rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-accent transition-colors"
-        >
-          <option value="">{m.tournament_none_option()}</option>
-          {#each data.blindStructures as bs}
-            <option value={bs.id}>{bs.name}</option>
-          {/each}
-        </select>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground w-28 shrink-0">{m.tournament_prize_structure_label()}</span>
-        <select
-          value={t.prize_structure_id ?? ''}
-          onchange={(e) => handleUpdateStructure('prize_structure_id', (e.currentTarget as HTMLSelectElement).value)}
-          class="flex-1 text-xs bg-background border border-input rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-accent transition-colors"
-        >
-          <option value="">{m.tournament_none_option()}</option>
-          {#each data.prizeStructures as ps}
-            <option value={ps.id}>{ps.name}</option>
-          {/each}
-        </select>
-      </div>
-    </div>
-  {/if}
 
   {#if errorKey}
     <p class="text-xs text-accent">{resolveError(errorKey)}</p>
@@ -1072,6 +1054,61 @@
       <button type="button" onclick={() => { showReview = false; }}
         class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
         {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </div>
+{/if}
+
+<!-- Edit tournament modal -->
+{#if showEditModal}
+  <div
+    class="fixed inset-0 z-40 bg-black/60"
+    role="presentation"
+    onclick={() => { showEditModal = false; }}
+  ></div>
+
+  <div class="fixed inset-x-4 top-1/2 z-50 -translate-y-1/2 max-w-sm mx-auto bg-card border border-border rounded-xl shadow-xl flex flex-col gap-4 p-5">
+    <h2 class="text-base font-semibold text-foreground">Edit tournament</h2>
+
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label for="edit-blind-structure" class="text-xs font-medium text-muted-foreground">{m.tournament_blind_structure_label()}</label>
+        <select
+          id="edit-blind-structure"
+          value={t.blind_structure_id ?? ''}
+          onchange={(e) => handleUpdateStructure('blind_structure_id', (e.currentTarget as HTMLSelectElement).value)}
+          class="w-full text-sm bg-background border border-input rounded-md px-3 py-2 text-foreground focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="">{m.tournament_none_option()}</option>
+          {#each data.blindStructures as bs}
+            <option value={bs.id}>{bs.name}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="edit-prize-structure" class="text-xs font-medium text-muted-foreground">{m.tournament_prize_structure_label()}</label>
+        <select
+          id="edit-prize-structure"
+          value={t.prize_structure_id ?? ''}
+          onchange={(e) => handleUpdateStructure('prize_structure_id', (e.currentTarget as HTMLSelectElement).value)}
+          class="w-full text-sm bg-background border border-input rounded-md px-3 py-2 text-foreground focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="">{m.tournament_none_option()}</option>
+          {#each data.prizeStructures as ps}
+            <option value={ps.id}>{ps.name}</option>
+          {/each}
+        </select>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        type="button"
+        onclick={() => { showEditModal = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+      >
+        Done
       </button>
     </div>
   </div>
