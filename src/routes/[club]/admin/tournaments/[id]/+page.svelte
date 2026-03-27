@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { invalidateAll } from '$app/navigation';
-  import { calculatePrizePool, calculatePayouts } from '$lib/tournaments';
+  import { calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
@@ -64,6 +64,9 @@
 
   // Finish review state
   let showReview = $state(false);
+
+  const totalRebuys = $derived(data.players.reduce((sum, p) => sum + p.rebuys, 0));
+  const addonCount = $derived(data.players.filter((p) => p.addon).length);
 
   const reviewPayouts = $derived(
     data.prizeStructure
@@ -517,7 +520,7 @@
   <!-- Prize pool callout -->
   <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-center">
     <span class="text-xs text-muted-foreground">
-      {m.tournament_prize_pool_label()} · {data.players.length} × €{(t.buy_in / 100).toFixed(0)}
+      {m.tournament_prize_pool_label()} · {formatPrizePoolBreakdown(data.players.length, t.buy_in, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0)}
     </span>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>

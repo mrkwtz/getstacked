@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validatePayouts, calculatePrizePool, calculatePayouts } from '$lib/tournaments';
+import { validatePayouts, calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
 
 describe('validatePayouts', () => {
   it('returns error_required for empty array', () => {
@@ -134,5 +134,27 @@ describe('calculatePayouts', () => {
         { playerId: 'p3', amount: 1000 },
       ])
     );
+  });
+});
+
+describe('formatPrizePoolBreakdown', () => {
+  it('freezeout: shows only player count × buy-in', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 0, 0)).toBe('4 × €20');
+  });
+
+  it('with rebuys: appends rebuy segment', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 0, 0)).toBe('4 × €20 + 3 × €10');
+  });
+
+  it('with addons: appends addon segment', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 0, 2, 500)).toBe('4 × €20 + 2 × €5');
+  });
+
+  it('with rebuys and addons: appends both segments in order', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 3, 1000, 2, 500)).toBe('4 × €20 + 3 × €10 + 2 × €5');
+  });
+
+  it('zero rebuys are omitted even when rebuy amount is set', () => {
+    expect(formatPrizePoolBreakdown(4, 2000, 0, 1000, 0, 500)).toBe('4 × €20');
   });
 });

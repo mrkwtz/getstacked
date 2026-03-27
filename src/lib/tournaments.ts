@@ -21,6 +21,21 @@ export function calculatePrizePool(
   return playerCount * buyIn + totalRebuys * rebuyAmount + addonCount * addonAmount;
 }
 
+export function formatPrizePoolBreakdown(
+  playerCount: number,
+  buyIn: number,
+  totalRebuys: number,
+  rebuyAmount: number,
+  addonCount: number,
+  addonAmount: number,
+): string {
+  const fmt = (cents: number) => `€${(cents / 100).toFixed(0)}`;
+  const parts = [`${playerCount} × ${fmt(buyIn)}`];
+  if (totalRebuys > 0) parts.push(`${totalRebuys} × ${fmt(rebuyAmount)}`);
+  if (addonCount > 0) parts.push(`${addonCount} × ${fmt(addonAmount)}`);
+  return parts.join(' + ');
+}
+
 export function calculatePayouts(
   players: { id: string; finish_position: number | null }[],
   payouts: { position: number; percentage: number }[],
