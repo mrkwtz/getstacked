@@ -26,7 +26,7 @@
 </script>
 
 <div class="flex flex-col gap-6">
-  <div class="flex items-center justify-between">
+  <div class="flex items-start justify-between">
     <h1 class="text-base font-semibold text-foreground">{m.tournament_list_title()}</h1>
     <a
       href="/{data.club.slug}/admin/tournaments/new"
