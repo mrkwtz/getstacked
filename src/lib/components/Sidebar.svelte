@@ -1,17 +1,20 @@
 <script lang="ts">
   import { isAdmin, displayName } from '$lib/players';
+  import { ArrowLeftRight } from '@lucide/svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
   import * as m from '$lib/paraglide/messages';
   import type { Club, Player } from '$lib/types';
 
-  const { club, player, currentPath } = $props<{
+  const { club, player, otherClubs, currentPath } = $props<{
     club: Club;
     player: Player;
+    otherClubs: { slug: string; name: string }[];
     currentPath: string;
   }>();
 
   const clubPath = $derived(`/${club.slug}`);
+  let showClubSwitcher = $state(false);
 
   function isActive(path: string, exact = false): boolean {
     if (exact) return currentPath === path;
@@ -28,7 +31,19 @@
   <!-- Club name -->
   <div class="px-4 py-3 border-b border-border">
     <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Club</p>
-    <p class="text-sm font-medium text-foreground truncate">{club.name}</p>
+    <div class="flex items-center gap-1.5">
+      <p class="text-sm font-medium text-foreground truncate flex-1">{club.name}</p>
+      {#if otherClubs.length > 0}
+        <button
+          type="button"
+          onclick={() => { showClubSwitcher = true; }}
+          title="Switch club"
+          class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer flex-shrink-0"
+        >
+          <ArrowLeftRight size={12} />
+        </button>
+      {/if}
+    </div>
   </div>
 
   <!-- Nav items -->
@@ -98,3 +113,30 @@
     </div>
   </div>
 </aside>
+
+{#if showClubSwitcher}
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <button type="button" class="absolute inset-0 bg-black/50" aria-label="Close" onclick={() => (showClubSwitcher = false)}></button>
+    <div class="relative bg-card border border-border rounded-xl p-6 w-full max-w-xs mx-4">
+      <h2 class="text-sm font-semibold text-foreground mb-4">Switch club</h2>
+      <div class="flex flex-col gap-1">
+        <!-- Current club -->
+        <div class="flex items-center gap-2 px-3 py-2.5 rounded-md bg-accent/10">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0"></span>
+          <span class="text-sm font-medium text-foreground truncate">{club.name}</span>
+        </div>
+        <!-- Other clubs -->
+        {#each otherClubs as other}
+          <a
+            href="/{other.slug}"
+            class="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onclick={() => { showClubSwitcher = false; }}
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-border flex-shrink-0"></span>
+            <span class="truncate">{other.name}</span>
+          </a>
+        {/each}
+      </div>
+    </div>
+  </div>
+{/if}

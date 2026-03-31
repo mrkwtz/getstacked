@@ -20,5 +20,16 @@ export const load: LayoutLoad = async ({ params, parent }) => {
     .single();
   if (!player) throw error(403, 'You are not a member of this club');
 
-  return { club, player };
+  // Load all clubs the user belongs to (for club switcher)
+  const { data: userClubs } = await supabase
+    .from('players')
+    .select('clubs(slug, name)')
+    .eq('user_id', session.user.id)
+    .order('created_at');
+
+  const otherClubs = (userClubs ?? [])
+    .map((p) => p.clubs as { slug: string; name: string } | null)
+    .filter((c): c is { slug: string; name: string } => c !== null && c.slug !== club.slug);
+
+  return { club, player, otherClubs };
 };

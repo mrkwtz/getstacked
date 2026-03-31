@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex min-h-screen bg-background">
-  <Sidebar club={data.club} player={data.player} currentPath={page.url.pathname} />
+  <Sidebar club={data.club} player={data.player} otherClubs={data.otherClubs} currentPath={page.url.pathname} />
   <main class="flex-1 overflow-y-auto">
     {@render children()}
   </main>
