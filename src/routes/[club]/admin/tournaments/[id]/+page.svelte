@@ -7,6 +7,7 @@
   import type { TournamentTable } from '$lib/types';
   import type { PageData } from './$types';
   import { Pencil } from '@lucide/svelte';
+  import { displayName } from '$lib/players';
 
   const { data }: { data: PageData } = $props();
 
@@ -81,8 +82,10 @@
     [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999))
   );
 
-  let selectedMemberId = $state('');
-  let guestName = $state('');
+  let selectedPlayerId = $state('');
+  let showQuickAdd = $state(false);
+  let quickFirstName = $state('');
+  let quickLastName = $state('');
 
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
@@ -100,7 +103,7 @@
       .filter((p) => p.finish_position === null && p.table_id !== null && p.seat_number !== null)
       .map((p) => ({
         id: p.id,
-        name: p.club_members?.display_name ?? p.guest_name ?? '?',
+        name: p.players ? displayName(p.players) : '?',
         tableId: p.table_id!,
         tableNumber: data.tables.find((t) => t.id === p.table_id)?.number ?? 0,
         seatNumber: p.seat_number!,
@@ -120,26 +123,65 @@
     dismissedSuggestion = false;
   });
 
-  async function handleAddPlayer(memberId: string | null, guestNameVal: string | null) {
+  async function handleAddPlayer(playerId: string) {
     if (loading) return;
     if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }
-    if (memberId) {
-      const existing = data.players.find((p) => p.member_user_id === memberId);
-      if (existing) { errorKey = 'error_duplicate_player'; return; }
-    }
     loading = true;
     errorKey = null;
     try {
       const supabase = createClient();
       const { error } = await supabase.from('tournament_players').insert({
         tournament_id: data.tournament.id,
-        member_club_id: memberId ? data.tournament.club_id : null,
-        member_user_id: memberId,
-        guest_name: guestNameVal ?? null,
+        player_id: playerId,
       });
       if (error) { errorKey = 'server_error'; return; }
-      selectedMemberId = '';
-      guestName = '';
+      selectedPlayerId = '';
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleQuickAdd() {
+    if (loading) return;
+    if (!quickFirstName.trim() || !quickLastName.trim()) { errorKey = 'error_required'; return; }
+    loading = true;
+    errorKey = null;
+    try {
+      const supabase = createClient();
+      // Get next member number
+      const { data: maxPlayer } = await supabase
+        .from('players')
+        .select('member_number')
+        .eq('club_id', data.tournament.club_id)
+        .order('member_number', { ascending: false })
+        .limit(1)
+        .single();
+      const nextNumber = (maxPlayer?.member_number ?? 0) + 1;
+
+      // Create player
+      const { data: newPlayer, error: playerError } = await supabase
+        .from('players')
+        .insert({
+          club_id: data.tournament.club_id,
+          first_name: quickFirstName.trim(),
+          last_name: quickLastName.trim(),
+          member_number: nextNumber,
+        })
+        .select('id')
+        .single();
+      if (playerError) { errorKey = 'server_error'; return; }
+
+      // Register for tournament
+      const { error: regError } = await supabase.from('tournament_players').insert({
+        tournament_id: data.tournament.id,
+        player_id: newPlayer.id,
+      });
+      if (regError) { errorKey = 'server_error'; return; }
+
+      showQuickAdd = false;
+      quickFirstName = '';
+      quickLastName = '';
       await invalidateAll();
     } finally {
       loading = false;
@@ -568,22 +610,15 @@
       <p class="text-sm text-muted-foreground">{m.tournament_no_players()}</p>
 
     {:else if t.status === 'registration'}
-      <!-- Registration table: Player · Type · Remove -->
+      <!-- Registration table: Player · Remove -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid grid-cols-[1fr_80px_80px] border-b border-border px-4 py-2.5">
+        <div class="grid grid-cols-[1fr_80px] border-b border-border px-4 py-2.5">
           <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Type</span>
           <span></span>
         </div>
         {#each data.players as player}
-          <div class="grid grid-cols-[1fr_80px_80px] px-4 py-3 border-b border-border last:border-0 items-center">
-            {#if player.guest_name}
-              <span class="text-sm text-muted-foreground">{player.guest_name} {m.tournament_guest_suffix()}</span>
-              <span class="text-xs text-muted-foreground">Guest</span>
-            {:else}
-              <span class="text-sm font-medium text-foreground">{player.club_members?.display_name ?? '—'}</span>
-              <span class="text-xs text-muted-foreground">Member</span>
-            {/if}
+          <div class="grid grid-cols-[1fr_80px] px-4 py-3 border-b border-border last:border-0 items-center">
+            <span class="text-sm font-medium text-foreground">{player.players ? displayName(player.players) : '—'}</span>
             <div class="flex justify-end">
               <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
                 class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
@@ -612,9 +647,7 @@
             {t.format === 'rebuy' ? 'grid-cols-[1fr_120px_80px_80px_80px]' : 'grid-cols-[1fr_80px_80px]'}">
             <!-- Player name -->
             <span class="text-sm {player.finish_position !== null ? 'text-muted-foreground line-through' : 'font-medium text-foreground'}">
-              {player.guest_name
-                ? `${player.guest_name} ${m.tournament_guest_suffix()}`
-                : (player.club_members?.display_name ?? '—')}
+              {player.players ? displayName(player.players) : '—'}
             </span>
 
             {#if t.format === 'rebuy'}
@@ -682,9 +715,7 @@
               {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
             </span>
             <span class="text-sm text-foreground">
-              {player.guest_name
-                ? `${player.guest_name} ${m.tournament_guest_suffix()}`
-                : (player.club_members?.display_name ?? '—')}
+              {player.players ? displayName(player.players) : '—'}
             </span>
             <span class="text-sm text-right {(player.payout_amount ?? 0) > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
               {(player.payout_amount ?? 0) > 0 ? `€${((player.payout_amount ?? 0) / 100).toFixed(2)}` : '—'}
@@ -697,31 +728,34 @@
 
   <!-- Add player (registration only) -->
   {#if t.status === 'registration'}
-    <div class="flex flex-col gap-3">
-      <div class="flex gap-2 items-center flex-wrap">
-        <select
-          bind:value={selectedMemberId}
-          class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-        >
-          <option value="">{m.tournament_member_placeholder()}</option>
-          {#each data.availableMembers as member}
-            <option value={member.user_id}>{member.display_name}</option>
-          {/each}
-        </select>
-        <input
-          type="text"
-          placeholder={m.tournament_guest_placeholder()}
-          bind:value={guestName}
-          disabled={!!selectedMemberId}
-          class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
-        />
-        <button type="button"
-          onclick={() => handleAddPlayer(selectedMemberId || null, guestName || null)}
-          disabled={loading || (!selectedMemberId && !guestName.trim())}
-          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          {m.tournament_add_player_button()}
-        </button>
-      </div>
+    <div class="flex gap-2">
+      <select
+        bind:value={selectedPlayerId}
+        class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground"
+      >
+        <option value="">{m.tournament_select_player()}</option>
+        {#each data.availablePlayers as player}
+          <option value={player.id}>
+            {player.nickname || `${player.first_name} ${player.last_name}`} #{player.member_number}
+          </option>
+        {/each}
+      </select>
+      <button
+        type="button"
+        onclick={() => handleAddPlayer(selectedPlayerId)}
+        disabled={loading || !selectedPlayerId}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {m.tournament_add_player_button()}
+      </button>
+      <button
+        type="button"
+        onclick={() => { showQuickAdd = true; quickFirstName = ''; quickLastName = ''; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2"
+        title={m.player_quick_add_title()}
+      >
+        +
+      </button>
     </div>
   {/if}
 
@@ -777,7 +811,7 @@
             {#each data.players as player}
               <div class="grid grid-cols-[1fr_auto] items-center px-4 py-2 border-b border-border last:border-0">
                 <span class="text-sm text-foreground">
-                  {player.club_members?.display_name ?? player.guest_name ?? '—'}
+                  {player.players ? displayName(player.players) : '—'}
                 </span>
                 <select
                   class="bg-background border border-input rounded-md text-xs px-2 py-1 text-foreground"
@@ -822,7 +856,7 @@
                   {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
                     {@const player = seated.find((p) => p.seat_number === seat)}
                     <div class="px-2 py-1 rounded {player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
-                      {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}
+                      {seat} {player ? (player.players ? displayName(player.players) : '?') : '—'}
                     </div>
                   {/each}
                 </div>
@@ -847,7 +881,7 @@
               </div>
               {#each unseated as player}
                 <div class="flex items-center gap-2 text-sm text-foreground">
-                  <span class="flex-1">{player.club_members?.display_name ?? player.guest_name ?? '?'}</span>
+                  <span class="flex-1">{player.players ? displayName(player.players) : '?'}</span>
                   <select
                     class="bg-background border border-input rounded-md text-xs px-2 py-1"
                     onchange={(e) => {
@@ -920,7 +954,7 @@
           {@const movingPlayer = data.players.find((p) => p.id === movingPlayerId)}
           <div class="flex items-center justify-between gap-3 bg-muted border border-border rounded-lg px-4 py-3">
             <span class="text-sm text-foreground">
-              {m.seating_move_hint({ name: movingPlayer?.club_members?.display_name ?? movingPlayer?.guest_name ?? '?' })}
+              {m.seating_move_hint({ name: movingPlayer?.players ? displayName(movingPlayer.players) : '?' })}
             </span>
             <button
               type="button"
@@ -988,7 +1022,7 @@
                               ? 'bg-accent/20 text-foreground cursor-pointer hover:bg-accent/30'
                               : 'bg-muted text-muted-foreground cursor-default'}"
                   >
-                    {seat} {player ? (player.club_members?.display_name ?? player.guest_name ?? '?') : '—'}
+                    {seat} {player ? (player.players ? displayName(player.players) : '?') : '—'}
                   </button>
                 {/each}
               </div>
@@ -1034,9 +1068,7 @@
             {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
           </span>
           <span class="text-sm text-foreground">
-            {player.guest_name
-              ? `${player.guest_name} ${m.tournament_guest_suffix()}`
-              : (player.club_members?.display_name ?? '—')}
+            {player.players ? displayName(player.players) : '—'}
           </span>
           <span class="text-sm text-right {payout.amount > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
             {payout.amount > 0 ? `€${(payout.amount / 100).toFixed(2)}` : '—'}
@@ -1110,6 +1142,36 @@
       >
         Done
       </button>
+    </div>
+  </div>
+{/if}
+
+{#if showQuickAdd}
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <button type="button" class="absolute inset-0 bg-black/50" onclick={() => (showQuickAdd = false)}></button>
+    <div class="relative bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4">
+      <h2 class="text-sm font-semibold text-foreground mb-4">{m.player_quick_add_title()}</h2>
+      <form onsubmit={(e) => { e.preventDefault(); handleQuickAdd(); }} class="flex flex-col gap-3">
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.player_first_name_label()} *</label>
+          <input bind:value={quickFirstName} type="text" required class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.player_last_name_label()} *</label>
+          <input bind:value={quickLastName} type="text" required class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        {#if errorKey}
+          <p class="text-xs text-accent">{resolveError(errorKey)}</p>
+        {/if}
+        <div class="flex gap-2 justify-end mt-2">
+          <button type="button" onclick={() => (showQuickAdd = false)} class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-3 py-1.5">
+            {m.player_cancel()}
+          </button>
+          <button type="submit" disabled={loading} class="bg-accent text-accent-foreground text-sm font-medium px-4 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50">
+            {m.player_quick_add_button()}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 {/if}

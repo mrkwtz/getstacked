@@ -13,17 +13,17 @@ export const load: PageLoad = async ({ params, parent }) => {
     .single();
   if (!tournament) throw error(404, 'Tournament not found');
 
-  const [{ data: players }, { data: members }, { data: tables }, { data: prizeStructures }, { data: blindStructures }] = await Promise.all([
+  const [{ data: players }, { data: clubPlayers }, { data: tables }, { data: prizeStructures }, { data: blindStructures }] = await Promise.all([
     supabase
       .from('tournament_players')
-      .select('*, club_members!tournament_players_member_club_id_member_user_id_fkey(display_name)')
+      .select('*, players!tournament_players_player_id_fkey(id, first_name, last_name, nickname)')
       .eq('tournament_id', params.id)
       .order('created_at'),
     supabase
-      .from('club_members')
-      .select('user_id, display_name')
+      .from('players')
+      .select('id, first_name, last_name, nickname, member_number')
       .eq('club_id', club.id)
-      .order('display_name'),
+      .order('first_name'),
     supabase
       .from('tournament_tables')
       .select('*')
@@ -34,8 +34,8 @@ export const load: PageLoad = async ({ params, parent }) => {
   ]);
 
   const allPlayers = players ?? [];
-  const registeredIds = new Set(allPlayers.map((p) => p.member_user_id).filter(Boolean));
-  const availableMembers = (members ?? []).filter((m) => !registeredIds.has(m.user_id));
+  const registeredPlayerIds = new Set(allPlayers.map((p) => p.player_id));
+  const availablePlayers = (clubPlayers ?? []).filter((p) => !registeredPlayerIds.has(p.id));
 
   const totalRebuys = allPlayers.reduce((sum, p) => sum + p.rebuys, 0);
   const addonCount = allPlayers.filter((p) => p.addon).length;
@@ -52,5 +52,5 @@ export const load: PageLoad = async ({ params, parent }) => {
     ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
     : null;
 
-  return { tournament, players: allPlayers, availableMembers, prizePool, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
+  return { tournament, players: allPlayers, availablePlayers, prizePool, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
 };
