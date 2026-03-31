@@ -43,6 +43,7 @@ export type Database = {
           expires_at: string
           used_at: string | null
           used_by_user_id: string | null
+          player_id: string | null
         }
         Insert: {
           id?: string
@@ -52,6 +53,7 @@ export type Database = {
           expires_at?: string
           used_at?: string | null
           used_by_user_id?: string | null
+          player_id?: string | null
         }
         Update: {
           id?: string
@@ -61,6 +63,7 @@ export type Database = {
           expires_at?: string
           used_at?: string | null
           used_by_user_id?: string | null
+          player_id?: string | null
         }
         Relationships: [
           {
@@ -72,31 +75,55 @@ export type Database = {
           },
         ]
       }
-      club_members: {
+      players: {
         Row: {
+          id: string
           club_id: string
-          display_name: string
-          joined_at: string
+          user_id: string | null
           role: string
-          user_id: string
+          member_number: number
+          first_name: string
+          last_name: string
+          nickname: string | null
+          birthday: string | null
+          country: string | null
+          city: string | null
+          phone: string | null
+          created_at: string
         }
         Insert: {
+          id?: string
           club_id: string
-          display_name: string
-          joined_at?: string
-          role: string
-          user_id: string
+          user_id?: string | null
+          role?: string
+          member_number: number
+          first_name: string
+          last_name: string
+          nickname?: string | null
+          birthday?: string | null
+          country?: string | null
+          city?: string | null
+          phone?: string | null
+          created_at?: string
         }
         Update: {
+          id?: string
           club_id?: string
-          display_name?: string
-          joined_at?: string
+          user_id?: string | null
           role?: string
-          user_id?: string
+          member_number?: number
+          first_name?: string
+          last_name?: string
+          nickname?: string | null
+          birthday?: string | null
+          country?: string | null
+          city?: string | null
+          phone?: string | null
+          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "club_members_club_id_fkey"
+            foreignKeyName: "players_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
@@ -263,9 +290,7 @@ export type Database = {
         Row: {
           id: string
           tournament_id: string
-          member_club_id: string | null
-          member_user_id: string | null
-          guest_name: string | null
+          player_id: string
           rebuys: number
           addon: boolean
           finish_position: number | null
@@ -278,9 +303,7 @@ export type Database = {
         Insert: {
           id?: string
           tournament_id: string
-          member_club_id?: string | null
-          member_user_id?: string | null
-          guest_name?: string | null
+          player_id: string
           rebuys?: number
           addon?: boolean
           finish_position?: number | null
@@ -293,9 +316,7 @@ export type Database = {
         Update: {
           id?: string
           tournament_id?: string
-          member_club_id?: string | null
-          member_user_id?: string | null
-          guest_name?: string | null
+          player_id?: string
           rebuys?: number
           addon?: boolean
           finish_position?: number | null
@@ -314,11 +335,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tournament_players_member_club_id_member_user_id_fkey"
-            columns: ["member_club_id", "member_user_id"]
+            foreignKeyName: "tournament_players_player_id_fkey"
+            columns: ["player_id"]
             isOneToOne: false
-            referencedRelation: "club_members"
-            referencedColumns: ["club_id", "user_id"]
+            referencedRelation: "players"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tournament_players_table_id_fkey"
@@ -512,12 +533,12 @@ export const Constants = {
 
 
 export type Club = Database['public']['Tables']['clubs']['Row'];
-export type ClubMember = Database['public']['Tables']['club_members']['Row'];
+export type Player = Database['public']['Tables']['players']['Row'];
 export type Role = 'admin' | 'member';
 
 export type ClubContext = {
   club: Club;
-  member: ClubMember;
+  player: Player;
   role: Role;
 };
 
@@ -569,15 +590,13 @@ export interface Tournament {
 export interface TournamentPlayer {
   id: string;
   tournament_id: string;
-  member_club_id: string | null;
-  member_user_id: string | null;
-  guest_name: string | null;
+  player_id: string;
   rebuys: number;
   addon: boolean;
   finish_position: number | null;
   payout_amount: number | null;
   created_at: string;
-  club_members?: { display_name: string } | null;
+  players?: { id: string; first_name: string; last_name: string; nickname: string | null } | null;
   table_id: string | null;
   seat_number: number | null;
   preferred_table: number | null;
