@@ -10,6 +10,7 @@
       club: { id: string; slug: string };
       player: Player;
       targetPlayer: Player;
+      pendingInviteId: string | null;
     };
   }>();
 
@@ -31,9 +32,13 @@
   let memberNumber = $state(0);
 
   // invite state
-  let inviteUrl = $state<string | null>(null);
   let copied = $state(false);
   let generatingInvite = $state(false);
+  let revokingInvite = $state(false);
+
+  const inviteUrl = $derived(
+    data.pendingInviteId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${data.pendingInviteId}` : null
+  );
 
   function startEdit() {
     const p = data.targetPlayer;
@@ -47,7 +52,6 @@
     registrationDate = p.created_at ? p.created_at.slice(0, 10) : '';
     memberNumber = p.member_number;
     errors = {};
-    inviteUrl = null;
     mode = 'edit';
   }
 
@@ -104,24 +108,34 @@
     generatingInvite = true;
     try {
       const supabase = createClient();
-      const { data: invite, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('club_invites')
         .insert({
           club_id: data.club.id,
           created_by: data.player.user_id!,
           player_id: data.targetPlayer.id,
-        })
-        .select('id')
-        .single();
+        });
 
-      if (dbError || !invite) {
-        errors = { invite: dbError?.message ?? 'Failed to generate invite.' };
+      if (dbError) {
+        errors = { invite: dbError.message };
         return;
       }
 
-      inviteUrl = `${window.location.origin}/invite/${invite.id}`;
+      await invalidateAll();
     } finally {
       generatingInvite = false;
+    }
+  }
+
+  async function handleRevokeInvite() {
+    if (!data.pendingInviteId) return;
+    revokingInvite = true;
+    try {
+      const supabase = createClient();
+      await supabase.from('club_invites').delete().eq('id', data.pendingInviteId);
+      await invalidateAll();
+    } finally {
+      revokingInvite = false;
     }
   }
 
@@ -370,6 +384,14 @@
             class="text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer whitespace-nowrap"
           >
             {copied ? m.invite_copied() : m.invite_copy()}
+          </button>
+          <button
+            type="button"
+            onclick={handleRevokeInvite}
+            disabled={revokingInvite}
+            class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50"
+          >
+            {m.invite_link_revoke()}
           </button>
         </div>
       {/if}
