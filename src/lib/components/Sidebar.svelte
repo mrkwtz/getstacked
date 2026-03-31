@@ -118,7 +118,7 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center">
     <button type="button" class="absolute inset-0 bg-black/50" aria-label="Close" onclick={() => (showClubSwitcher = false)}></button>
     <div class="relative bg-card border border-border rounded-xl p-6 w-full max-w-xs mx-4">
-      <h2 class="text-sm font-semibold text-foreground mb-4">Switch club</h2>
+      <h2 class="text-sm font-semibold text-foreground mb-4">{m.club_switch_title()}</h2>
       <div class="flex flex-col gap-1">
         <!-- Current club -->
         <div class="flex items-center gap-2 px-3 py-2.5 rounded-md bg-accent/10">
