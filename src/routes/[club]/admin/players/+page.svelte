@@ -20,7 +20,7 @@
   // Compute next available member number
   function nextMemberNumber(): number {
     if (data.players.length === 0) return 1;
-    return Math.max(...data.players.map((p) => p.member_number)) + 1;
+    return Math.max(...data.players.map((p: { member_number: number }) => p.member_number)) + 1;
   }
 
   let showModal = $state(false);

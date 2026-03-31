@@ -57,17 +57,31 @@ export const actions: Actions = {
 
     const club = invite.clubs as { id: string; name: string; slug: string };
 
+    // Already a member? Redirect straight to the club
+    const { data: existing } = await service
+      .from('players')
+      .select('id')
+      .eq('club_id', club.id)
+      .eq('user_id', session.user.id)
+      .single();
+    if (existing) throw redirect(303, `/${club.slug}`);
+
     if (invite.player_id) {
       // Variant 2: Link account to existing player
-      const { error: linkError } = await service
+      const { data: linked, error: linkError } = await service
         .from('players')
         .update({ user_id: session.user.id })
         .eq('id', invite.player_id)
-        .is('user_id', null);
+        .is('user_id', null)
+        .select('id');
 
       if (linkError) {
         if (linkError.code === '23505') throw redirect(303, `/${club.slug}`);
         throw error(500, 'Failed to link account');
+      }
+      if (!linked || linked.length === 0) {
+        // Player already linked to a different account — don't burn the invite
+        throw error(409, 'Player already linked to another account');
       }
     } else {
       // Variant 1: Create new player
