@@ -143,7 +143,7 @@ Actions:
 ### Tournament registration
 
 - Dropdown shows all club players (display: nickname or "first_name last_name" + member number)
-- "Quick add" button next to dropdown — minimal form (first name + last name only), creates player and immediately registers them
+- "Quick add" button next to dropdown — opens a modal with a minimal form (first name + last name only), creates player and immediately registers them
 - No more guest name field
 
 ## Files Affected
