@@ -108,7 +108,7 @@
         .from('club_invites')
         .insert({
           club_id: data.club.id,
-          created_by: data.player.id,
+          created_by: data.player.user_id!,
           player_id: data.targetPlayer.id,
         })
         .select('id')
