@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import type { Club, ClubMember } from '$lib/types';
+  import type { Club, Player } from '$lib/types';
 
   const { data, children } = $props<{
-    data: { club: Club; member: ClubMember };
+    data: { club: Club; player: Player };
     children: Snippet;
   }>();
 </script>

@@ -12,13 +12,13 @@ export const load: LayoutLoad = async ({ params, parent }) => {
     .single();
   if (!club) throw error(404, 'Club not found');
 
-  const { data: member } = await supabase
-    .from('club_members')
+  const { data: player } = await supabase
+    .from('players')
     .select('*')
     .eq('club_id', club.id)
     .eq('user_id', session.user.id)
     .single();
-  if (!member) throw error(403, 'You are not a member of this club');
+  if (!player) throw error(403, 'You are not a member of this club');
 
-  return { club, member };
+  return { club, player };
 };

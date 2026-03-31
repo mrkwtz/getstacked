@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { isAdmin } from '$lib/players';
+  import { isAdmin, displayName } from '$lib/players';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
   import * as m from '$lib/paraglide/messages';
-  import type { Club, ClubMember } from '$lib/types';
+  import type { Club, Player } from '$lib/types';
 
-  const { club, member, currentPath } = $props<{
+  const { club, player, currentPath } = $props<{
     club: Club;
-    member: ClubMember;
+    player: Player;
     currentPath: string;
   }>();
 
@@ -44,7 +44,7 @@
       {m.nav_dashboard()}
     </a>
 
-    {#if isAdmin(member)}
+    {#if isAdmin(player)}
       <a
         href="{clubPath}/admin/tournaments"
         class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
@@ -58,14 +58,14 @@
         {m.nav_tournaments()}
       </a>
       <a
-        href="{clubPath}/admin/members"
+        href="{clubPath}/admin/players"
         class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
-          isActive(`${clubPath}/admin/members`)
+          isActive(`${clubPath}/admin/players`)
             ? 'bg-accent/10 border-l-2 border-accent text-foreground font-medium pl-[10px]'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }"
       >
-        {m.nav_members()}
+        {m.nav_players()}
       </a>
       <a
         href="{clubPath}/admin/settings"
@@ -82,7 +82,7 @@
 
   <!-- Footer: display name + theme toggle + logout -->
   <div class="px-3 py-3 border-t border-border flex items-center justify-between gap-2">
-    <span class="text-xs text-muted-foreground truncate">{member.display_name}</span>
+    <span class="text-xs text-muted-foreground truncate">{displayName(player)}</span>
     <div class="flex items-center gap-1 flex-shrink-0">
       <LanguageSwitcher />
       <ThemeToggle />
