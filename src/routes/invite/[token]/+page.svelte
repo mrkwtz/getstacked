@@ -3,7 +3,7 @@
   import * as m from '$lib/paraglide/messages';
 
   const { data, form } = $props<{
-    data: { clubName: string; clubSlug: string };
+    data: { clubName: string; clubSlug: string; linkedPlayer: boolean };
     form: { errorKey?: string } | null;
   }>();
 
@@ -18,34 +18,64 @@
     <div class="bg-card border border-border rounded-xl p-8">
       <div class="mb-6">
         <p class="font-extrabold text-sm tracking-tight text-foreground mb-1">GETSTACKED</p>
-        <p class="text-sm text-muted-foreground">{m.invite_title()}</p>
+        {#if data.linkedPlayer}
+          <p class="text-sm text-muted-foreground">{m.invite_linked_title()}</p>
+        {:else}
+          <p class="text-sm text-muted-foreground">{m.invite_title()}</p>
+        {/if}
       </div>
 
-      <p class="text-sm text-foreground mb-6">{m.invite_body({ club_name: data.clubName })}</p>
+      {#if data.linkedPlayer}
+        <p class="text-sm text-foreground mb-6">{m.invite_linked_body({ club_name: data.clubName })}</p>
+        <form method="POST" use:enhance>
+          {#if form?.errorKey}
+            <p class="text-xs text-accent mb-4">{resolveError(form.errorKey)}</p>
+          {/if}
+          <button
+            type="submit"
+            class="w-full bg-accent text-accent-foreground text-sm font-medium py-2.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+          >
+            {m.invite_join_button()}
+          </button>
+        </form>
+      {:else}
+        <p class="text-sm text-foreground mb-6">{m.invite_body({ club_name: data.clubName })}</p>
+        <form method="POST" use:enhance class="flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="first_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.invite_first_name_label()}
+              </label>
+              <input
+                id="first_name" name="first_name" type="text" required
+                placeholder="John"
+                class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
+            <div>
+              <label for="last_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.invite_last_name_label()}
+              </label>
+              <input
+                id="last_name" name="last_name" type="text" required
+                placeholder="Doe"
+                class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
+          </div>
 
-      <form method="POST" use:enhance class="flex flex-col gap-4">
-        <div>
-          <label for="display_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
-            {m.club_display_name_label()}
-          </label>
-          <input
-            id="display_name" name="display_name" type="text" required
-            placeholder="Poker Pete"
-            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
-          />
-        </div>
+          {#if form?.errorKey}
+            <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
+          {/if}
 
-        {#if form?.errorKey}
-          <p class="text-xs text-accent">{resolveError(form.errorKey)}</p>
-        {/if}
-
-        <button
-          type="submit"
-          class="w-full bg-accent text-accent-foreground text-sm font-medium py-2.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
-        >
-          {m.invite_join_button()}
-        </button>
-      </form>
+          <button
+            type="submit"
+            class="w-full bg-accent text-accent-foreground text-sm font-medium py-2.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+          >
+            {m.invite_join_button()}
+          </button>
+        </form>
+      {/if}
     </div>
   </div>
 </div>

@@ -24,25 +24,24 @@ export const load: PageServerLoad = async ({ params, locals: { safeGetSession } 
 
   // Already a member? Redirect straight to the club
   const { data: existing } = await createUserClient(session.access_token)
-    .from('club_members')
-    .select('user_id')
+    .from('players')
+    .select('id')
     .eq('club_id', club.id)
     .eq('user_id', session.user.id)
     .single();
 
   if (existing) throw redirect(303, `/${club.slug}`);
 
-  return { clubName: club.name, clubSlug: club.slug };
+  // Check if invite has a player_id (variant 2: linking existing player)
+  const linkedPlayer = invite.player_id ? true : false;
+
+  return { clubName: club.name, clubSlug: club.slug, linkedPlayer };
 };
 
 export const actions: Actions = {
   default: async ({ params, request, locals: { safeGetSession } }) => {
     const { session } = await safeGetSession();
     if (!session) throw redirect(303, `/auth/login?next=/invite/${params.token}`);
-
-    const formData = await request.formData();
-    const displayName = formData.get('display_name')?.toString().trim() ?? '';
-    if (!displayName) return { errorKey: 'error_required' };
 
     const service = createServiceClient();
 
@@ -58,13 +57,50 @@ export const actions: Actions = {
 
     const club = invite.clubs as { id: string; name: string; slug: string };
 
-    const { error: memberError } = await service
-      .from('club_members')
-      .insert({ club_id: club.id, user_id: session.user.id, role: 'member', display_name: displayName });
+    if (invite.player_id) {
+      // Variant 2: Link account to existing player
+      const { error: linkError } = await service
+        .from('players')
+        .update({ user_id: session.user.id })
+        .eq('id', invite.player_id)
+        .is('user_id', null);
 
-    if (memberError) {
-      if (memberError.code === '23505') throw redirect(303, `/${club.slug}`);
-      throw error(500, 'Failed to join club');
+      if (linkError) {
+        if (linkError.code === '23505') throw redirect(303, `/${club.slug}`);
+        throw error(500, 'Failed to link account');
+      }
+    } else {
+      // Variant 1: Create new player
+      const formData = await request.formData();
+      const firstName = formData.get('first_name')?.toString().trim() ?? '';
+      const lastName = formData.get('last_name')?.toString().trim() ?? '';
+      if (!firstName || !lastName) return { errorKey: 'error_required' };
+
+      // Get next member number
+      const { data: maxPlayer } = await service
+        .from('players')
+        .select('member_number')
+        .eq('club_id', club.id)
+        .order('member_number', { ascending: false })
+        .limit(1)
+        .single();
+      const nextNumber = (maxPlayer?.member_number ?? 0) + 1;
+
+      const { error: playerError } = await service
+        .from('players')
+        .insert({
+          club_id: club.id,
+          user_id: session.user.id,
+          role: 'member',
+          first_name: firstName,
+          last_name: lastName,
+          member_number: nextNumber,
+        });
+
+      if (playerError) {
+        if (playerError.code === '23505') throw redirect(303, `/${club.slug}`);
+        throw error(500, 'Failed to join club');
+      }
     }
 
     await service

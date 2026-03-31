@@ -17,11 +17,13 @@ export const actions: Actions = {
     const formData = await request.formData();
     const name = formData.get('name')?.toString().trim() ?? '';
     const slug = formData.get('slug')?.toString().trim() ?? '';
-    const displayName = formData.get('display_name')?.toString().trim() ?? '';
+    const firstName = formData.get('first_name')?.toString().trim() ?? '';
+    const lastName = formData.get('last_name')?.toString().trim() ?? '';
 
     if (!name) return fail(400, { errorKey: 'error_required', field: 'name' });
     if (!isValidSlug(slug)) return fail(400, { errorKey: 'error_invalid_slug' });
-    if (!displayName) return fail(400, { errorKey: 'error_required', field: 'display_name' });
+    if (!firstName) return fail(400, { errorKey: 'error_required', field: 'first_name' });
+    if (!lastName) return fail(400, { errorKey: 'error_required', field: 'last_name' });
 
     const service = createServiceClient();
 
@@ -37,8 +39,15 @@ export const actions: Actions = {
     }
 
     const { error: memberError } = await service
-      .from('club_members')
-      .insert({ club_id: club.id, user_id: session.user.id, role: 'admin', display_name: displayName });
+      .from('players')
+      .insert({
+        club_id: club.id,
+        user_id: session.user.id,
+        role: 'admin',
+        first_name: firstName,
+        last_name: lastName,
+        member_number: 1,
+      });
 
     if (memberError) return fail(500, { errorKey: 'server_error', errorMessage: memberError.message });
 
