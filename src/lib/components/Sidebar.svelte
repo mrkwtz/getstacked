@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isAdmin } from '$lib/members';
+  import { isAdmin } from '$lib/players';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
   import * as m from '$lib/paraglide/messages';

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { isAdmin } from '$lib/members';
+import { isAdmin } from '$lib/players';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent }) => {
