@@ -1,9 +1,24 @@
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { sequence } from '@sveltejs/kit/hooks';
-import { i18n } from '$lib/i18n';
+import { setLanguageTag } from '$lib/paraglide/runtime.js';
+import { getLanguageCookie, detectLanguageFromHeader } from '$lib/i18n';
 import type { Handle } from '@sveltejs/kit';
 import type { Database } from '$lib/types';
+
+const i18nHandle: Handle = async ({ event, resolve }) => {
+  const lang =
+    getLanguageCookie(event.request.headers.get('cookie')) ??
+    detectLanguageFromHeader(event.request.headers.get('accept-language'));
+
+  setLanguageTag(() => lang);
+
+  return resolve(event, {
+    transformPageChunk({ html }) {
+      return html.replace('%lang%', lang);
+    }
+  });
+};
 
 const supabaseHandle: Handle = async ({ event, resolve }) => {
   event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -31,4 +46,4 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
   });
 };
 
-export const handle: Handle = sequence(i18n.handle(), supabaseHandle);
+export const handle: Handle = sequence(i18nHandle, supabaseHandle);

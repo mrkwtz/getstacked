@@ -1,3 +1,1 @@
-import { i18n } from '$lib/i18n';
-
-export const reroute = i18n.reroute();
+// No reroute needed — language is cookie-based, not path-based.

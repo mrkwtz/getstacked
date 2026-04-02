@@ -1,14 +1,13 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { i18n } from '$lib/i18n';
   import { availableLanguageTags, languageTag } from '$lib/paraglide/runtime';
+  import { setLanguageCookie } from '$lib/i18n';
+  import type { AvailableLanguageTag } from '$lib/paraglide/runtime';
 
   function switchLang() {
     const current = languageTag();
-    const next = availableLanguageTags.find((l) => l !== current) ?? current;
-    const canonical = i18n.route(page.url.pathname);
-    const localized = i18n.resolveRoute(canonical, next);
-    window.location.href = localized;
+    const next = (availableLanguageTags.find((l) => l !== current) ?? current) as AvailableLanguageTag;
+    setLanguageCookie(document, next);
+    window.location.reload();
   }
 </script>
 
