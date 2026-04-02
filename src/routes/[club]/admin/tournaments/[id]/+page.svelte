@@ -767,7 +767,7 @@
     <div class="flex gap-2">
       <select
         bind:value={selectedPlayerId}
-        class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground"
+        class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground"
       >
         <option value="">{m.tournament_select_player()}</option>
         {#each data.availablePlayers as player}
