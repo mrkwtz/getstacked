@@ -18,6 +18,8 @@
   type Mode = 'view' | 'edit';
   let mode = $state<Mode>('view');
   let saving = $state(false);
+  let deleting = $state(false);
+  let showDeleteModal = $state(false);
   let errors = $state<Record<string, string>>({});
 
   // edit form fields
@@ -28,6 +30,7 @@
   let country = $state('');
   let city = $state('');
   let phone = $state('');
+  let address = $state('');
   let registrationDate = $state('');
   let memberNumber = $state(0);
 
@@ -49,6 +52,7 @@
     country = p.country ?? '';
     city = p.city ?? '';
     phone = p.phone ?? '';
+    address = p.address ?? '';
     registrationDate = p.created_at ? p.created_at.slice(0, 10) : '';
     memberNumber = p.member_number;
     errors = {};
@@ -83,6 +87,7 @@
           country: country.trim() || null,
           city: city.trim() || null,
           phone: phone.trim() || null,
+          address: address.trim() || null,
           created_at: registrationDate ? new Date(registrationDate).toISOString() : undefined,
           member_number: memberNumber,
         })
@@ -147,9 +152,15 @@
   }
 
   async function handleDelete() {
-    const supabase = createClient();
-    await supabase.from('players').delete().eq('id', data.targetPlayer.id);
-    await goto(`/${data.club.slug}/admin/players`);
+    deleting = true;
+    try {
+      const supabase = createClient();
+      await supabase.from('players').delete().eq('id', data.targetPlayer.id);
+      await goto(`/${data.club.slug}/admin/players`);
+    } finally {
+      deleting = false;
+      showDeleteModal = false;
+    }
   }
 
   // Derive a reactive snapshot so view mode always shows fresh data after save
@@ -172,13 +183,23 @@
       <p class="text-xs text-muted-foreground mt-0.5">#{p.member_number}</p>
     </div>
     {#if mode === 'view'}
-      <button
-        type="button"
-        onclick={startEdit}
-        class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
-      >
-        {m.player_edit_title()}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick={startEdit}
+          class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+        >
+          {m.player_edit_title()}
+        </button>
+        <button
+          type="button"
+          onclick={() => showDeleteModal = true}
+          class="w-7 h-7 flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors cursor-pointer"
+          aria-label={m.player_remove()}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
     {/if}
   </div>
 
@@ -278,6 +299,20 @@
           <input
             type="tel"
             bind:value={phone}
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        {/if}
+      </div>
+
+      <!-- Address -->
+      <div class="col-span-2">
+        <p class="text-xs text-muted-foreground mb-0.5">{m.player_address_label()}</p>
+        {#if mode === 'view'}
+          <p class="text-foreground">{p.address ?? '—'}</p>
+        {:else}
+          <input
+            type="text"
+            bind:value={address}
             class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
           />
         {/if}
@@ -397,16 +432,40 @@
       {/if}
     </div>
 
-    <!-- Delete -->
-    <div class="flex justify-start">
-      <!-- svelte-ignore a11y_consider_explicit_label -->
-      <button
-        type="button"
-        onclick={handleDelete}
-        class="text-xs text-muted-foreground hover:text-accent transition-colors cursor-pointer"
-      >
-        {m.player_remove()}
-      </button>
-    </div>
   {/if}
 </div>
+
+<!-- Delete confirmation modal -->
+{#if showDeleteModal}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    onkeydown={(e) => e.key === 'Escape' && (showDeleteModal = false)}
+  >
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="fixed inset-0" onclick={() => showDeleteModal = false}></div>
+    <div class="relative bg-card border border-border rounded-lg p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
+      <h2 class="text-sm font-semibold text-foreground">{m.player_delete_confirm_title()}</h2>
+      <p class="text-sm text-muted-foreground">
+        {m.player_delete_confirm_body({ name: displayName(p) })}
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          onclick={() => showDeleteModal = false}
+          class="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          {m.player_cancel()}
+        </button>
+        <button
+          type="button"
+          onclick={handleDelete}
+          disabled={deleting}
+          class="bg-destructive text-destructive-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {m.player_delete_confirm()}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

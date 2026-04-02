@@ -89,6 +89,7 @@ export type Database = {
           country: string | null
           city: string | null
           phone: string | null
+          address: string | null
           created_at: string
         }
         Insert: {
@@ -104,6 +105,7 @@ export type Database = {
           country?: string | null
           city?: string | null
           phone?: string | null
+          address?: string | null
           created_at?: string
         }
         Update: {
@@ -119,6 +121,7 @@ export type Database = {
           country?: string | null
           city?: string | null
           phone?: string | null
+          address?: string | null
           created_at?: string
         }
         Relationships: [

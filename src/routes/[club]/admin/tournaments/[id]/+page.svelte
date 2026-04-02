@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
-  import { invalidateAll } from '$app/navigation';
+  import { invalidateAll, goto } from '$app/navigation';
   import { calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
@@ -67,6 +67,8 @@
   // Finish review state
   let showReview = $state(false);
   let showEditModal = $state(false);
+  let showDeleteModal = $state(false);
+  let deleting = $state(false);
 
   const totalRebuys = $derived(data.players.reduce((sum, p) => sum + p.rebuys, 0));
   const addonCount = $derived(data.players.filter((p) => p.addon).length);
@@ -190,7 +192,7 @@
 
   async function handleRemovePlayer(playerId: string) {
     if (loading) return;
-    if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }
+    if (data.tournament.status === 'finished') { errorKey = 'error_tournament_not_open'; return; }
     loading = true;
     errorKey = null;
     try {
@@ -532,6 +534,20 @@
       loading = false;
     }
   }
+
+  async function handleDeleteTournament() {
+    deleting = true;
+    try {
+      const supabase = createClient();
+      await supabase.from('tournament_players').delete().eq('tournament_id', data.tournament.id);
+      await supabase.from('tournament_tables').delete().eq('tournament_id', data.tournament.id);
+      await supabase.from('tournaments').delete().eq('id', data.tournament.id);
+      await goto(`/${data.club.slug}/admin/tournaments`);
+    } finally {
+      deleting = false;
+      showDeleteModal = false;
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-6">
@@ -550,6 +566,14 @@
             <Pencil size={12} />
           </button>
         {/if}
+        <button
+          type="button"
+          onclick={() => { showDeleteModal = true; }}
+          class="p-0.5 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition-colors cursor-pointer"
+          aria-label={m.tournament_delete_confirm_title()}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
       </h1>
       <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
     </div>
@@ -684,7 +708,7 @@
             </span>
 
             <!-- Bust / Undo -->
-            <div class="flex justify-end">
+            <div class="flex justify-end gap-2">
               {#if player.finish_position === null}
                 <button type="button" onclick={() => handleBustPlayer(player.id)} disabled={loading}
                   class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
@@ -696,6 +720,11 @@
                   {m.tournament_undo_bust()}
                 </button>
               {/if}
+              <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
+                class="text-muted-foreground hover:text-destructive transition-colors cursor-pointer disabled:opacity-50"
+                aria-label={m.common_delete()}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              </button>
             </div>
           </div>
         {/each}
@@ -1172,6 +1201,41 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+{/if}
+
+<!-- Delete tournament confirmation modal -->
+{#if showDeleteModal}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    onkeydown={(e) => e.key === 'Escape' && (showDeleteModal = false)}
+  >
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="fixed inset-0" onclick={() => showDeleteModal = false}></div>
+    <div class="relative bg-card border border-border rounded-lg p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
+      <h2 class="text-sm font-semibold text-foreground">{m.tournament_delete_confirm_title()}</h2>
+      <p class="text-sm text-muted-foreground">
+        {m.tournament_delete_confirm_body({ name: t.name })}
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          onclick={() => showDeleteModal = false}
+          class="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          {m.tournament_cancel_review()}
+        </button>
+        <button
+          type="button"
+          onclick={handleDeleteTournament}
+          disabled={deleting}
+          class="bg-destructive text-destructive-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {m.tournament_delete_confirm()}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
