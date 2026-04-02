@@ -6,8 +6,13 @@ describe('validatePayouts', () => {
     expect(validatePayouts([])).toBe('error_required');
   });
 
-  it('returns error_required if any percentage is 0', () => {
-    expect(validatePayouts([{ position: 1, percentage: 0 }])).toBe('error_required');
+  it('allows 0% for a position when total still sums to 100', () => {
+    expect(
+      validatePayouts([
+        { position: 1, percentage: 0 },
+        { position: 2, percentage: 100 },
+      ])
+    ).toBeNull();
   });
 
   it('returns error_required if any percentage is negative', () => {

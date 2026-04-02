@@ -3,7 +3,7 @@ export function validatePayouts(
 ): string | null {
   if (payouts.length === 0) return 'error_required';
   for (const payout of payouts) {
-    if (payout.percentage <= 0 || payout.percentage > 100) return 'error_required';
+    if (payout.percentage < 0 || payout.percentage > 100) return 'error_required';
   }
   const total = payouts.reduce((sum, p) => sum + p.percentage, 0);
   if (Math.round(total) !== 100) return 'error_payouts_must_total_100';

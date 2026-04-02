@@ -154,7 +154,7 @@
                   <span class="text-sm text-foreground">{i + 1}</span>
                 </td>
                 <td class="pr-2 pb-2">
-                  <input type="number" min="0.01" max="100" step="0.01" bind:value={payout.percentage}
+                  <input type="number" min="0" max="100" step="0.01" bind:value={payout.percentage}
                     class="w-24 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
                 </td>
                 <td class="pb-2">
