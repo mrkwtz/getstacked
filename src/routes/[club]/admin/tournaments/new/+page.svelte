@@ -2,6 +2,7 @@
   import { createClient } from '$lib/supabase';
   import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
+  import { validatePayouts } from '$lib/tournaments';
 
   const { data } = $props<{
     data: {
@@ -20,6 +21,118 @@
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
   let fieldErrors = $state<Record<string, boolean>>({});
+
+  // --- Blind structure modal state ---
+  let showBlindModal = $state(false);
+  let blindName = $state('');
+  let blindLevels = $state([{ small_blind: '', big_blind: '', ante: '0', duration_minutes: '' }]);
+  let blindLoading = $state(false);
+  let blindError = $state<string | null>(null);
+  let selectedBlindId = $state('');
+
+  function openBlindModal() {
+    blindName = '';
+    blindLevels = [{ small_blind: '', big_blind: '', ante: '0', duration_minutes: '' }];
+    blindError = null;
+    showBlindModal = true;
+  }
+
+  function addBlindLevel() {
+    blindLevels = [...blindLevels, { small_blind: '', big_blind: '', ante: '0', duration_minutes: '' }];
+  }
+
+  function removeBlindLevel(i: number) {
+    blindLevels = blindLevels.filter((_, idx) => idx !== i);
+  }
+
+  async function handleCreateBlind() {
+    if (blindLoading) return;
+    blindError = null;
+    if (!blindName.trim()) { blindError = 'error_required'; return; }
+    if (blindLevels.length === 0) { blindError = 'error_required'; return; }
+
+    const parsedLevels = blindLevels.map((l) => ({
+      small_blind: Number(l.small_blind),
+      big_blind: Number(l.big_blind),
+      ante: Number(l.ante),
+      duration_minutes: Number(l.duration_minutes),
+    }));
+    for (const level of parsedLevels) {
+      if (level.small_blind <= 0 || level.big_blind < level.small_blind || level.duration_minutes <= 0 || level.ante < 0) {
+        blindError = 'error_required';
+        return;
+      }
+    }
+
+    blindLoading = true;
+    try {
+      const supabase = createClient();
+      const { data: created, error } = await supabase
+        .from('blind_structures')
+        .insert({ club_id: data.club.id, name: blindName.trim(), levels: parsedLevels })
+        .select('id, name')
+        .single();
+      if (error || !created) { blindError = 'server_error'; return; }
+      data.blindStructures = [...data.blindStructures, created];
+      selectedBlindId = created.id;
+      showBlindModal = false;
+    } finally {
+      blindLoading = false;
+    }
+  }
+
+  // --- Prize structure modal state ---
+  let showPrizeModal = $state(false);
+  let prizeName = $state('');
+  let prizePayouts = $state([{ position: 1, percentage: '' }]);
+  let prizeLoading = $state(false);
+  let prizeError = $state<string | null>(null);
+  let selectedPrizeId = $state('');
+
+  function openPrizeModal() {
+    prizeName = '';
+    prizePayouts = [{ position: 1, percentage: '' }];
+    prizeError = null;
+    showPrizeModal = true;
+  }
+
+  function addPrizePayout() {
+    prizePayouts = [...prizePayouts, { position: prizePayouts.length + 1, percentage: '' }];
+  }
+
+  function removePrizePayout(i: number) {
+    prizePayouts = prizePayouts.filter((_, idx) => idx !== i);
+  }
+
+  async function handleCreatePrize() {
+    if (prizeLoading) return;
+    prizeError = null;
+    if (!prizeName.trim()) { prizeError = 'error_required'; return; }
+    if (prizePayouts.length === 0) { prizeError = 'error_required'; return; }
+
+    const parsedPayouts = prizePayouts.map((p, i) => ({
+      position: i + 1,
+      percentage: Number(p.percentage),
+    }));
+    const validationError = validatePayouts(parsedPayouts);
+    if (validationError) { prizeError = validationError; return; }
+
+    prizeLoading = true;
+    try {
+      const supabase = createClient();
+      const { data: created, error } = await supabase
+        .from('prize_structures')
+        .insert({ club_id: data.club.id, name: prizeName.trim(), payouts: parsedPayouts })
+        .select('id, name')
+        .single();
+      if (error || !created) { prizeError = 'server_error'; return; }
+      data.prizeStructures = [...data.prizeStructures, created];
+      selectedPrizeId = created.id;
+      showPrizeModal = false;
+    } finally {
+      prizeLoading = false;
+    }
+  }
 
   function clearFieldError(field: string) {
     if (fieldErrors[field]) fieldErrors = { ...fieldErrors, [field]: false };
@@ -182,30 +295,44 @@
         <label for="t-blind" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.tournament_blind_structure_label()}
         </label>
-        <select
-          id="t-blind" name="blind_structure_id"
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-        >
-          <option value="">{m.tournament_none_option()}</option>
-          {#each data.blindStructures as bs}
-            <option value={bs.id}>{bs.name}</option>
-          {/each}
-        </select>
+        <div class="flex gap-2">
+          <select
+            id="t-blind" name="blind_structure_id"
+            bind:value={selectedBlindId}
+            class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          >
+            <option value="">{m.tournament_none_option()}</option>
+            {#each data.blindStructures as bs}
+              <option value={bs.id}>{bs.name}</option>
+            {/each}
+          </select>
+          <button type="button" onclick={openBlindModal}
+            class="px-2.5 py-2 bg-background border border-input rounded-md text-sm text-muted-foreground hover:text-foreground hover:border-accent transition-colors cursor-pointer">
+            +
+          </button>
+        </div>
       </div>
 
       <div>
         <label for="t-prize" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.tournament_prize_structure_label()}
         </label>
-        <select
-          id="t-prize" name="prize_structure_id"
-          class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-        >
-          <option value="">{m.tournament_none_option()}</option>
-          {#each data.prizeStructures as ps}
-            <option value={ps.id}>{ps.name}</option>
-          {/each}
-        </select>
+        <div class="flex gap-2">
+          <select
+            id="t-prize" name="prize_structure_id"
+            bind:value={selectedPrizeId}
+            class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          >
+            <option value="">{m.tournament_none_option()}</option>
+            {#each data.prizeStructures as ps}
+              <option value={ps.id}>{ps.name}</option>
+            {/each}
+          </select>
+          <button type="button" onclick={openPrizeModal}
+            class="px-2.5 py-2 bg-background border border-input rounded-md text-sm text-foreground hover:text-foreground hover:border-accent transition-colors cursor-pointer">
+            +
+          </button>
+        </div>
       </div>
 
       {#if errorKey}
@@ -222,3 +349,154 @@
     </form>
   </div>
 </div>
+
+<!-- Blind structure creation modal -->
+{#if showBlindModal}
+  <div class="fixed inset-0 z-40 bg-black/60" role="presentation" onclick={() => { showBlindModal = false; }}></div>
+  <div class="fixed inset-x-4 top-1/2 z-50 -translate-y-1/2 max-w-md mx-auto bg-card border border-border rounded-xl shadow-xl flex flex-col gap-4 p-5 max-h-[80vh] overflow-y-auto">
+    <h2 class="text-base font-semibold text-foreground">{m.blind_structure_new_title()}</h2>
+
+    <div>
+      <label for="bs-name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+        {m.blind_structure_name_label()}
+      </label>
+      <input
+        id="bs-name" type="text"
+        bind:value={blindName}
+        class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+      />
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-muted-foreground">
+            <th class="text-left font-medium pb-2">{m.blind_structure_duration_label()}</th>
+            <th class="text-left font-medium pb-2">{m.blind_structure_sb_label()}</th>
+            <th class="text-left font-medium pb-2">{m.blind_structure_bb_label()}</th>
+            <th class="text-left font-medium pb-2">{m.blind_structure_ante_label()}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each blindLevels as level, i}
+            <tr>
+              <td class="pr-2 pb-2">
+                <input type="number" min="1" bind:value={level.duration_minutes}
+                  class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+              </td>
+              <td class="pr-2 pb-2">
+                <input type="number" min="1" bind:value={level.small_blind}
+                  class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+              </td>
+              <td class="pr-2 pb-2">
+                <input type="number" min="1" bind:value={level.big_blind}
+                  class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+              </td>
+              <td class="pr-2 pb-2">
+                <input type="number" min="0" bind:value={level.ante}
+                  class="w-20 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+              </td>
+              <td class="pb-2">
+                {#if blindLevels.length > 1}
+                  <button type="button" onclick={() => removeBlindLevel(i)}
+                    class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">✕</button>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+
+    <button type="button" onclick={addBlindLevel}
+      class="self-start text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer">
+      + {m.blind_structure_add_level()}
+    </button>
+
+    {#if blindError}
+      <p class="text-xs text-accent">{resolveError(blindError)}</p>
+    {/if}
+
+    <div class="flex items-center gap-4">
+      <button type="button" onclick={handleCreateBlind} disabled={blindLoading}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        {m.blind_structure_create_button()}
+      </button>
+      <button type="button" onclick={() => { showBlindModal = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </div>
+{/if}
+
+<!-- Prize structure creation modal -->
+{#if showPrizeModal}
+  <div class="fixed inset-0 z-40 bg-black/60" role="presentation" onclick={() => { showPrizeModal = false; }}></div>
+  <div class="fixed inset-x-4 top-1/2 z-50 -translate-y-1/2 max-w-md mx-auto bg-card border border-border rounded-xl shadow-xl flex flex-col gap-4 p-5 max-h-[80vh] overflow-y-auto">
+    <h2 class="text-base font-semibold text-foreground">{m.prize_structure_new_title()}</h2>
+
+    <div>
+      <label for="ps-name" class="block text-xs font-medium text-muted-foreground mb-1.5">
+        {m.prize_structure_name_label()}
+      </label>
+      <input
+        id="ps-name" type="text"
+        bind:value={prizeName}
+        class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+      />
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-muted-foreground">
+            <th class="text-left font-medium pb-2">{m.prize_structure_position_label()}</th>
+            <th class="text-left font-medium pb-2">{m.prize_structure_percentage_label()}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each prizePayouts as payout, i}
+            <tr>
+              <td class="pr-2 pb-2">
+                <span class="text-sm text-foreground">{i + 1}</span>
+              </td>
+              <td class="pr-2 pb-2">
+                <input type="number" min="0.01" max="100" step="0.01" bind:value={payout.percentage}
+                  class="w-24 px-2 py-1.5 bg-background border border-input rounded text-sm text-foreground focus:outline-none focus:border-accent" />
+              </td>
+              <td class="pb-2">
+                {#if prizePayouts.length > 1}
+                  <button type="button" onclick={() => removePrizePayout(i)}
+                    class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">✕</button>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+
+    <button type="button" onclick={addPrizePayout}
+      class="self-start text-xs text-accent hover:text-accent/80 transition-colors cursor-pointer">
+      + {m.prize_structure_add_payout()}
+    </button>
+
+    {#if prizeError}
+      <p class="text-xs text-accent">{resolveError(prizeError)}</p>
+    {/if}
+
+    <div class="flex items-center gap-4">
+      <button type="button" onclick={handleCreatePrize} disabled={prizeLoading}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        {m.prize_structure_create_button()}
+      </button>
+      <button type="button" onclick={() => { showPrizeModal = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </div>
+{/if}
