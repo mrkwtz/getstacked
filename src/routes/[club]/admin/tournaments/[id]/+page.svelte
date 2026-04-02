@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { invalidateAll, goto } from '$app/navigation';
-  import { calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
+  import { calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
@@ -78,6 +78,21 @@
       ? calculatePayouts(data.players, data.prizeStructure.payouts, data.prizePool)
       : []
   );
+
+  // Editable payout amounts (in cents), keyed by playerId
+  let editedPayouts: Record<string, number> = $state({});
+
+  const editedPayoutsTotal = $derived(
+    Object.values(editedPayouts).reduce((sum, v) => sum + v, 0)
+  );
+
+  function openReview() {
+    editedPayouts = {};
+    for (const p of reviewPayouts) {
+      editedPayouts[p.playerId] = p.amount;
+    }
+    showReview = true;
+  }
 
   // Sort players by position for finished view
   const sortedFinished = $derived(
@@ -509,20 +524,9 @@
     errorKey = null;
     try {
       const supabase = createClient();
-      if (data.prizeStructure) {
-        const totalRebuys = data.players.reduce((sum, p) => sum + p.rebuys, 0);
-        const addonCount = data.players.filter((p) => p.addon).length;
-        const prizePool = calculatePrizePool(
-          data.players.length,
-          data.tournament.buy_in,
-          totalRebuys,
-          data.tournament.rebuy_amount ?? 0,
-          addonCount,
-          data.tournament.addon_amount ?? 0,
-        );
-        const payoutResults = calculatePayouts(data.players, data.prizeStructure.payouts, prizePool);
+      if (Object.keys(editedPayouts).length > 0) {
         await Promise.all(
-          payoutResults.map(({ playerId, amount }) =>
+          Object.entries(editedPayouts).map(([playerId, amount]) =>
             supabase.from('tournament_players').update({ payout_amount: amount }).eq('id', playerId).eq('tournament_id', data.tournament.id)
           )
         );
@@ -597,7 +601,7 @@
           type="button"
           disabled={!canFinish || loading}
           title={!allPositionsAssigned ? m.tournament_positions_incomplete() : undefined}
-          onclick={() => { showReview = true; }}
+          onclick={() => { openReview(); }}
           class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {m.tournament_finish_button()}
@@ -1099,12 +1103,31 @@
           <span class="text-sm text-foreground">
             {player.players ? displayName(player.players) : '—'}
           </span>
-          <span class="text-sm text-right {payout.amount > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
-            {payout.amount > 0 ? `€${(payout.amount / 100).toFixed(2)}` : '—'}
-          </span>
+          <div class="flex justify-end">
+            <div class="relative w-24">
+              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">€</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={(editedPayouts[payout.playerId] ?? 0) / 100}
+                onchange={(e) => { editedPayouts[payout.playerId] = Math.round(parseFloat((e.currentTarget as HTMLInputElement).value || '0') * 100); }}
+                class="w-full bg-background border border-border rounded-md px-2 pl-6 py-1.5 text-sm text-right text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            </div>
+          </div>
         </div>
       {/each}
+      <!-- Total row -->
+      <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-t border-border bg-muted/30 items-center">
+        <span></span>
+        <span class="text-xs font-medium text-muted-foreground">{m.tournament_payout_total_label()}</span>
+        <span class="text-sm text-right font-medium text-foreground">€{(editedPayoutsTotal / 100).toFixed(2)}</span>
+      </div>
     </div>
+    {#if editedPayoutsTotal !== data.prizePool}
+      <p class="text-xs text-amber-500">{m.tournament_payout_mismatch_warning({ pool: (data.prizePool / 100).toFixed(2) })}</p>
+    {/if}
     {/if}
 
     <div class="flex items-center gap-4">

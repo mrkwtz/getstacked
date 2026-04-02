@@ -112,6 +112,8 @@
   "error_no_blind_structures": "Create a blind structure first.",
   "error_no_prize_structures": "Create a prize structure first.",
   "tournament_no_prize_structure_note": "No prize structure selected — payouts will not be recorded.",
+  "tournament_payout_total_label": "Total",
+  "tournament_payout_mismatch_warning": "Total does not match prize pool (€{pool})",
   "error_tournament_not_open": "Tournament registration is closed.",
   "error_tournament_not_running": "This action requires the tournament to be running.",
   "error_structure_in_use": "This structure is used by an existing tournament.",
