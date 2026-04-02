@@ -79,10 +79,6 @@ body {
   color: var(--foreground);
 }
 
-select {
-  padding-right: 2rem;
-}
-
 @custom-variant data-open {
 	&:where([data-state="open"]), &:where([data-open]:not([data-open="false"])) {
 		@slot;
