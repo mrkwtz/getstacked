@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { goto } from '$app/navigation';
+  import { tick } from 'svelte';
   import * as m from '$lib/paraglide/messages';
   import { validatePayouts } from '$lib/tournaments';
 
@@ -74,8 +75,9 @@
         .single();
       if (error || !created) { blindError = 'server_error'; return; }
       data.blindStructures = [...data.blindStructures, created];
-      selectedBlindId = created.id;
       showBlindModal = false;
+      await tick();
+      selectedBlindId = created.id;
     } finally {
       blindLoading = false;
     }
@@ -127,8 +129,9 @@
         .single();
       if (error || !created) { prizeError = 'server_error'; return; }
       data.prizeStructures = [...data.prizeStructures, created];
-      selectedPrizeId = created.id;
       showPrizeModal = false;
+      await tick();
+      selectedPrizeId = created.id;
     } finally {
       prizeLoading = false;
     }
