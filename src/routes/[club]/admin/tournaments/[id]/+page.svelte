@@ -88,6 +88,9 @@
 
   function openReview() {
     editedPayouts = {};
+    for (const p of data.players) {
+      editedPayouts[p.id] = 0;
+    }
     for (const p of reviewPayouts) {
       editedPayouts[p.playerId] = p.amount;
     }
@@ -1090,12 +1093,7 @@
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right">{m.tournament_payout_col()}</span>
       </div>
-      {#each [...reviewPayouts].sort((a, b) => {
-        const posA = data.players.find(p => p.id === a.playerId)?.finish_position ?? 999;
-        const posB = data.players.find(p => p.id === b.playerId)?.finish_position ?? 999;
-        return posA - posB;
-      }) as payout}
-        {@const player = data.players.find(p => p.id === payout.playerId)!}
+      {#each [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999)) as player}
         <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
           <span class="text-sm font-medium text-foreground">
             {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
@@ -1110,8 +1108,8 @@
                 type="number"
                 min="0"
                 step="0.01"
-                value={(editedPayouts[payout.playerId] ?? 0) / 100}
-                onchange={(e) => { editedPayouts[payout.playerId] = Math.round(parseFloat((e.currentTarget as HTMLInputElement).value || '0') * 100); }}
+                value={(editedPayouts[player.id] ?? 0) / 100}
+                onchange={(e) => { editedPayouts[player.id] = Math.round(parseFloat((e.currentTarget as HTMLInputElement).value || '0') * 100); }}
                 class="w-full bg-background border border-border rounded-md px-2 pl-6 py-1.5 text-sm text-right text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
