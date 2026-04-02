@@ -588,7 +588,7 @@
           onclick={handleStartTournament}
           disabled={data.players.length < 2 || loading}
           title={data.players.length < 2 ? m.tournament_min_players_error() : undefined}
-          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {m.tournament_start_button()}
         </button>
@@ -598,7 +598,7 @@
           disabled={!canFinish || loading}
           title={!allPositionsAssigned ? m.tournament_positions_incomplete() : undefined}
           onclick={() => { showReview = true; }}
-          class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {m.tournament_finish_button()}
         </button>
