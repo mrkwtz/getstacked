@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { goto } from '$app/navigation';
-  import { tick } from 'svelte';
   import * as m from '$lib/paraglide/messages';
   import { validatePayouts } from '$lib/tournaments';
 
@@ -22,6 +21,10 @@
   let loading = $state(false);
   let errorKey = $state<string | null>(null);
   let fieldErrors = $state<Record<string, boolean>>({});
+
+  // Local copies of structure lists so we can reactively add to them
+  let blindStructures = $state([...data.blindStructures]);
+  let prizeStructures = $state([...data.prizeStructures]);
 
   // --- Blind structure modal state ---
   let showBlindModal = $state(false);
@@ -74,10 +77,9 @@
         .select('id, name')
         .single();
       if (error || !created) { blindError = 'server_error'; return; }
-      data.blindStructures = [...data.blindStructures, created];
-      showBlindModal = false;
-      await tick();
+      blindStructures = [...blindStructures, created];
       selectedBlindId = created.id;
+      showBlindModal = false;
     } finally {
       blindLoading = false;
     }
@@ -128,10 +130,9 @@
         .select('id, name')
         .single();
       if (error || !created) { prizeError = 'server_error'; return; }
-      data.prizeStructures = [...data.prizeStructures, created];
-      showPrizeModal = false;
-      await tick();
+      prizeStructures = [...prizeStructures, created];
       selectedPrizeId = created.id;
+      showPrizeModal = false;
     } finally {
       prizeLoading = false;
     }
@@ -305,7 +306,7 @@
             class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
           >
             <option value="">{m.tournament_none_option()}</option>
-            {#each data.blindStructures as bs}
+            {#each blindStructures as bs}
               <option value={bs.id}>{bs.name}</option>
             {/each}
           </select>
@@ -327,7 +328,7 @@
             class="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
           >
             <option value="">{m.tournament_none_option()}</option>
-            {#each data.prizeStructures as ps}
+            {#each prizeStructures as ps}
               <option value={ps.id}>{ps.name}</option>
             {/each}
           </select>
