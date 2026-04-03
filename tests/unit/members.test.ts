@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { displayName, isAdmin } from '$lib/players';
+import { displayName, isAdmin } from '$lib/members';
 
 describe('displayName', () => {
   it('returns nickname when set', () => {
