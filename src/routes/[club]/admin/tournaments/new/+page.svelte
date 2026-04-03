@@ -171,10 +171,9 @@
         const rebuyVal = Math.round(parseFloat(rebuyRaw) * 100);
         if (!rebuyRaw || rebuyVal <= 0) errors.rebuy_amount = true;
         else rebuyAmount = rebuyVal;
-        if (addonRaw) {
-          addonAmount = Math.round(parseFloat(addonRaw) * 100);
-          if (addonAmount <= 0) { errors.addon_amount = true; addonAmount = null; }
-        }
+        const addonVal = Math.round(parseFloat(addonRaw) * 100);
+        if (!addonRaw || addonVal <= 0) errors.addon_amount = true;
+        else addonAmount = addonVal;
       }
 
       if (Object.values(errors).some(Boolean)) {
@@ -271,30 +270,6 @@
         />
       </div>
 
-      {#if format === 'rebuy'}
-        <div>
-          <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
-            {m.tournament_rebuy_label()}
-          </label>
-          <input
-            id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
-            oninput={() => clearFieldError('rebuy_amount')}
-            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'ring-2 ring-accent' : ''}"
-          />
-        </div>
-
-        <div>
-          <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
-            {m.tournament_addon_label()}
-          </label>
-          <input
-            id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
-            oninput={() => clearFieldError('addon_amount')}
-            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
-          />
-        </div>
-      {/if}
-
       <div>
         <label for="t-blind" class="block text-xs font-medium text-muted-foreground mb-1.5">
           {m.tournament_blind_structure_label()}
@@ -338,6 +313,34 @@
           </button>
         </div>
       </div>
+
+      {#if format === 'rebuy'}
+        <div class="border-2 border-red-500 rounded-lg p-4 flex flex-col gap-4">
+          <h3 class="text-sm font-semibold text-foreground">{m.tournament_format_options_title()}</h3>
+
+          <div>
+            <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              {m.tournament_rebuy_label()}
+            </label>
+            <input
+              id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
+              oninput={() => clearFieldError('rebuy_amount')}
+              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'ring-2 ring-accent' : ''}"
+            />
+          </div>
+
+          <div>
+            <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              {m.tournament_addon_label()}
+            </label>
+            <input
+              id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
+              oninput={() => clearFieldError('addon_amount')}
+              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
+            />
+          </div>
+        </div>
+      {/if}
 
       {#if errorKey}
         <p class="text-xs text-accent">{resolveError(errorKey)}</p>
