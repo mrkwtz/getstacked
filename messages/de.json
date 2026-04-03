@@ -188,7 +188,7 @@
   "invite_first_name_label": "Vorname",
   "invite_last_name_label": "Nachname",
   "invite_linked_title": "Konto verknüpfen",
-  "invite_linked_body": "Du wurdest eingeladen, dein Konto mit deinem Spielerprofil bei {club_name} zu verknüpfen.",
+  "invite_linked_body": "Du wurdest eingeladen, dein Konto mit deinem Mitgliedsprofil bei {club_name} zu verknüpfen.",
   "invite_copy": "Kopieren",
   "invite_copied": "Kopiert!",
   "tournament_select_player": "Spieler auswählen…",

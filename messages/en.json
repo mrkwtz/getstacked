@@ -188,7 +188,7 @@
   "invite_first_name_label": "First name",
   "invite_last_name_label": "Last name",
   "invite_linked_title": "Link Your Account",
-  "invite_linked_body": "You've been invited to link your account to your player profile in {club_name}.",
+  "invite_linked_body": "You've been invited to link your account to your member profile in {club_name}.",
   "invite_copy": "Copy",
   "invite_copied": "Copied!",
   "tournament_select_player": "Select player…",
