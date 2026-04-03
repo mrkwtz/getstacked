@@ -80,7 +80,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label for="first_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.player_first_name_label()}
+              {m.member_first_name_label()}
             </label>
             <input
               id="first_name" name="first_name" type="text" required
@@ -90,7 +90,7 @@
           </div>
           <div>
             <label for="last_name" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.player_last_name_label()}
+              {m.member_last_name_label()}
             </label>
             <input
               id="last_name" name="last_name" type="text" required
