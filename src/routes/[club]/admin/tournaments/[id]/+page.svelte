@@ -45,7 +45,7 @@
   const metaLine = $derived([
     formatDate(t.date),
     formatLabel,
-    `€${(t.buy_in / 100).toFixed(2)} buy-in`,
+    `€${(t.buy_in_amount / 100).toFixed(2)} buy-in`,
     t.blind_structures?.name,
     t.prize_structures?.name,
   ].filter(Boolean).join(' · '));
@@ -617,7 +617,7 @@
   <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-start">
     <div class="flex flex-col gap-0.5">
       <span class="text-xs font-medium text-muted-foreground">{m.tournament_prize_pool_label()}</span>
-      {#each formatPrizePoolBreakdown(data.players.length, t.buy_in, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0) as part}
+      {#each formatPrizePoolBreakdown(data.players.length, t.buy_in_amount, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0) as part}
         <span class="text-xs text-muted-foreground">
           {part.count} × €{(part.amountCents / 100).toFixed(0)}
           <span class="opacity-60">
@@ -625,6 +625,11 @@
           </span>
         </span>
       {/each}
+      {#if data.totalFees > 0}
+        <span class="text-xs text-muted-foreground">
+          {m.tournament_fees_label()}: €{(data.totalFees / 100).toFixed(0)}
+        </span>
+      {/if}
     </div>
     <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
   </div>
