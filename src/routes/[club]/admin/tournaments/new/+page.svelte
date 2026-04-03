@@ -257,7 +257,7 @@
           {m.tournament_date_label()}
         </label>
         <input
-          id="t-date" type="date" name="date"
+          id="t-date" type="date" name="date" value={new Date().toISOString().slice(0, 10)}
           onchange={() => clearFieldError('date')}
           class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.date ? 'ring-2 ring-accent' : ''}"
         />
@@ -277,26 +277,27 @@
         </select>
       </div>
 
-      <div>
-        <label for="t-buyin" class="block text-xs font-medium text-muted-foreground mb-1.5">
-          {m.tournament_buy_in_label()}
-        </label>
-        <input
-          id="t-buyin" type="number" name="buy_in_amount" min="0" step="0.01"
-          oninput={() => clearFieldError('buy_in_amount')}
-          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_amount ? 'ring-2 ring-accent' : ''}"
-        />
-      </div>
-
-      <div>
-        <label for="t-buyin-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-          {m.tournament_buy_in_fee_label()}
-        </label>
-        <input
-          id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
-          oninput={() => clearFieldError('buy_in_fee')}
-          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_fee ? 'ring-2 ring-accent' : ''}"
-        />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="t-buyin" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.tournament_buy_in_label()}
+          </label>
+          <input
+            id="t-buyin" type="number" name="buy_in_amount" min="0" step="0.01"
+            oninput={() => clearFieldError('buy_in_amount')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_amount ? 'ring-2 ring-accent' : ''}"
+          />
+        </div>
+        <div>
+          <label for="t-buyin-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.tournament_buy_in_fee_label()}
+          </label>
+          <input
+            id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
+            oninput={() => clearFieldError('buy_in_fee')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_fee ? 'ring-2 ring-accent' : ''}"
+          />
+        </div>
       </div>
 
       <div>
@@ -347,48 +348,50 @@
         <div class="border-2 border-red-500 rounded-lg p-4 flex flex-col gap-4">
           <h3 class="text-sm font-semibold text-foreground">{m.tournament_format_options_title()}</h3>
 
-          <div>
-            <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.tournament_rebuy_label()}
-            </label>
-            <input
-              id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
-              oninput={() => clearFieldError('rebuy_amount')}
-              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'ring-2 ring-accent' : ''}"
-            />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_rebuy_label()}
+              </label>
+              <input
+                id="t-rebuy" type="number" name="rebuy_amount" min="0" step="0.01"
+                oninput={() => clearFieldError('rebuy_amount')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_amount ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
+            <div>
+              <label for="t-rebuy-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_rebuy_fee_label()}
+              </label>
+              <input
+                id="t-rebuy-fee" type="number" name="rebuy_fee" min="0" step="0.01"
+                oninput={() => clearFieldError('rebuy_fee')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_fee ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
           </div>
 
-          <div>
-            <label for="t-rebuy-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.tournament_rebuy_fee_label()}
-            </label>
-            <input
-              id="t-rebuy-fee" type="number" name="rebuy_fee" min="0" step="0.01"
-              oninput={() => clearFieldError('rebuy_fee')}
-              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_fee ? 'ring-2 ring-accent' : ''}"
-            />
-          </div>
-
-          <div>
-            <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.tournament_addon_label()}
-            </label>
-            <input
-              id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
-              oninput={() => clearFieldError('addon_amount')}
-              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
-            />
-          </div>
-
-          <div>
-            <label for="t-addon-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-              {m.tournament_addon_fee_label()}
-            </label>
-            <input
-              id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
-              oninput={() => clearFieldError('addon_fee')}
-              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_fee ? 'ring-2 ring-accent' : ''}"
-            />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_addon_label()}
+              </label>
+              <input
+                id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
+                oninput={() => clearFieldError('addon_amount')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
+            <div>
+              <label for="t-addon-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_addon_fee_label()}
+              </label>
+              <input
+                id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
+                oninput={() => clearFieldError('addon_fee')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_fee ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
           </div>
         </div>
       {/if}
