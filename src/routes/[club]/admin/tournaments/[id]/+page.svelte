@@ -369,8 +369,30 @@
         number: i + 1,
         max_seats: s,
       }));
-      const { error } = await supabase.from('tournament_tables').insert(rows);
-      if (error) { seatingError = error.message; return; }
+      const { data: insertedTables, error } = await supabase.from('tournament_tables').insert(rows).select('id, number, max_seats');
+      if (error || !insertedTables) { seatingError = error?.message ?? 'Failed to create tables'; return; }
+
+      // Draw seats immediately after creating tables
+      if (data.players.length >= 2) {
+        const players = data.players.map((p) => ({ id: p.id, preferred_table: p.preferred_table ?? null }));
+        const tables = insertedTables.map((t) => ({ id: t.id, number: t.number, max_seats: t.max_seats }));
+        const result = drawSeats(players, tables);
+        if (result.error) { seatingError = result.error; await invalidateAll(); return; }
+
+        await supabase
+          .from('tournament_players')
+          .update({ table_id: null, seat_number: null })
+          .eq('tournament_id', data.tournament.id);
+        await Promise.all(
+          result.assignments.map((a) =>
+            supabase
+              .from('tournament_players')
+              .update({ table_id: a.tableId, seat_number: a.seatNumber })
+              .eq('id', a.playerId),
+          ),
+        );
+      }
+
       await invalidateAll();
     } finally {
       loading = false;
@@ -388,37 +410,6 @@
         .update({ preferred_table: preferredTable })
         .eq('id', playerId);
       if (error) { seatingError = error.message; return; }
-      await invalidateAll();
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function handleDrawSeats() {
-    if (loading) return;
-    seatingError = null;
-    const players = data.players.map((p) => ({ id: p.id, preferred_table: p.preferred_table ?? null }));
-    const tables = data.tables.map((t) => ({ id: t.id, number: t.number, max_seats: t.max_seats }));
-    const result = drawSeats(players, tables);
-    if (result.error) { seatingError = result.error; return; }
-
-    loading = true;
-    try {
-      const supabase = createClient();
-      // Reset all seats first
-      await supabase
-        .from('tournament_players')
-        .update({ table_id: null, seat_number: null })
-        .eq('tournament_id', data.tournament.id);
-      // Apply assignments
-      await Promise.all(
-        result.assignments.map((a) =>
-          supabase
-            .from('tournament_players')
-            .update({ table_id: a.tableId, seat_number: a.seatNumber })
-            .eq('id', a.playerId),
-        ),
-      );
       await invalidateAll();
     } finally {
       loading = false;
@@ -871,18 +862,6 @@
             {/each}
           </div>
         {/if}
-
-        <!-- Draw / re-draw button -->
-        <div class="flex gap-2">
-          <button
-            type="button"
-            disabled={loading || data.players.length < 2}
-            onclick={handleDrawSeats}
-            class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {data.players.some(p => p.table_id !== null) ? m.seating_redraw_button() : m.seating_draw_button()}
-          </button>
-        </div>
 
         <!-- Seating grid (after draw) -->
         {#if data.players.some((p) => p.table_id !== null)}
