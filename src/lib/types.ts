@@ -43,7 +43,7 @@ export type Database = {
           expires_at: string
           used_at: string | null
           used_by_user_id: string | null
-          player_id: string | null
+          member_id: string | null
         }
         Insert: {
           id?: string
@@ -53,7 +53,7 @@ export type Database = {
           expires_at?: string
           used_at?: string | null
           used_by_user_id?: string | null
-          player_id?: string | null
+          member_id?: string | null
         }
         Update: {
           id?: string
@@ -63,7 +63,7 @@ export type Database = {
           expires_at?: string
           used_at?: string | null
           used_by_user_id?: string | null
-          player_id?: string | null
+          member_id?: string | null
         }
         Relationships: [
           {
@@ -75,7 +75,7 @@ export type Database = {
           },
         ]
       }
-      players: {
+      members: {
         Row: {
           id: string
           club_id: string
@@ -90,6 +90,7 @@ export type Database = {
           city: string | null
           phone: string | null
           address: string | null
+          notes: string | null
           created_at: string
         }
         Insert: {
@@ -106,6 +107,7 @@ export type Database = {
           city?: string | null
           phone?: string | null
           address?: string | null
+          notes?: string | null
           created_at?: string
         }
         Update: {
@@ -122,11 +124,12 @@ export type Database = {
           city?: string | null
           phone?: string | null
           address?: string | null
+          notes?: string | null
           created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "players_club_id_fkey"
+            foreignKeyName: "members_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
@@ -302,7 +305,7 @@ export type Database = {
         Row: {
           id: string
           tournament_id: string
-          player_id: string
+          member_id: string
           rebuys: number
           addon: boolean
           finish_position: number | null
@@ -315,7 +318,7 @@ export type Database = {
         Insert: {
           id?: string
           tournament_id: string
-          player_id: string
+          member_id: string
           rebuys?: number
           addon?: boolean
           finish_position?: number | null
@@ -328,7 +331,7 @@ export type Database = {
         Update: {
           id?: string
           tournament_id?: string
-          player_id?: string
+          member_id?: string
           rebuys?: number
           addon?: boolean
           finish_position?: number | null
@@ -347,10 +350,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tournament_players_player_id_fkey"
-            columns: ["player_id"]
+            foreignKeyName: "tournament_players_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
           {
@@ -545,12 +548,12 @@ export const Constants = {
 
 
 export type Club = Database['public']['Tables']['clubs']['Row'];
-export type Player = Database['public']['Tables']['players']['Row'];
+export type Member = Database['public']['Tables']['members']['Row'];
 export type Role = 'admin' | 'member';
 
 export type ClubContext = {
   club: Club;
-  player: Player;
+  player: Member;
   role: Role;
 };
 
@@ -605,13 +608,13 @@ export interface Tournament {
 export interface TournamentPlayer {
   id: string;
   tournament_id: string;
-  player_id: string;
+  member_id: string;
   rebuys: number;
   addon: boolean;
   finish_position: number | null;
   payout_amount: number | null;
   created_at: string;
-  players?: { id: string; first_name: string; last_name: string; nickname: string | null } | null;
+  members?: { id: string; first_name: string; last_name: string; nickname: string | null } | null;
   table_id: string | null;
   seat_number: number | null;
   preferred_table: number | null;
