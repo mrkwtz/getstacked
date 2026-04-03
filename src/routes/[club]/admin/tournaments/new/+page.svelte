@@ -153,9 +153,12 @@
       const name = formData.get('name')?.toString().trim() ?? '';
       const date = formData.get('date')?.toString() ?? '';
       const formatVal = formData.get('format')?.toString() ?? '';
-      const buyInRaw = formData.get('buy_in')?.toString() ?? '';
+      const buyInRaw = formData.get('buy_in_amount')?.toString() ?? '';
       const rebuyRaw = formData.get('rebuy_amount')?.toString() ?? '';
       const addonRaw = formData.get('addon_amount')?.toString() ?? '';
+      const buyInFeeRaw = formData.get('buy_in_fee')?.toString() ?? '';
+      const rebuyFeeRaw = formData.get('rebuy_fee')?.toString() ?? '';
+      const addonFeeRaw = formData.get('addon_fee')?.toString() ?? '';
       const blindStructureId = formData.get('blind_structure_id')?.toString() ?? '';
       const prizeStructureId = formData.get('prize_structure_id')?.toString() ?? '';
 
@@ -163,7 +166,7 @@
       const errors: Record<string, boolean> = {};
       if (!name) errors.name = true;
       if (!date) errors.date = true;
-      if (!buyInRaw || buyIn <= 0) errors.buy_in = true;
+      if (!buyInRaw || buyIn <= 0) errors.buy_in_amount = true;
 
       let rebuyAmount: number | null = null;
       let addonAmount: number | null = null;
@@ -174,6 +177,18 @@
         const addonVal = Math.round(parseFloat(addonRaw) * 100);
         if (!addonRaw || addonVal <= 0) errors.addon_amount = true;
         else addonAmount = addonVal;
+      }
+
+      const buyInFee = buyInFeeRaw ? Math.round(parseFloat(buyInFeeRaw) * 100) : null;
+      if (buyInFee !== null && buyInFee < 0) errors.buy_in_fee = true;
+
+      let rebuyFee: number | null = null;
+      let addonFee: number | null = null;
+      if (formatVal === 'rebuy') {
+        rebuyFee = rebuyFeeRaw ? Math.round(parseFloat(rebuyFeeRaw) * 100) : null;
+        if (rebuyFee !== null && rebuyFee < 0) errors.rebuy_fee = true;
+        addonFee = addonFeeRaw ? Math.round(parseFloat(addonFeeRaw) * 100) : null;
+        if (addonFee !== null && addonFee < 0) errors.addon_fee = true;
       }
 
       if (Object.values(errors).some(Boolean)) {
@@ -200,9 +215,12 @@
           name,
           date,
           format: formatVal,
-          buy_in: buyIn,
+          buy_in_amount: buyIn,
           rebuy_amount: rebuyAmount,
           addon_amount: addonAmount,
+          buy_in_fee: buyInFee,
+          rebuy_fee: rebuyFee,
+          addon_fee: addonFee,
           blind_structure_id: blindStructureId || null,
           prize_structure_id: prizeStructureId || null,
           status: 'registration',
@@ -264,9 +282,20 @@
           {m.tournament_buy_in_label()}
         </label>
         <input
-          id="t-buyin" type="number" name="buy_in" min="0" step="0.01"
-          oninput={() => clearFieldError('buy_in')}
-          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in ? 'ring-2 ring-accent' : ''}"
+          id="t-buyin" type="number" name="buy_in_amount" min="0" step="0.01"
+          oninput={() => clearFieldError('buy_in_amount')}
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_amount ? 'ring-2 ring-accent' : ''}"
+        />
+      </div>
+
+      <div>
+        <label for="t-buyin-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+          {m.tournament_buy_in_fee_label()}
+        </label>
+        <input
+          id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
+          oninput={() => clearFieldError('buy_in_fee')}
+          class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_fee ? 'ring-2 ring-accent' : ''}"
         />
       </div>
 
@@ -330,6 +359,17 @@
           </div>
 
           <div>
+            <label for="t-rebuy-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              {m.tournament_rebuy_fee_label()}
+            </label>
+            <input
+              id="t-rebuy-fee" type="number" name="rebuy_fee" min="0" step="0.01"
+              oninput={() => clearFieldError('rebuy_fee')}
+              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_fee ? 'ring-2 ring-accent' : ''}"
+            />
+          </div>
+
+          <div>
             <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
               {m.tournament_addon_label()}
             </label>
@@ -337,6 +377,17 @@
               id="t-addon" type="number" name="addon_amount" min="0" step="0.01"
               oninput={() => clearFieldError('addon_amount')}
               class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_amount ? 'ring-2 ring-accent' : ''}"
+            />
+          </div>
+
+          <div>
+            <label for="t-addon-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              {m.tournament_addon_fee_label()}
+            </label>
+            <input
+              id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
+              oninput={() => clearFieldError('addon_fee')}
+              class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_fee ? 'ring-2 ring-accent' : ''}"
             />
           </div>
         </div>
