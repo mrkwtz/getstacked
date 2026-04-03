@@ -6,13 +6,13 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	const { session } = await safeGetSession();
 	if (!session) return {};
 
-	const { data: player } = await createUserClient(session.access_token)
-		.from('players')
+	const { data: member } = await createUserClient(session.access_token)
+		.from('members')
 		.select('clubs(slug)')
 		.eq('user_id', session.user.id)
 		.limit(1)
 		.single();
 
-	const slug = (player?.clubs as { slug: string } | null)?.slug;
+	const slug = (member?.clubs as { slug: string } | null)?.slug;
 	throw redirect(303, slug ? `/${slug}` : '/clubs/new');
 };

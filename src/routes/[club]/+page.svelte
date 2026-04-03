@@ -1,8 +1,8 @@
 <script lang="ts">
   import * as m from '$lib/paraglide/messages';
-  import type { Club, Player } from '$lib/types';
+  import type { Club, Member } from '$lib/types';
 
-  const { data } = $props<{ data: { club: Club; player: Player; playerCount: number; tournamentCount: number } }>();
+  const { data } = $props<{ data: { club: Club; player: Member; memberCount: number; tournamentCount: number } }>();
 </script>
 
 <div class="p-6 flex flex-col gap-6">
@@ -11,8 +11,8 @@
   <!-- Stat cards -->
   <div class="grid grid-cols-2 gap-4">
     <div class="bg-card border border-border rounded-lg p-4">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_players()}</p>
-      <p class="text-3xl font-light text-foreground">{data.playerCount}</p>
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_members()}</p>
+      <p class="text-3xl font-light text-foreground">{data.memberCount}</p>
     </div>
     <div class="bg-card border border-border rounded-lg p-4">
       <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{m.dashboard_stat_tournaments()}</p>

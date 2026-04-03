@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { isAdmin, displayName } from '$lib/players';
+  import { isAdmin, displayName } from '$lib/members';
   import { ArrowLeftRight } from '@lucide/svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
   import * as m from '$lib/paraglide/messages';
-  import type { Club, Player } from '$lib/types';
+  import type { Club, Member } from '$lib/types';
 
   const { club, player, otherClubs, currentPath } = $props<{
     club: Club;
-    player: Player;
+    player: Member;
     otherClubs: { slug: string; name: string }[];
     currentPath: string;
   }>();
@@ -73,14 +73,14 @@
         {m.nav_tournaments()}
       </a>
       <a
-        href="{clubPath}/admin/players"
+        href="{clubPath}/admin/members"
         class="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {
-          isActive(`${clubPath}/admin/players`)
+          isActive(`${clubPath}/admin/members`)
             ? 'bg-accent/10 border-l-2 border-accent text-foreground font-medium pl-[10px]'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }"
       >
-        {m.nav_players()}
+        {m.nav_members()}
       </a>
       <a
         href="{clubPath}/admin/settings"

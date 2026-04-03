@@ -13,7 +13,7 @@ export const load: LayoutLoad = async ({ params, parent }) => {
   if (!club) throw error(404, 'Club not found');
 
   const { data: player } = await supabase
-    .from('players')
+    .from('members')
     .select('*')
     .eq('club_id', club.id)
     .eq('user_id', session.user.id)
@@ -22,7 +22,7 @@ export const load: LayoutLoad = async ({ params, parent }) => {
 
   // Load all clubs the user belongs to (for club switcher)
   const { data: userClubs } = await supabase
-    .from('players')
+    .from('members')
     .select('clubs(slug, name)')
     .eq('user_id', session.user.id)
     .order('created_at');

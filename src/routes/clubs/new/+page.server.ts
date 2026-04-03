@@ -39,7 +39,7 @@ export const actions: Actions = {
     }
 
     const { error: memberError } = await service
-      .from('players')
+      .from('members')
       .insert({
         club_id: club.id,
         user_id: session.user.id,
