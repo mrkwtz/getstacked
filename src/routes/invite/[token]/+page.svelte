@@ -3,7 +3,7 @@
   import * as m from '$lib/paraglide/messages';
 
   const { data, form } = $props<{
-    data: { clubName: string; clubSlug: string; linkedPlayer: boolean };
+    data: { clubName: string; clubSlug: string; linkedMember: boolean };
     form: { errorKey?: string } | null;
   }>();
 
@@ -18,14 +18,14 @@
     <div class="bg-card border border-border rounded-xl p-8">
       <div class="mb-6">
         <p class="font-extrabold text-sm tracking-tight text-foreground mb-1">GETSTACKED</p>
-        {#if data.linkedPlayer}
+        {#if data.linkedMember}
           <p class="text-sm text-muted-foreground">{m.invite_linked_title()}</p>
         {:else}
           <p class="text-sm text-muted-foreground">{m.invite_title()}</p>
         {/if}
       </div>
 
-      {#if data.linkedPlayer}
+      {#if data.linkedMember}
         <p class="text-sm text-foreground mb-6">{m.invite_linked_body({ club_name: data.clubName })}</p>
         <form method="POST" use:enhance>
           {#if form?.errorKey}
