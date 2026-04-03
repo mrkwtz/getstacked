@@ -58,3 +58,14 @@ export function calculatePayouts(
   }
   return results;
 }
+
+export function calculateTotalFees(
+  playerCount: number,
+  buyInFee: number,
+  totalRebuys: number,
+  rebuyFee: number,
+  addonCount: number,
+  addonFee: number
+): number {
+  return playerCount * buyInFee + totalRebuys * rebuyFee + addonCount * addonFee;
+}
