@@ -229,9 +229,12 @@ export type Database = {
           name: string
           date: string
           format: string
-          buy_in: number
+          buy_in_amount: number
           rebuy_amount: number | null
           addon_amount: number | null
+          buy_in_fee: number | null
+          rebuy_fee: number | null
+          addon_fee: number | null
           blind_structure_id: string | null
           prize_structure_id: string | null
           status: string
@@ -243,9 +246,12 @@ export type Database = {
           name: string
           date: string
           format: string
-          buy_in: number
+          buy_in_amount: number
           rebuy_amount?: number | null
           addon_amount?: number | null
+          buy_in_fee?: number | null
+          rebuy_fee?: number | null
+          addon_fee?: number | null
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string
@@ -257,9 +263,12 @@ export type Database = {
           name?: string
           date?: string
           format?: string
-          buy_in?: number
+          buy_in_amount?: number
           rebuy_amount?: number | null
           addon_amount?: number | null
+          buy_in_fee?: number | null
+          rebuy_fee?: number | null
+          addon_fee?: number | null
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string
@@ -579,9 +588,12 @@ export interface Tournament {
   name: string;
   date: string;
   format: 'freezeout' | 'rebuy';
-  buy_in: number;
+  buy_in_amount: number;
   rebuy_amount: number | null;
   addon_amount: number | null;
+  buy_in_fee: number | null;
+  rebuy_fee: number | null;
+  addon_fee: number | null;
   blind_structure_id: string | null;
   prize_structure_id: string | null;
   status: 'registration' | 'running' | 'finished';
