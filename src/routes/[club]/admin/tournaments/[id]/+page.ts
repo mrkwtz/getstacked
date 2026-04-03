@@ -13,14 +13,14 @@ export const load: PageLoad = async ({ params, parent }) => {
     .single();
   if (!tournament) throw error(404, 'Tournament not found');
 
-  const [{ data: players }, { data: clubPlayers }, { data: tables }, { data: prizeStructures }, { data: blindStructures }] = await Promise.all([
+  const [{ data: players }, { data: clubMembers }, { data: tables }, { data: prizeStructures }, { data: blindStructures }] = await Promise.all([
     supabase
       .from('tournament_players')
-      .select('*, players!tournament_players_player_id_fkey(id, first_name, last_name, nickname)')
+      .select('*, members!tournament_players_member_id_fkey(id, first_name, last_name, nickname)')
       .eq('tournament_id', params.id)
       .order('created_at'),
     supabase
-      .from('players')
+      .from('members')
       .select('id, first_name, last_name, nickname, member_number')
       .eq('club_id', club.id)
       .order('first_name'),
@@ -34,8 +34,8 @@ export const load: PageLoad = async ({ params, parent }) => {
   ]);
 
   const allPlayers = players ?? [];
-  const registeredPlayerIds = new Set(allPlayers.map((p) => p.player_id));
-  const availablePlayers = (clubPlayers ?? []).filter((p) => !registeredPlayerIds.has(p.id));
+  const registeredMemberIds = new Set(allPlayers.map((p) => p.member_id));
+  const availableMembers = (clubMembers ?? []).filter((m) => !registeredMemberIds.has(m.id));
 
   const totalRebuys = allPlayers.reduce((sum, p) => sum + p.rebuys, 0);
   const addonCount = allPlayers.filter((p) => p.addon).length;
@@ -61,5 +61,5 @@ export const load: PageLoad = async ({ params, parent }) => {
     ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
     : null;
 
-  return { tournament, players: allPlayers, availablePlayers, prizePool, totalFees, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
+  return { tournament, players: allPlayers, availableMembers, prizePool, totalFees, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
 };

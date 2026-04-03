@@ -7,7 +7,7 @@
   import type { TournamentTable } from '$lib/types';
   import type { PageData } from './$types';
   import { Pencil } from '@lucide/svelte';
-  import { displayName } from '$lib/players';
+  import { displayName } from '$lib/members';
 
   const { data }: { data: PageData } = $props();
 
@@ -123,7 +123,7 @@
       .filter((p) => p.finish_position === null && p.table_id !== null && p.seat_number !== null)
       .map((p) => ({
         id: p.id,
-        name: p.players ? displayName(p.players) : '?',
+        name: p.members ? displayName(p.members) : '?',
         tableId: p.table_id!,
         tableNumber: data.tables.find((t) => t.id === p.table_id)?.number ?? 0,
         seatNumber: p.seat_number!,
@@ -143,7 +143,7 @@
     dismissedSuggestion = false;
   });
 
-  async function handleAddPlayer(playerId: string) {
+  async function handleAddPlayer(memberId: string) {
     if (loading) return;
     if (data.tournament.status !== 'registration') { errorKey = 'error_tournament_not_open'; return; }
     loading = true;
@@ -152,7 +152,7 @@
       const supabase = createClient();
       const { error } = await supabase.from('tournament_players').insert({
         tournament_id: data.tournament.id,
-        player_id: playerId,
+        member_id: memberId,
       });
       if (error) { errorKey = 'server_error'; return; }
       selectedPlayerId = '';
@@ -170,18 +170,18 @@
     try {
       const supabase = createClient();
       // Get next member number
-      const { data: maxPlayer } = await supabase
-        .from('players')
+      const { data: maxMember } = await supabase
+        .from('members')
         .select('member_number')
         .eq('club_id', data.tournament.club_id)
         .order('member_number', { ascending: false })
         .limit(1)
         .single();
-      const nextNumber = (maxPlayer?.member_number ?? 0) + 1;
+      const nextNumber = (maxMember?.member_number ?? 0) + 1;
 
-      // Create player
-      const { data: newPlayer, error: playerError } = await supabase
-        .from('players')
+      // Create member
+      const { data: newMember, error: memberError } = await supabase
+        .from('members')
         .insert({
           club_id: data.tournament.club_id,
           first_name: quickFirstName.trim(),
@@ -190,12 +190,12 @@
         })
         .select('id')
         .single();
-      if (playerError) { errorKey = 'server_error'; return; }
+      if (memberError) { errorKey = 'server_error'; return; }
 
       // Register for tournament
       const { error: regError } = await supabase.from('tournament_players').insert({
         tournament_id: data.tournament.id,
-        player_id: newPlayer.id,
+        member_id: newMember.id,
       });
       if (regError) { errorKey = 'server_error'; return; }
 
@@ -645,7 +645,7 @@
         </div>
         {#each data.players as player}
           <div class="grid grid-cols-[1fr_80px] px-4 py-3 border-b border-border last:border-0 items-center">
-            <span class="text-sm font-medium text-foreground">{player.players ? displayName(player.players) : '—'}</span>
+            <span class="text-sm font-medium text-foreground">{player.members ? displayName(player.members) : '—'}</span>
             <div class="flex justify-end">
               <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
                 class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
@@ -674,7 +674,7 @@
             {t.format === 'rebuy' ? 'grid-cols-[1fr_120px_80px_80px_80px]' : 'grid-cols-[1fr_80px_80px]'}">
             <!-- Player name -->
             <span class="text-sm {player.finish_position !== null ? 'text-muted-foreground line-through' : 'font-medium text-foreground'}">
-              {player.players ? displayName(player.players) : '—'}
+              {player.members ? displayName(player.members) : '—'}
             </span>
 
             {#if t.format === 'rebuy'}
@@ -747,7 +747,7 @@
               {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
             </span>
             <span class="text-sm text-foreground">
-              {player.players ? displayName(player.players) : '—'}
+              {player.members ? displayName(player.members) : '—'}
             </span>
             <span class="text-sm text-right {(player.payout_amount ?? 0) > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
               {(player.payout_amount ?? 0) > 0 ? `€${((player.payout_amount ?? 0) / 100).toFixed(2)}` : '—'}
@@ -766,7 +766,7 @@
         class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground"
       >
         <option value="">{m.tournament_select_player()}</option>
-        {#each data.availablePlayers as player}
+        {#each data.availableMembers as player}
           <option value={player.id}>
             {player.nickname || `${player.first_name} ${player.last_name}`} #{player.member_number}
           </option>
@@ -784,7 +784,7 @@
         type="button"
         onclick={() => { showQuickAdd = true; quickFirstName = ''; quickLastName = ''; }}
         class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2"
-        title={m.player_quick_add_title()}
+        title={m.member_quick_add_title()}
       >
         +
       </button>
@@ -843,7 +843,7 @@
             {#each data.players as player}
               <div class="grid grid-cols-[1fr_auto] items-center px-4 py-2 border-b border-border last:border-0">
                 <span class="text-sm text-foreground">
-                  {player.players ? displayName(player.players) : '—'}
+                  {player.members ? displayName(player.members) : '—'}
                 </span>
                 <select
                   class="bg-background border border-input rounded-md text-xs px-2 py-1 text-foreground"
@@ -876,7 +876,7 @@
                   {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
                     {@const player = seated.find((p) => p.seat_number === seat)}
                     <div class="px-2 py-1 rounded {player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
-                      {seat} {player ? (player.players ? displayName(player.players) : '?') : '—'}
+                      {seat} {player ? (player.members ? displayName(player.members) : '?') : '—'}
                     </div>
                   {/each}
                 </div>
@@ -901,7 +901,7 @@
               </div>
               {#each unseated as player}
                 <div class="flex items-center gap-2 text-sm text-foreground">
-                  <span class="flex-1">{player.players ? displayName(player.players) : '?'}</span>
+                  <span class="flex-1">{player.members ? displayName(player.members) : '?'}</span>
                   <select
                     class="bg-background border border-input rounded-md text-xs px-2 py-1"
                     onchange={(e) => {
@@ -974,7 +974,7 @@
           {@const movingPlayer = data.players.find((p) => p.id === movingPlayerId)}
           <div class="flex items-center justify-between gap-3 bg-muted border border-border rounded-lg px-4 py-3">
             <span class="text-sm text-foreground">
-              {m.seating_move_hint({ name: movingPlayer?.players ? displayName(movingPlayer.players) : '?' })}
+              {m.seating_move_hint({ name: movingPlayer?.members ? displayName(movingPlayer.members) : '?' })}
             </span>
             <button
               type="button"
@@ -1042,7 +1042,7 @@
                               ? 'bg-accent/20 text-foreground cursor-pointer hover:bg-accent/30'
                               : 'bg-muted text-muted-foreground cursor-default'}"
                   >
-                    {seat} {player ? (player.players ? displayName(player.players) : '?') : '—'}
+                    {seat} {player ? (player.members ? displayName(player.members) : '?') : '—'}
                   </button>
                 {/each}
               </div>
@@ -1083,7 +1083,7 @@
             {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
           </span>
           <span class="text-sm text-foreground">
-            {player.players ? displayName(player.players) : '—'}
+            {player.members ? displayName(player.members) : '—'}
           </span>
           <div class="flex justify-end">
             <div class="relative w-24">
@@ -1184,14 +1184,14 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center">
     <button type="button" class="absolute inset-0 bg-black/50" onclick={() => (showQuickAdd = false)}></button>
     <div class="relative bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4">
-      <h2 class="text-sm font-semibold text-foreground mb-4">{m.player_quick_add_title()}</h2>
+      <h2 class="text-sm font-semibold text-foreground mb-4">{m.member_quick_add_title()}</h2>
       <form onsubmit={(e) => { e.preventDefault(); handleQuickAdd(); }} class="flex flex-col gap-3">
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.player_first_name_label()} *</label>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.member_first_name_label()} *</label>
           <input bind:value={quickFirstName} type="text" required class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.player_last_name_label()} *</label>
+          <label class="block text-xs font-medium text-muted-foreground mb-1">{m.member_last_name_label()} *</label>
           <input bind:value={quickLastName} type="text" required class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors" />
         </div>
         {#if errorKey}
@@ -1199,10 +1199,10 @@
         {/if}
         <div class="flex gap-2 justify-end mt-2">
           <button type="button" onclick={() => (showQuickAdd = false)} class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-3 py-1.5">
-            {m.player_cancel()}
+            {m.member_cancel()}
           </button>
           <button type="submit" disabled={loading} class="bg-accent text-accent-foreground text-sm font-medium px-4 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50">
-            {m.player_quick_add_button()}
+            {m.member_quick_add_button()}
           </button>
         </div>
       </form>
