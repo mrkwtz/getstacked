@@ -81,7 +81,7 @@ export type Database = {
           club_id: string
           user_id: string | null
           role: string
-          member_number: number
+          member_number: number | null
           first_name: string
           last_name: string
           nickname: string | null
@@ -98,7 +98,7 @@ export type Database = {
           club_id: string
           user_id?: string | null
           role?: string
-          member_number: number
+          member_number?: number | null
           first_name: string
           last_name: string
           nickname?: string | null
@@ -115,7 +115,7 @@ export type Database = {
           club_id?: string
           user_id?: string | null
           role?: string
-          member_number?: number
+          member_number?: number | null
           first_name?: string
           last_name?: string
           nickname?: string | null
@@ -549,7 +549,7 @@ export const Constants = {
 
 export type Club = Database['public']['Tables']['clubs']['Row'];
 export type Member = Database['public']['Tables']['members']['Row'];
-export type Role = 'admin' | 'member';
+export type Role = 'admin' | 'member' | 'guest';
 
 export type ClubContext = {
   club: Club;
