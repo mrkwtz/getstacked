@@ -6,21 +6,22 @@
   const { data } = $props<{
     data: {
       club: { id: string; slug: string };
-      players: {
+      members: {
         id: string;
         first_name: string;
         last_name: string;
         nickname: string | null;
         user_id: string | null;
         member_number: number;
+        created_at: string;
       }[];
     };
   }>();
 
   // Compute next available member number
   function nextMemberNumber(): number {
-    if (data.players.length === 0) return 1;
-    return Math.max(...data.players.map((p: { member_number: number }) => p.member_number)) + 1;
+    if (data.members.length === 0) return 1;
+    return Math.max(...data.members.map((mem: { member_number: number }) => mem.member_number)) + 1;
   }
 
   let showModal = $state(false);
@@ -34,6 +35,8 @@
   let country = $state('');
   let city = $state('');
   let phone = $state('');
+  let address = $state('');
+  let notes = $state('');
   let registrationDate = $state(new Date().toISOString().slice(0, 10));
   let memberNumber = $state(0);
 
@@ -45,6 +48,8 @@
     country = '';
     city = '';
     phone = '';
+    address = '';
+    notes = '';
     registrationDate = new Date().toISOString().slice(0, 10);
     memberNumber = nextMemberNumber();
     errors = {};
@@ -68,7 +73,7 @@
     saving = true;
     try {
       const supabase = createClient();
-      const { error } = await supabase.from('players').insert({
+      const { error } = await supabase.from('members').insert({
         club_id: data.club.id,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -77,6 +82,8 @@
         country: country.trim() || null,
         city: city.trim() || null,
         phone: phone.trim() || null,
+        address: address.trim() || null,
+        notes: notes.trim() || null,
         created_at: registrationDate ? new Date(registrationDate).toISOString() : undefined,
         member_number: memberNumber,
       });
@@ -90,53 +97,111 @@
       saving = false;
     }
   }
+
+  // ── Sorting ──────────────────────────────────────────────────
+  type SortKey = 'member_number' | 'first_name' | 'last_name' | 'nickname' | 'created_at';
+  let sortKey = $state<SortKey>('member_number');
+  let sortAsc = $state(true);
+
+  function setSort(key: SortKey) {
+    if (sortKey === key) {
+      sortAsc = !sortAsc;
+    } else {
+      sortKey = key;
+      sortAsc = true;
+    }
+  }
+
+  const sortedMembers = $derived(
+    [...data.members].sort((a, b) => {
+      const av = a[sortKey] ?? '';
+      const bv = b[sortKey] ?? '';
+      const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return sortAsc ? cmp : -cmp;
+    })
+  );
+
+  function sortIcon(key: SortKey): string {
+    if (sortKey !== key) return '↕';
+    return sortAsc ? '↑' : '↓';
+  }
+
+  function formatDate(iso: string): string {
+    return iso.slice(0, 10);
+  }
 </script>
 
 <div class="flex flex-col gap-6">
   <!-- Header -->
   <div class="flex items-start justify-between">
-    <h1 class="text-base font-semibold text-foreground">{m.players_title()}</h1>
+    <h1 class="text-base font-semibold text-foreground">{m.members_title()}</h1>
     <button
       type="button"
       onclick={openModal}
       class="bg-accent text-accent-foreground text-xs font-medium px-3 py-1 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
     >
-      {m.player_add_button()}
+      {m.member_add_button()}
     </button>
   </div>
 
   <!-- Table -->
-  {#if data.players.length === 0}
-    <p class="text-sm text-muted-foreground">{m.players_empty()}</p>
+  {#if data.members.length === 0}
+    <p class="text-sm text-muted-foreground">{m.members_empty()}</p>
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[60px_1fr_1fr_1fr_40px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.player_member_number_label()}</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.player_first_name_label()}</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.player_last_name_label()}</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.player_nickname_label()}</span>
+      <div class="grid grid-cols-[60px_1fr_1fr_1fr_110px_40px] border-b border-border px-4 py-2.5">
+        <button
+          type="button"
+          onclick={() => setSort('member_number')}
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+        >
+          {m.member_member_number_label()} {sortIcon('member_number')}
+        </button>
+        <button
+          type="button"
+          onclick={() => setSort('first_name')}
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+        >
+          {m.member_first_name_label()} {sortIcon('first_name')}
+        </button>
+        <button
+          type="button"
+          onclick={() => setSort('last_name')}
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+        >
+          {m.member_last_name_label()} {sortIcon('last_name')}
+        </button>
+        <button
+          type="button"
+          onclick={() => setSort('nickname')}
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+        >
+          {m.member_nickname_label()} {sortIcon('nickname')}
+        </button>
+        <button
+          type="button"
+          onclick={() => setSort('created_at')}
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+        >
+          {m.member_registration_date_label()} {sortIcon('created_at')}
+        </button>
         <span></span>
       </div>
-      {#each data.players as player}
+      {#each sortedMembers as member}
         <a
-          href="/{data.club.slug}/admin/players/{player.id}"
-          class="grid grid-cols-[60px_1fr_1fr_1fr_40px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
+          href="/{data.club.slug}/admin/members/{member.id}"
+          class="grid grid-cols-[60px_1fr_1fr_1fr_110px_40px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
         >
-          <span class="text-xs text-muted-foreground">{player.member_number}</span>
-          <span class="text-sm font-medium text-foreground">{player.first_name}</span>
-          <span class="text-sm text-foreground">{player.last_name}</span>
-          <span class="text-xs text-muted-foreground">{player.nickname ?? ''}</span>
+          <span class="text-xs text-muted-foreground">{member.member_number}</span>
+          <span class="text-sm font-medium text-foreground">{member.first_name}</span>
+          <span class="text-sm text-foreground">{member.last_name}</span>
+          <span class="text-xs text-muted-foreground">{member.nickname ?? ''}</span>
+          <span class="text-xs text-muted-foreground">{formatDate(member.created_at)}</span>
           <span class="flex items-center justify-center">
-            {#if player.user_id}
-              <span
-                class="w-2 h-2 rounded-full bg-green-500"
-                title={m.player_linked()}
-              ></span>
+            {#if member.user_id}
+              <span class="w-2 h-2 rounded-full bg-green-500" title={m.member_linked()}></span>
             {:else}
-              <span
-                class="w-2 h-2 rounded-full bg-muted-foreground/30"
-                title={m.player_not_linked()}
-              ></span>
+              <span class="w-2 h-2 rounded-full bg-muted-foreground/30" title={m.member_not_linked()}></span>
             {/if}
           </span>
         </a>
@@ -145,7 +210,7 @@
   {/if}
 </div>
 
-<!-- Add Player Modal -->
+<!-- Add Member Modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -153,8 +218,8 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     onclick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
   >
-    <div class="bg-card rounded-xl p-6 max-w-md w-full mx-4 flex flex-col gap-4">
-      <h2 class="text-base font-semibold text-foreground">{m.player_add_button()}</h2>
+    <div class="bg-card rounded-xl p-6 max-w-md w-full mx-4 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+      <h2 class="text-base font-semibold text-foreground">{m.member_add_button()}</h2>
 
       {#if errors.form}
         <p class="text-xs text-destructive">{errors.form}</p>
@@ -164,7 +229,7 @@
         <!-- First name -->
         <div class="flex flex-col gap-1">
           <label for="firstName" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_first_name_label()} *
+            {m.member_first_name_label()} *
           </label>
           <input
             id="firstName"
@@ -180,7 +245,7 @@
         <!-- Last name -->
         <div class="flex flex-col gap-1">
           <label for="lastName" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_last_name_label()} *
+            {m.member_last_name_label()} *
           </label>
           <input
             id="lastName"
@@ -196,7 +261,7 @@
         <!-- Nickname -->
         <div class="flex flex-col gap-1 col-span-2">
           <label for="nickname" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_nickname_label()}
+            {m.member_nickname_label()}
           </label>
           <input
             id="nickname"
@@ -209,7 +274,7 @@
         <!-- Birthday -->
         <div class="flex flex-col gap-1">
           <label for="birthday" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_birthday_label()}
+            {m.member_birthday_label()}
           </label>
           <input
             id="birthday"
@@ -222,7 +287,7 @@
         <!-- Country -->
         <div class="flex flex-col gap-1">
           <label for="country" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_country_label()}
+            {m.member_country_label()}
           </label>
           <input
             id="country"
@@ -235,7 +300,7 @@
         <!-- City -->
         <div class="flex flex-col gap-1">
           <label for="city" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_city_label()}
+            {m.member_city_label()}
           </label>
           <input
             id="city"
@@ -248,7 +313,7 @@
         <!-- Phone -->
         <div class="flex flex-col gap-1">
           <label for="phone" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_phone_label()}
+            {m.member_phone_label()}
           </label>
           <input
             id="phone"
@@ -258,10 +323,36 @@
           />
         </div>
 
+        <!-- Address -->
+        <div class="flex flex-col gap-1 col-span-2">
+          <label for="address" class="block text-xs font-medium text-muted-foreground mb-1">
+            {m.member_address_label()}
+          </label>
+          <input
+            id="address"
+            type="text"
+            bind:value={address}
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+          />
+        </div>
+
+        <!-- Notes -->
+        <div class="flex flex-col gap-1 col-span-2">
+          <label for="notes" class="block text-xs font-medium text-muted-foreground mb-1">
+            {m.member_notes_label()}
+          </label>
+          <textarea
+            id="notes"
+            bind:value={notes}
+            rows={3}
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors resize-none"
+          ></textarea>
+        </div>
+
         <!-- Registration date -->
         <div class="flex flex-col gap-1">
           <label for="registrationDate" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_registration_date_label()}
+            {m.member_registration_date_label()}
           </label>
           <input
             id="registrationDate"
@@ -274,7 +365,7 @@
         <!-- Member number -->
         <div class="flex flex-col gap-1">
           <label for="memberNumber" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.player_member_number_label()}
+            {m.member_member_number_label()}
           </label>
           <input
             id="memberNumber"
@@ -293,7 +384,7 @@
           onclick={closeModal}
           class="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
-          {m.player_cancel()}
+          {m.member_cancel()}
         </button>
         <button
           type="button"
@@ -301,7 +392,7 @@
           disabled={saving}
           class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {m.player_save()}
+          {m.member_save()}
         </button>
       </div>
     </div>

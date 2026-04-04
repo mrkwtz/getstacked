@@ -4,9 +4,9 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ params, parent }) => {
   const { supabase, club } = await parent();
 
-  const [{ data: player }, { data: pendingInvite }] = await Promise.all([
+  const [{ data: member }, { data: pendingInvite }] = await Promise.all([
     supabase
-      .from('players')
+      .from('members')
       .select('*')
       .eq('id', params.id)
       .eq('club_id', club.id)
@@ -15,14 +15,14 @@ export const load: PageLoad = async ({ params, parent }) => {
       .from('club_invites')
       .select('id')
       .eq('club_id', club.id)
-      .eq('player_id', params.id)
+      .eq('member_id', params.id)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
       .limit(1)
       .maybeSingle(),
   ]);
 
-  if (!player) throw error(404, 'Player not found');
+  if (!member) throw error(404, 'Member not found');
 
-  return { targetPlayer: player, pendingInviteId: pendingInvite?.id ?? null };
+  return { targetMember: member, pendingInviteId: pendingInvite?.id ?? null };
 };
