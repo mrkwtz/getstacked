@@ -8,7 +8,7 @@
   const { data } = $props<{
     data: {
       club: { id: string; slug: string };
-      player: Member;
+      currentMember: Member;
       targetMember: Member;
       pendingInviteId: string | null;
     };
@@ -117,7 +117,7 @@
         .from('club_invites')
         .insert({
           club_id: data.club.id,
-          created_by: data.player.user_id!,
+          created_by: data.currentMember.user_id!,
           member_id: data.targetMember.id,
         });
 
@@ -155,7 +155,11 @@
     deleting = true;
     try {
       const supabase = createClient();
-      await supabase.from('members').delete().eq('id', data.targetMember.id);
+      const { error: deleteError } = await supabase.from('members').delete().eq('id', data.targetMember.id);
+      if (deleteError) {
+        errors = { form: deleteError.message };
+        return;
+      }
       await goto(`/${data.club.slug}/admin/members`);
     } finally {
       deleting = false;
