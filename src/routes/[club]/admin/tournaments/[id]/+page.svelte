@@ -736,13 +736,13 @@
     {:else}
       <!-- Finished table: Position · Player · Payout -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
+        <div class="grid grid-cols-[auto_1fr_100px] border-b border-border px-4 py-2.5">
           <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
           <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
           <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
         </div>
         {#each sortedFinished as player}
-          <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
+          <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
             <span class="text-sm font-medium text-foreground">
               {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
             </span>
@@ -1072,13 +1072,13 @@
       <p class="text-xs text-muted-foreground">{m.tournament_no_prize_structure_note()}</p>
     {:else}
     <div class="border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
+      <div class="grid grid-cols-[auto_1fr_100px] border-b border-border px-4 py-2.5">
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
         <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
       </div>
       {#each [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999)) as player}
-        <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
+        <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
           <span class="text-sm font-medium text-foreground">
             {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
           </span>
@@ -1101,7 +1101,7 @@
         </div>
       {/each}
       <!-- Total row -->
-      <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-t border-border bg-muted/30 items-center">
+      <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-t border-border bg-muted/30 items-center">
         <span></span>
         <span class="text-xs font-medium text-muted-foreground">{m.tournament_payout_total_label()}</span>
         <span class="text-sm text-right font-medium text-foreground">€{(editedPayoutsTotal / 100).toFixed(2)}</span>

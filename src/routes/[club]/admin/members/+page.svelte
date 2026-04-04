@@ -149,7 +149,7 @@
     <p class="text-sm text-muted-foreground">{m.members_empty()}</p>
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[60px_1fr_1fr_1fr_110px_40px] border-b border-border px-4 py-2.5">
+      <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_40px] border-b border-border px-4 py-2.5">
         <button
           type="button"
           onclick={() => setSort('member_number')}
@@ -190,7 +190,7 @@
       {#each sortedMembers as member}
         <a
           href="/{data.club.slug}/admin/members/{member.id}"
-          class="grid grid-cols-[60px_1fr_1fr_1fr_110px_40px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
+          class="grid grid-cols-[auto_1fr_1fr_1fr_auto_40px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
         >
           <span class="text-xs text-muted-foreground">{member.member_number}</span>
           <span class="text-sm font-medium text-foreground">{member.first_name}</span>
