@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
   import type { Tournament } from '$lib/types';
 
@@ -40,27 +41,31 @@
     <p class="text-sm text-muted-foreground">{m.tournament_empty()}</p>
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[1fr_80px_100px_120px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Date</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Format</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Status</span>
-      </div>
-      {#each data.tournaments as tournament}
-        <a
-          href="/{data.club.slug}/admin/tournaments/{tournament.id}"
-          class="grid grid-cols-[1fr_80px_100px_120px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
-        >
-          <span class="text-sm font-medium text-foreground">{tournament.name}</span>
-          <span class="text-xs text-muted-foreground">{formatDate(tournament.date)}</span>
-          <span class="text-xs text-muted-foreground">{formatLabel(tournament.format)}</span>
-          <span class="inline-flex">
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(tournament.status)}">
-              {statusLabel(tournament.status)}
-            </span>
-          </span>
-        </a>
-      {/each}
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-border">
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</th>
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Date</th>
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Format</th>
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each data.tournaments as tournament}
+            <tr onclick={() => goto(`/${data.club.slug}/admin/tournaments/${tournament.id}`)}
+              class="border-b border-border last:border-0 hover:bg-card/80 cursor-pointer transition-colors">
+              <td class="px-4 py-3 text-sm font-medium text-foreground">{tournament.name}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatDate(tournament.date)}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLabel(tournament.format)}</td>
+              <td class="px-4 py-3">
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(tournament.status)}">
+                  {statusLabel(tournament.status)}
+                </span>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
   {/if}
 

@@ -639,121 +639,143 @@
     {:else if t.status === 'registration'}
       <!-- Registration table: Player · Remove -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid grid-cols-[1fr_80px] border-b border-border px-4 py-2.5">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
-          <span></span>
-        </div>
-        {#each data.players as player}
-          <div class="grid grid-cols-[1fr_80px] px-4 py-3 border-b border-border last:border-0 items-center">
-            <span class="text-sm font-medium text-foreground">{player.members ? displayName(player.members) : '—'}</span>
-            <div class="flex justify-end">
-              <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
-                class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
-                {m.common_delete()}
-              </button>
-            </div>
-          </div>
-        {/each}
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</th>
+              <th class="px-4 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each data.players as player}
+              <tr class="border-b border-border last:border-0">
+                <td class="px-4 py-3 text-sm font-medium text-foreground">{player.members ? displayName(player.members) : '—'}</td>
+                <td class="px-4 py-3 text-right">
+                  <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
+                    class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                    {m.common_delete()}
+                  </button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
 
     {:else if t.status === 'running'}
       <!-- Running table: Player · Rebuys · Add-on · Position · Bust/Undo -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid border-b border-border px-4 py-2.5
-          {t.format === 'rebuy' ? 'grid-cols-[1fr_120px_80px_80px_80px]' : 'grid-cols-[1fr_80px_80px]'}">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
-          {#if t.format === 'rebuy'}
-            <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_rebuy_col()}</span>
-            <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_addon_col()}</span>
-          {/if}
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
-          <span></span>
-        </div>
-        {#each data.players as player}
-          <div class="grid border-b border-border last:border-0 px-4 py-3 items-center
-            {t.format === 'rebuy' ? 'grid-cols-[1fr_120px_80px_80px_80px]' : 'grid-cols-[1fr_80px_80px]'}">
-            <!-- Player name -->
-            <span class="text-sm {player.finish_position !== null ? 'text-muted-foreground line-through' : 'font-medium text-foreground'}">
-              {player.members ? displayName(player.members) : '—'}
-            </span>
-
-            {#if t.format === 'rebuy'}
-              <!-- Rebuys: − count + -->
-              <div class="flex items-center gap-1">
-                <button type="button" onclick={() => handleRemoveRebuy(player.id)} disabled={player.rebuys === 0 || loading}
-                  class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-                  −
-                </button>
-                <span class="text-sm text-foreground w-4 text-center">{player.rebuys}</span>
-                <button type="button" onclick={() => handleAddRebuy(player.id)} disabled={loading}
-                  class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30">
-                  +
-                </button>
-              </div>
-
-              <!-- Add-on checkbox -->
-              <div class="flex justify-center">
-                <button type="button" onclick={() => handleToggleAddon(player.id)} disabled={loading}
-                  class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
-                    {player.addon ? 'bg-accent border-accent' : 'border-border hover:border-accent'}">
-                  {#if player.addon}
-                    <svg class="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  {/if}
-                </button>
-              </div>
-            {/if}
-
-            <!-- Position -->
-            <span class="text-sm text-center text-muted-foreground">
-              {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
-            </span>
-
-            <!-- Bust / Undo -->
-            <div class="flex justify-end gap-2">
-              {#if player.finish_position === null}
-                <button type="button" onclick={() => handleBustPlayer(player.id)} disabled={loading}
-                  class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
-                  {m.tournament_bust_button({ position: ordinal(nextBustPosition) })}
-                </button>
-              {:else}
-                <button type="button" onclick={() => handleUnsetBust(player.id)} disabled={loading}
-                  class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
-                  {m.tournament_undo_bust()}
-                </button>
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</th>
+              {#if t.format === 'rebuy'}
+                <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_rebuy_col()}</th>
+                <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_addon_col()}</th>
               {/if}
-              <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
-                class="text-muted-foreground hover:text-destructive transition-colors cursor-pointer disabled:opacity-50"
-                aria-label={m.common_delete()}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-              </button>
-            </div>
-          </div>
-        {/each}
+              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</th>
+              <th class="px-4 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each data.players as player}
+              <tr class="border-b border-border last:border-0">
+                <!-- Player name -->
+                <td class="px-4 py-3 text-sm {player.finish_position !== null ? 'text-muted-foreground line-through' : 'font-medium text-foreground'}">
+                  {player.members ? displayName(player.members) : '—'}
+                </td>
+
+                {#if t.format === 'rebuy'}
+                  <!-- Rebuys: − count + -->
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-1">
+                      <button type="button" onclick={() => handleRemoveRebuy(player.id)} disabled={player.rebuys === 0 || loading}
+                        class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+                        −
+                      </button>
+                      <span class="text-sm text-foreground w-4 text-center">{player.rebuys}</span>
+                      <button type="button" onclick={() => handleAddRebuy(player.id)} disabled={loading}
+                        class="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-30">
+                        +
+                      </button>
+                    </div>
+                  </td>
+
+                  <!-- Add-on checkbox -->
+                  <td class="px-4 py-3">
+                    <div class="flex justify-center">
+                      <button type="button" onclick={() => handleToggleAddon(player.id)} disabled={loading}
+                        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
+                          {player.addon ? 'bg-accent border-accent' : 'border-border hover:border-accent'}">
+                        {#if player.addon}
+                          <svg class="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        {/if}
+                      </button>
+                    </div>
+                  </td>
+                {/if}
+
+                <!-- Position -->
+                <td class="px-4 py-3 text-sm text-center text-muted-foreground">
+                  {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
+                </td>
+
+                <!-- Bust / Undo -->
+                <td class="px-4 py-3">
+                  <div class="flex justify-end gap-2">
+                    {#if player.finish_position === null}
+                      <button type="button" onclick={() => handleBustPlayer(player.id)} disabled={loading}
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                        {m.tournament_bust_button({ position: ordinal(nextBustPosition) })}
+                      </button>
+                    {:else}
+                      <button type="button" onclick={() => handleUnsetBust(player.id)} disabled={loading}
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50">
+                        {m.tournament_undo_bust()}
+                      </button>
+                    {/if}
+                    <button type="button" onclick={() => handleRemovePlayer(player.id)} disabled={loading}
+                      class="text-muted-foreground hover:text-destructive transition-colors cursor-pointer disabled:opacity-50"
+                      aria-label={m.common_delete()}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
 
     {:else}
       <!-- Finished table: Position · Player · Payout -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="grid grid-cols-[auto_1fr_100px] border-b border-border px-4 py-2.5">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
-        </div>
-        {#each sortedFinished as player}
-          <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
-            <span class="text-sm font-medium text-foreground">
-              {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
-            </span>
-            <span class="text-sm text-foreground">
-              {player.members ? displayName(player.members) : '—'}
-            </span>
-            <span class="text-sm text-right {(player.payout_amount ?? 0) > 0 ? 'text-accent font-medium' : 'text-muted-foreground'}">
-              {(player.payout_amount ?? 0) > 0 ? `€${((player.payout_amount ?? 0) / 100).toFixed(2)}` : '—'}
-            </span>
-          </div>
-        {/each}
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</th>
+              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</th>
+              <th class="px-4 py-2.5 text-right font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_payout_col()}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each sortedFinished as player}
+              <tr class="border-b border-border last:border-0">
+                <td class="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap">
+                  {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
+                </td>
+                <td class="px-4 py-3 text-sm text-foreground">
+                  {player.members ? displayName(player.members) : '—'}
+                </td>
+                <td class="px-4 py-3 text-sm text-right {(player.payout_amount ?? 0) > 0 ? 'text-accent font-medium' : 'text-muted-foreground'} whitespace-nowrap">
+                  {(player.payout_amount ?? 0) > 0 ? `€${((player.payout_amount ?? 0) / 100).toFixed(2)}` : '—'}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
     {/if}
   </div>
@@ -1072,40 +1094,49 @@
       <p class="text-xs text-muted-foreground">{m.tournament_no_prize_structure_note()}</p>
     {:else}
     <div class="border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[auto_1fr_100px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
-      </div>
-      {#each [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999)) as player}
-        <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
-          <span class="text-sm font-medium text-foreground">
-            {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
-          </span>
-          <span class="text-sm text-foreground">
-            {player.members ? displayName(player.members) : '—'}
-          </span>
-          <div class="flex justify-end">
-            <div class="relative w-24">
-              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">€</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={(editedPayouts[player.id] ?? 0) / 100}
-                onchange={(e) => { editedPayouts[player.id] = Math.round(parseFloat((e.currentTarget as HTMLInputElement).value || '0') * 100); }}
-                class="w-full bg-background border border-border rounded-md px-2 pl-6 py-1.5 text-sm text-right text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-              />
-            </div>
-          </div>
-        </div>
-      {/each}
-      <!-- Total row -->
-      <div class="grid grid-cols-[auto_1fr_100px] px-4 py-3 border-t border-border bg-muted/30 items-center">
-        <span></span>
-        <span class="text-xs font-medium text-muted-foreground">{m.tournament_payout_total_label()}</span>
-        <span class="text-sm text-right font-medium text-foreground">€{(editedPayoutsTotal / 100).toFixed(2)}</span>
-      </div>
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-border">
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</th>
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</th>
+            <th class="px-4 py-2.5 text-right font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_payout_col()}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999)) as player}
+            <tr class="border-b border-border last:border-0">
+              <td class="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap">
+                {player.finish_position !== null ? ordinal(player.finish_position) : '—'}
+              </td>
+              <td class="px-4 py-3 text-sm text-foreground">
+                {player.members ? displayName(player.members) : '—'}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end">
+                  <div class="relative w-24">
+                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">€</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={(editedPayouts[player.id] ?? 0) / 100}
+                      onchange={(e) => { editedPayouts[player.id] = Math.round(parseFloat((e.currentTarget as HTMLInputElement).value || '0') * 100); }}
+                      class="w-full bg-background border border-border rounded-md px-2 pl-6 py-1.5 text-sm text-right text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border bg-muted/30">
+            <td class="px-4 py-3"></td>
+            <td class="px-4 py-3 text-xs font-medium text-muted-foreground">{m.tournament_payout_total_label()}</td>
+            <td class="px-4 py-3 text-sm text-right font-medium text-foreground">€{(editedPayoutsTotal / 100).toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
     {#if editedPayoutsTotal !== data.prizePool}
       <p class="text-xs text-amber-500">{m.tournament_payout_mismatch_warning({ pool: (data.prizePool / 100).toFixed(2) })}</p>

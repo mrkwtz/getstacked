@@ -97,26 +97,32 @@
     <p class="text-sm text-muted-foreground">{m.blind_structure_empty()}</p>
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[1fr_80px_80px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Levels</span>
-        <span></span>
-      </div>
-      {#each data.structures as s}
-        <div class="grid grid-cols-[1fr_80px_80px] px-4 py-3 border-b border-border last:border-0 items-center">
-          <span class="text-sm font-medium text-foreground">{s.name}</span>
-          <span class="text-xs text-muted-foreground">{s.levels.length}</span>
-          <div class="flex justify-end">
-            {#if s.in_use}
-              <span class="text-xs text-muted-foreground">{m.blind_structure_in_use()}</span>
-            {:else}
-              <button type="button" onclick={() => handleDelete(s.id)} class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                {m.common_delete()}
-              </button>
-            {/if}
-          </div>
-        </div>
-      {/each}
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-border">
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</th>
+            <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Levels</th>
+            <th class="px-4 py-2.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each data.structures as s}
+            <tr class="border-b border-border last:border-0">
+              <td class="px-4 py-3 text-sm font-medium text-foreground">{s.name}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{s.levels.length}</td>
+              <td class="px-4 py-3 text-right">
+                {#if s.in_use}
+                  <span class="text-xs text-muted-foreground">{m.blind_structure_in_use()}</span>
+                {:else}
+                  <button type="button" onclick={() => handleDelete(s.id)} class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                    {m.common_delete()}
+                  </button>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
   {/if}
 

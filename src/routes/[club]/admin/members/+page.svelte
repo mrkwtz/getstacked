@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
-  import { invalidateAll } from '$app/navigation';
+  import { invalidateAll, goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
 
   const { data } = $props<{
@@ -149,63 +149,64 @@
     <p class="text-sm text-muted-foreground">{m.members_empty()}</p>
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-      <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_40px] border-b border-border px-4 py-2.5">
-        <button
-          type="button"
-          onclick={() => setSort('member_number')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
-        >
-          {m.member_member_number_label()} <span class={sortKey === 'member_number' ? '' : 'opacity-30'}>{sortIcon('member_number')}</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => setSort('first_name')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
-        >
-          {m.member_first_name_label()} <span class={sortKey === 'first_name' ? '' : 'opacity-30'}>{sortIcon('first_name')}</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => setSort('last_name')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
-        >
-          {m.member_last_name_label()} <span class={sortKey === 'last_name' ? '' : 'opacity-30'}>{sortIcon('last_name')}</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => setSort('nickname')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
-        >
-          {m.member_nickname_label()} <span class={sortKey === 'nickname' ? '' : 'opacity-30'}>{sortIcon('nickname')}</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => setSort('created_at')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
-        >
-          {m.member_registration_date_label()} <span class={sortKey === 'created_at' ? '' : 'opacity-30'}>{sortIcon('created_at')}</span>
-        </button>
-        <span></span>
-      </div>
-      {#each sortedMembers as member}
-        <a
-          href="/{data.club.slug}/admin/members/{member.id}"
-          class="grid grid-cols-[auto_1fr_1fr_1fr_auto_40px] px-4 py-3 border-b border-border last:border-0 items-center hover:bg-card/80 transition-colors"
-        >
-          <span class="text-xs text-muted-foreground">{member.member_number}</span>
-          <span class="text-sm font-medium text-foreground">{member.first_name}</span>
-          <span class="text-sm text-foreground">{member.last_name}</span>
-          <span class="text-xs text-muted-foreground">{member.nickname ?? ''}</span>
-          <span class="text-xs text-muted-foreground">{formatDate(member.created_at)}</span>
-          <span class="flex items-center justify-center">
-            {#if member.user_id}
-              <span class="w-2 h-2 rounded-full bg-green-500" title={m.member_linked()}></span>
-            {:else}
-              <span class="w-2 h-2 rounded-full bg-muted-foreground/30" title={m.member_not_linked()}></span>
-            {/if}
-          </span>
-        </a>
-      {/each}
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-border">
+            <th class="px-4 py-2.5 text-left font-normal">
+              <button type="button" onclick={() => setSort('member_number')}
+                class="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap">
+                {m.member_member_number_label()} <span class={sortKey === 'member_number' ? '' : 'opacity-30'}>{sortIcon('member_number')}</span>
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-left font-normal">
+              <button type="button" onclick={() => setSort('first_name')}
+                class="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap">
+                {m.member_first_name_label()} <span class={sortKey === 'first_name' ? '' : 'opacity-30'}>{sortIcon('first_name')}</span>
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-left font-normal">
+              <button type="button" onclick={() => setSort('last_name')}
+                class="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap">
+                {m.member_last_name_label()} <span class={sortKey === 'last_name' ? '' : 'opacity-30'}>{sortIcon('last_name')}</span>
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-left font-normal">
+              <button type="button" onclick={() => setSort('nickname')}
+                class="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap">
+                {m.member_nickname_label()} <span class={sortKey === 'nickname' ? '' : 'opacity-30'}>{sortIcon('nickname')}</span>
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-left font-normal">
+              <button type="button" onclick={() => setSort('created_at')}
+                class="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap">
+                {m.member_registration_date_label()} <span class={sortKey === 'created_at' ? '' : 'opacity-30'}>{sortIcon('created_at')}</span>
+              </button>
+            </th>
+            <th class="px-4 py-2.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each sortedMembers as member}
+            <tr onclick={() => goto(`/${data.club.slug}/admin/members/${member.id}`)}
+              class="border-b border-border last:border-0 hover:bg-card/80 cursor-pointer transition-colors">
+              <td class="px-4 py-3 text-xs text-muted-foreground">{member.member_number}</td>
+              <td class="px-4 py-3 text-sm font-medium text-foreground">{member.first_name}</td>
+              <td class="px-4 py-3 text-sm text-foreground">{member.last_name}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{member.nickname ?? ''}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{formatDate(member.created_at)}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-center">
+                  {#if member.user_id}
+                    <span class="w-2 h-2 rounded-full bg-green-500" title={m.member_linked()}></span>
+                  {:else}
+                    <span class="w-2 h-2 rounded-full bg-muted-foreground/30" title={m.member_not_linked()}></span>
+                  {/if}
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
   {/if}
 </div>
