@@ -102,7 +102,7 @@
     [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999))
   );
 
-  let selectedPlayerId = $state('');
+  let selectedMemberId = $state('');
   let showQuickAdd = $state(false);
   let quickFirstName = $state('');
   let quickLastName = $state('');
@@ -155,7 +155,7 @@
         member_id: memberId,
       });
       if (error) { errorKey = 'server_error'; return; }
-      selectedPlayerId = '';
+      selectedMemberId = '';
       await invalidateAll();
     } finally {
       loading = false;
@@ -762,7 +762,7 @@
   {#if t.status === 'registration'}
     <div class="flex gap-2">
       <select
-        bind:value={selectedPlayerId}
+        bind:value={selectedMemberId}
         class="px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground"
       >
         <option value="">{m.tournament_select_player()}</option>
@@ -774,8 +774,8 @@
       </select>
       <button
         type="button"
-        onclick={() => handleAddPlayer(selectedPlayerId)}
-        disabled={loading || !selectedPlayerId}
+        onclick={() => handleAddPlayer(selectedMemberId)}
+        disabled={loading || !selectedMemberId}
         class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {m.tournament_add_player_button()}
