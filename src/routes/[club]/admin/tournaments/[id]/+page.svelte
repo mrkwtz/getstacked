@@ -671,9 +671,9 @@
               <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</th>
               {#if t.format === 'rebuy'}
                 <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_rebuy_col()}</th>
-                <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_addon_col()}</th>
+                <th class="px-4 py-2.5 text-center font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_addon_col()}</th>
               {/if}
-              <th class="px-4 py-2.5 text-left font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</th>
+              <th class="px-4 py-2.5 text-center font-normal text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</th>
               <th class="px-4 py-2.5"></th>
             </tr>
           </thead>
