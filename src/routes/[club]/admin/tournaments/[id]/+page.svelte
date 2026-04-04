@@ -859,29 +859,38 @@
         <!-- Per-player lock dropdowns -->
         {#if data.players.length > 0}
           <div class="bg-card border border-border rounded-lg overflow-hidden">
-            <div class="grid grid-cols-[1fr_auto] text-xs font-medium text-muted-foreground px-4 py-2 border-b border-border uppercase tracking-wide">
-              <span>Player</span><span>{m.seating_lock_label()}</span>
-            </div>
-            {#each data.players as player}
-              <div class="grid grid-cols-[1fr_auto] items-center px-4 py-2 border-b border-border last:border-0">
-                <span class="text-sm text-foreground">
-                  {player.members ? displayName(player.members) : '—'}
-                </span>
-                <select
-                  class="bg-background border border-input rounded-md text-xs px-2 py-1 text-foreground"
-                  value={player.preferred_table ?? ''}
-                  onchange={(e) => {
-                    const val = (e.currentTarget as HTMLSelectElement).value;
-                    handleSetLock(player.id, val ? parseInt(val) : null);
-                  }}
-                >
-                  <option value="">{m.seating_lock_any()}</option>
-                  {#each data.tables as table}
-                    <option value={table.number}>{m.seating_table_label({ number: String(table.number) })}</option>
-                  {/each}
-                </select>
-              </div>
-            {/each}
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="px-4 py-2 text-left font-medium text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">Player</th>
+                  <th class="px-4 py-2 text-left font-medium text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">{m.seating_lock_label()}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.players as player}
+                  <tr class="border-b border-border last:border-0">
+                    <td class="px-4 py-2 text-sm text-foreground">
+                      {player.members ? displayName(player.members) : '—'}
+                    </td>
+                    <td class="px-4 py-2">
+                      <select
+                        class="bg-background border border-input rounded-md text-xs px-2 py-1 text-foreground"
+                        value={player.preferred_table ?? ''}
+                        onchange={(e) => {
+                          const val = (e.currentTarget as HTMLSelectElement).value;
+                          handleSetLock(player.id, val ? parseInt(val) : null);
+                        }}
+                      >
+                        <option value="">{m.seating_lock_any()}</option>
+                        {#each data.tables as table}
+                          <option value={table.number}>{m.seating_table_label({ number: String(table.number) })}</option>
+                        {/each}
+                      </select>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
           </div>
         {/if}
 
