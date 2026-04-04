@@ -5,6 +5,8 @@
 ALTER TABLE members ALTER COLUMN member_number DROP NOT NULL;
 
 -- 2. Restrict role column to valid values
+--    Drop the original inline check from 0008 (was auto-named using the old 'players' table name)
+ALTER TABLE members DROP CONSTRAINT players_role_check;
 ALTER TABLE members ADD CONSTRAINT members_role_check
   CHECK (role IN ('admin', 'member', 'guest'));
 
