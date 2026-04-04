@@ -640,7 +640,7 @@
       <!-- Registration table: Player · Remove -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="grid grid-cols-[1fr_80px] border-b border-border px-4 py-2.5">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
           <span></span>
         </div>
         {#each data.players as player}
@@ -661,12 +661,12 @@
       <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="grid border-b border-border px-4 py-2.5
           {t.format === 'rebuy' ? 'grid-cols-[1fr_120px_80px_80px_80px]' : 'grid-cols-[1fr_80px_80px]'}">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
           {#if t.format === 'rebuy'}
-            <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_rebuy_col()}</span>
-            <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_addon_col()}</span>
+            <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_rebuy_col()}</span>
+            <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_addon_col()}</span>
           {/if}
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
           <span></span>
         </div>
         {#each data.players as player}
@@ -737,9 +737,9 @@
       <!-- Finished table: Position · Player · Payout -->
       <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
-          <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right">{m.tournament_payout_col()}</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
+          <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
         </div>
         {#each sortedFinished as player}
           <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">
@@ -1073,9 +1073,9 @@
     {:else}
     <div class="border border-border rounded-lg overflow-hidden">
       <div class="grid grid-cols-[60px_1fr_100px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{m.tournament_position_col()}</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Player</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right">{m.tournament_payout_col()}</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{m.tournament_position_col()}</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Player</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">{m.tournament_payout_col()}</span>
       </div>
       {#each [...data.players].sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999)) as player}
         <div class="grid grid-cols-[60px_1fr_100px] px-4 py-3 border-b border-border last:border-0 items-center">

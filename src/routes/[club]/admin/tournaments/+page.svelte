@@ -41,10 +41,10 @@
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
       <div class="grid grid-cols-[1fr_80px_100px_120px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Name</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Date</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Format</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Status</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Date</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Format</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Status</span>
       </div>
       {#each data.tournaments as tournament}
         <a

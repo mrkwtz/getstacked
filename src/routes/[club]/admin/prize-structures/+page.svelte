@@ -100,8 +100,8 @@
   {:else}
     <div class="bg-card border border-border rounded-lg overflow-hidden">
       <div class="grid grid-cols-[1fr_1fr_80px] border-b border-border px-4 py-2.5">
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Name</span>
-        <span class="text-[10px] uppercase tracking-widest text-muted-foreground">Payouts</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</span>
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Payouts</span>
         <span></span>
       </div>
       {#each data.structures as s}

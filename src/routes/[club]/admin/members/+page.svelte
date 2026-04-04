@@ -153,35 +153,35 @@
         <button
           type="button"
           onclick={() => setSort('member_number')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
         >
           {m.member_member_number_label()} <span class={sortKey === 'member_number' ? '' : 'opacity-30'}>{sortIcon('member_number')}</span>
         </button>
         <button
           type="button"
           onclick={() => setSort('first_name')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
         >
           {m.member_first_name_label()} <span class={sortKey === 'first_name' ? '' : 'opacity-30'}>{sortIcon('first_name')}</span>
         </button>
         <button
           type="button"
           onclick={() => setSort('last_name')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
         >
           {m.member_last_name_label()} <span class={sortKey === 'last_name' ? '' : 'opacity-30'}>{sortIcon('last_name')}</span>
         </button>
         <button
           type="button"
           onclick={() => setSort('nickname')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
         >
           {m.member_nickname_label()} <span class={sortKey === 'nickname' ? '' : 'opacity-30'}>{sortIcon('nickname')}</span>
         </button>
         <button
           type="button"
           onclick={() => setSort('created_at')}
-          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors"
+          class="text-[10px] uppercase tracking-widest text-muted-foreground text-left cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
         >
           {m.member_registration_date_label()} <span class={sortKey === 'created_at' ? '' : 'opacity-30'}>{sortIcon('created_at')}</span>
         </button>
