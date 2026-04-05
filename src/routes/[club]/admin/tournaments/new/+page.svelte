@@ -159,6 +159,9 @@
       const buyInFeeRaw = formData.get('buy_in_fee')?.toString() ?? '';
       const rebuyFeeRaw = formData.get('rebuy_fee')?.toString() ?? '';
       const addonFeeRaw = formData.get('addon_fee')?.toString() ?? '';
+      const buyInChipsRaw = formData.get('buy_in_chips')?.toString() ?? '';
+      const rebuyChipsRaw = formData.get('rebuy_chips')?.toString() ?? '';
+      const addonChipsRaw = formData.get('addon_chips')?.toString() ?? '';
       const blindStructureId = formData.get('blind_structure_id')?.toString() ?? '';
       const prizeStructureId = formData.get('prize_structure_id')?.toString() ?? '';
 
@@ -167,6 +170,8 @@
       if (!name) errors.name = true;
       if (!date) errors.date = true;
       if (!buyInRaw || buyIn <= 0) errors.buy_in_amount = true;
+      const buyInChips = buyInChipsRaw ? parseInt(buyInChipsRaw, 10) : NaN;
+      if (!buyInChipsRaw || isNaN(buyInChips) || buyInChips < 1) errors.buy_in_chips = true;
 
       let rebuyAmount: number | null = null;
       let addonAmount: number | null = null;
@@ -177,6 +182,17 @@
         const addonVal = Math.round(parseFloat(addonRaw) * 100);
         if (!addonRaw || addonVal <= 0) errors.addon_amount = true;
         else addonAmount = addonVal;
+      }
+
+      let rebuyChips: number | null = null;
+      let addonChips: number | null = null;
+      if (formatVal === 'rebuy') {
+        const rebuyChipsVal = rebuyChipsRaw ? parseInt(rebuyChipsRaw, 10) : NaN;
+        if (!rebuyChipsRaw || isNaN(rebuyChipsVal) || rebuyChipsVal < 1) errors.rebuy_chips = true;
+        else rebuyChips = rebuyChipsVal;
+        const addonChipsVal = addonChipsRaw ? parseInt(addonChipsRaw, 10) : NaN;
+        if (!addonChipsRaw || isNaN(addonChipsVal) || addonChipsVal < 1) errors.addon_chips = true;
+        else addonChips = addonChipsVal;
       }
 
       const buyInFee = buyInFeeRaw ? Math.round(parseFloat(buyInFeeRaw) * 100) : null;
@@ -221,6 +237,9 @@
           buy_in_fee: buyInFee,
           rebuy_fee: rebuyFee,
           addon_fee: addonFee,
+          buy_in_chips: buyInChips,
+          rebuy_chips: rebuyChips,
+          addon_chips: addonChips,
           blind_structure_id: blindStructureId || null,
           prize_structure_id: prizeStructureId || null,
           status: 'registration',
@@ -277,7 +296,7 @@
         </select>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-3 gap-3">
         <div>
           <label for="t-buyin" class="block text-xs font-medium text-muted-foreground mb-1.5">
             {m.tournament_buy_in_label()}
@@ -296,6 +315,16 @@
             id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
             oninput={() => clearFieldError('buy_in_fee')}
             class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_fee ? 'ring-2 ring-accent' : ''}"
+          />
+        </div>
+        <div>
+          <label for="t-buyin-chips" class="block text-xs font-medium text-muted-foreground mb-1.5">
+            {m.tournament_buy_in_chips_label()}
+          </label>
+          <input
+            id="t-buyin-chips" type="number" name="buy_in_chips" min="1" step="1"
+            oninput={() => clearFieldError('buy_in_chips')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_chips ? 'ring-2 ring-accent' : ''}"
           />
         </div>
       </div>
@@ -348,7 +377,7 @@
         <div class="border-2 border-red-500 rounded-lg p-4 flex flex-col gap-4">
           <h3 class="text-sm font-semibold text-foreground">{m.tournament_format_options_title()}</h3>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-3 gap-3">
             <div>
               <label for="t-rebuy" class="block text-xs font-medium text-muted-foreground mb-1.5">
                 {m.tournament_rebuy_label()}
@@ -369,9 +398,19 @@
                 class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_fee ? 'ring-2 ring-accent' : ''}"
               />
             </div>
+            <div>
+              <label for="t-rebuy-chips" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_rebuy_chips_label()}
+              </label>
+              <input
+                id="t-rebuy-chips" type="number" name="rebuy_chips" min="1" step="1"
+                oninput={() => clearFieldError('rebuy_chips')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_chips ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-3 gap-3">
             <div>
               <label for="t-addon" class="block text-xs font-medium text-muted-foreground mb-1.5">
                 {m.tournament_addon_label()}
@@ -390,6 +429,16 @@
                 id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
                 oninput={() => clearFieldError('addon_fee')}
                 class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_fee ? 'ring-2 ring-accent' : ''}"
+              />
+            </div>
+            <div>
+              <label for="t-addon-chips" class="block text-xs font-medium text-muted-foreground mb-1.5">
+                {m.tournament_addon_chips_label()}
+              </label>
+              <input
+                id="t-addon-chips" type="number" name="addon_chips" min="1" step="1"
+                oninput={() => clearFieldError('addon_chips')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_chips ? 'ring-2 ring-accent' : ''}"
               />
             </div>
           </div>
