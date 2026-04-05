@@ -238,6 +238,9 @@ export type Database = {
           buy_in_fee: number | null
           rebuy_fee: number | null
           addon_fee: number | null
+          buy_in_chips: number | null
+          rebuy_chips: number | null
+          addon_chips: number | null
           blind_structure_id: string | null
           prize_structure_id: string | null
           status: string
@@ -255,6 +258,9 @@ export type Database = {
           buy_in_fee?: number | null
           rebuy_fee?: number | null
           addon_fee?: number | null
+          buy_in_chips?: number | null
+          rebuy_chips?: number | null
+          addon_chips?: number | null
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string
@@ -272,6 +278,9 @@ export type Database = {
           buy_in_fee?: number | null
           rebuy_fee?: number | null
           addon_fee?: number | null
+          buy_in_chips?: number | null
+          rebuy_chips?: number | null
+          addon_chips?: number | null
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string

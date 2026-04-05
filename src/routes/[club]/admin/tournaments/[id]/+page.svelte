@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { invalidateAll, goto } from '$app/navigation';
-  import { calculatePayouts, formatPrizePoolBreakdown } from '$lib/tournaments';
+  import { calculatePayouts, formatPrizePoolBreakdown, calculateAverageStack } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import type { TournamentTable } from '$lib/types';
@@ -72,6 +72,10 @@
 
   const totalRebuys = $derived(data.players.reduce((sum, p) => sum + p.rebuys, 0));
   const addonCount = $derived(data.players.filter((p) => p.addon).length);
+
+  const averageStack = $derived(
+    calculateAverageStack(t, data.players)
+  );
 
   const reviewPayouts = $derived(
     data.prizeStructure
@@ -622,7 +626,14 @@
         </span>
       {/if}
     </div>
-    <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
+    <div class="flex flex-col items-end gap-1">
+      <span class="text-lg font-light text-accent">€{(data.prizePool / 100).toFixed(0)}</span>
+      {#if averageStack !== null}
+        <span class="text-xs text-muted-foreground">
+          {m.tournament_avg_stack_label()}: {averageStack.toLocaleString()}
+        </span>
+      {/if}
+    </div>
   </div>
 
   {#if errorKey}
