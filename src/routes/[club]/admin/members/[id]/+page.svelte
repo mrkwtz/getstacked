@@ -33,6 +33,7 @@
   let notes = $state('');
   let registrationDate = $state('');
   let memberNumber = $state(0);
+  let role = $state<'admin' | 'member' | 'guest'>('member');
 
   let copied = $state(false);
   let generatingInvite = $state(false);
@@ -40,6 +41,10 @@
 
   const inviteUrl = $derived(
     data.pendingInviteId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${data.pendingInviteId}` : null
+  );
+
+  const memberIsLastAdmin = $derived(
+    isLastAdmin(data.clubMembers, data.targetMember.id)
   );
 
   function startEdit() {
@@ -54,7 +59,8 @@
     address = mem.address ?? '';
     notes = mem.notes ?? '';
     registrationDate = mem.created_at ? mem.created_at.slice(0, 10) : '';
-    memberNumber = mem.member_number;
+    role = mem.role as 'admin' | 'member' | 'guest';
+    memberNumber = mem.member_number ?? 0;
     errors = {};
     mode = 'edit';
   }
@@ -68,6 +74,10 @@
     const e: Record<string, string> = {};
     if (!firstName.trim()) e.firstName = m.error_required();
     if (!lastName.trim()) e.lastName = m.error_required();
+    if (role !== 'guest' && !memberNumber) e.memberNumber = m.error_required();
+    if (data.targetMember.role === 'admin' && role !== 'admin' && memberIsLastAdmin) {
+      e.role = m.member_last_admin_error();
+    }
     errors = e;
     return Object.keys(e).length === 0;
   }
@@ -80,6 +90,7 @@
       const { error: dbError } = await supabase
         .from('members')
         .update({
+          role,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           nickname: nickname.trim() || null,
@@ -90,7 +101,7 @@
           address: address.trim() || null,
           notes: notes.trim() || null,
           created_at: registrationDate ? new Date(registrationDate).toISOString() : undefined,
-          member_number: memberNumber,
+          member_number: role !== 'guest' ? memberNumber : null,
         })
         .eq('id', data.targetMember.id);
 
@@ -269,24 +280,46 @@
         {/if}
       </div>
 
-      <!-- Member number -->
-      {#if !isGuest(mem)}
-      <div>
-        <p class="text-xs text-muted-foreground mb-0.5">{m.member_member_number_label()}</p>
-        {#if mode === 'view'}
+      <!-- Member number (view mode) -->
+      {#if mode === 'view' && !isGuest(mem)}
+        <div>
+          <p class="text-xs text-muted-foreground mb-0.5">{m.member_member_number_label()}</p>
           <p class="text-foreground">{mem.member_number}</p>
-        {:else}
-          <input
-            type="number"
-            bind:value={memberNumber}
-            min="1"
-            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {errors.memberNumber ? 'border-destructive' : ''}"
-          />
-          {#if errors.memberNumber}
-            <p class="text-xs text-destructive mt-0.5">{errors.memberNumber}</p>
+        </div>
+      {/if}
+
+      <!-- Role selector (edit mode only) -->
+      {#if mode === 'edit'}
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground mb-0.5">{m.member_role_label()}</p>
+          <select
+            bind:value={role}
+            class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {errors.role ? 'border-destructive' : ''}"
+          >
+            <option value="member">{m.member_role_member()}</option>
+            <option value="admin">{m.member_role_admin()}</option>
+            <option value="guest">{m.member_role_guest()}</option>
+          </select>
+          {#if errors.role}
+            <p class="text-xs text-destructive mt-0.5">{errors.role}</p>
           {/if}
+        </div>
+
+        <!-- Member number (edit mode) -->
+        {#if role !== 'guest'}
+          <div>
+            <p class="text-xs text-muted-foreground mb-0.5">{m.member_member_number_label()}</p>
+            <input
+              type="number"
+              bind:value={memberNumber}
+              min="1"
+              class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors {errors.memberNumber ? 'border-destructive' : ''}"
+            />
+            {#if errors.memberNumber}
+              <p class="text-xs text-destructive mt-0.5">{errors.memberNumber}</p>
+            {/if}
+          </div>
         {/if}
-      </div>
       {/if}
 
       <!-- Birthday -->
