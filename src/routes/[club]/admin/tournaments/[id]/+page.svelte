@@ -790,7 +790,7 @@
         <option value="">{m.tournament_select_player()}</option>
         {#each data.availableMembers as player}
           <option value={player.id}>
-            {player.nickname || `${player.first_name} ${player.last_name}`} #{player.member_number}
+            {player.nickname || `${player.first_name} ${player.last_name}`}{player.member_number != null ? ` #${player.member_number}` : ''}
           </option>
         {/each}
       </select>
