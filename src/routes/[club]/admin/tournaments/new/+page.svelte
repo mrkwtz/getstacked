@@ -170,8 +170,10 @@
       if (!name) errors.name = true;
       if (!date) errors.date = true;
       if (!buyInRaw || buyIn <= 0) errors.buy_in_amount = true;
-      const buyInChips = buyInChipsRaw ? parseInt(buyInChipsRaw, 10) : NaN;
-      if (!buyInChipsRaw || isNaN(buyInChips) || buyInChips < 1) errors.buy_in_chips = true;
+      let buyInChips: number | null = null;
+      const buyInChipsVal = buyInChipsRaw ? parseInt(buyInChipsRaw, 10) : NaN;
+      if (!buyInChipsRaw || isNaN(buyInChipsVal) || buyInChipsVal < 1) errors.buy_in_chips = true;
+      else buyInChips = buyInChipsVal;
 
       let rebuyAmount: number | null = null;
       let addonAmount: number | null = null;
