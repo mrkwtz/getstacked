@@ -70,6 +70,7 @@
     const e: Record<string, string> = {};
     if (!firstName.trim()) e.firstName = m.error_required();
     if (!lastName.trim()) e.lastName = m.error_required();
+    if (role !== 'guest' && !memberNumber) e.memberNumber = m.error_required();
     errors = e;
     return Object.keys(e).length === 0;
   }

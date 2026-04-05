@@ -200,7 +200,7 @@
       {:else if mem.role === 'admin'}
         <span class="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent font-medium mt-0.5 inline-block">{m.member_role_admin()}</span>
       {/if}
-      {#if !isGuest(mem)}
+      {#if !isGuest(mem) && mem.member_number != null}
         <p class="text-xs text-muted-foreground mt-0.5">#{mem.member_number}</p>
       {/if}
     </div>
@@ -281,7 +281,7 @@
       </div>
 
       <!-- Member number (view mode) -->
-      {#if mode === 'view' && !isGuest(mem)}
+      {#if mode === 'view' && !isGuest(mem) && mem.member_number != null}
         <div>
           <p class="text-xs text-muted-foreground mb-0.5">{m.member_member_number_label()}</p>
           <p class="text-foreground">{mem.member_number}</p>
