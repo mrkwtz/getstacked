@@ -197,5 +197,9 @@
   "invite_copy": "Copy",
   "invite_copied": "Copied!",
   "tournament_select_player": "Select player…",
-  "club_switch_title": "Switch club"
+  "club_switch_title": "Switch club",
+  "tournament_buy_in_chips_label": "Buy-in chips",
+  "tournament_rebuy_chips_label": "Rebuy chips",
+  "tournament_addon_chips_label": "Add-on chips",
+  "tournament_avg_stack_label": "Avg. stack"
 }
