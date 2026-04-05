@@ -246,12 +246,12 @@ describe('calculateAverageStack', () => {
   });
 
   it('rounds down (Math.floor) fractional result', () => {
+    // 3 players * 1 chip = 3 total chips, 2 remaining => 1.5, floors to 1
     const players = [
       { finish_position: null, rebuys: 0, addon: false },
       { finish_position: null, rebuys: 0, addon: false },
-      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: 3, rebuys: 0, addon: false },
     ];
-    // Use odd buy_in_chips to force a fraction: 10001 chips * 3 players = 30003, / 3 = 10001 (exact here)
-    expect(calculateAverageStack({ buy_in_chips: 10001, rebuy_chips: null, addon_chips: null }, players)).toBe(Math.floor(30003 / 3));
+    expect(calculateAverageStack({ buy_in_chips: 1, rebuy_chips: null, addon_chips: null }, players)).toBe(1);
   });
 });
