@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { invalidateAll, goto } from '$app/navigation';
-  import { displayName } from '$lib/members';
+  import { displayName, isGuest, isLastAdmin } from '$lib/members';
   import * as m from '$lib/paraglide/messages';
   import type { Member } from '$lib/types';
 
@@ -11,6 +11,7 @@
       currentMember: Member;
       targetMember: Member;
       pendingInviteId: string | null;
+      clubMembers: { id: string; role: string }[];
     };
   }>();
 
@@ -183,7 +184,14 @@
   <div class="flex items-start justify-between">
     <div>
       <h1 class="text-base font-semibold text-foreground">{displayName(mem)}</h1>
-      <p class="text-xs text-muted-foreground mt-0.5">#{mem.member_number}</p>
+      {#if mem.role === 'guest'}
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium mt-0.5 inline-block">{m.member_role_guest()}</span>
+      {:else if mem.role === 'admin'}
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent font-medium mt-0.5 inline-block">{m.member_role_admin()}</span>
+      {/if}
+      {#if !isGuest(mem)}
+        <p class="text-xs text-muted-foreground mt-0.5">#{mem.member_number}</p>
+      {/if}
     </div>
     {#if mode === 'view'}
       <div class="flex items-center gap-2">
@@ -262,6 +270,7 @@
       </div>
 
       <!-- Member number -->
+      {#if !isGuest(mem)}
       <div>
         <p class="text-xs text-muted-foreground mb-0.5">{m.member_member_number_label()}</p>
         {#if mode === 'view'}
@@ -278,6 +287,7 @@
           {/if}
         {/if}
       </div>
+      {/if}
 
       <!-- Birthday -->
       <div>
@@ -401,7 +411,7 @@
   </div>
 
   <!-- Account linking section -->
-  {#if mode === 'view'}
+  {#if mode === 'view' && !isGuest(mem)}
     <div class="bg-card border border-border rounded-lg p-5 flex flex-col gap-3">
       <div class="flex items-center gap-2">
         {#if mem.user_id}
