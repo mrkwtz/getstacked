@@ -12,7 +12,8 @@
         last_name: string;
         nickname: string | null;
         user_id: string | null;
-        member_number: number;
+        member_number: number | null;
+        role: string;
         created_at: string;
       }[];
     };
@@ -20,8 +21,11 @@
 
   // Compute next available member number
   function nextMemberNumber(): number {
-    if (data.members.length === 0) return 1;
-    return Math.max(...data.members.map((mem: { member_number: number }) => mem.member_number)) + 1;
+    const numbers = data.members
+      .map((mem: { member_number: number | null }) => mem.member_number)
+      .filter((n: number | null): n is number => n !== null);
+    if (numbers.length === 0) return 1;
+    return Math.max(...numbers) + 1;
   }
 
   let showModal = $state(false);
@@ -39,6 +43,7 @@
   let notes = $state('');
   let registrationDate = $state(new Date().toISOString().slice(0, 10));
   let memberNumber = $state(0);
+  let role = $state<'admin' | 'member' | 'guest'>('member');
 
   function openModal() {
     firstName = '';
@@ -52,6 +57,7 @@
     notes = '';
     registrationDate = new Date().toISOString().slice(0, 10);
     memberNumber = nextMemberNumber();
+    role = 'member';
     errors = {};
     showModal = true;
   }
@@ -75,6 +81,7 @@
       const supabase = createClient();
       const { error } = await supabase.from('members').insert({
         club_id: data.club.id,
+        role,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         nickname: nickname.trim() || null,
@@ -85,7 +92,7 @@
         address: address.trim() || null,
         notes: notes.trim() || null,
         created_at: registrationDate ? new Date(registrationDate).toISOString() : undefined,
-        member_number: memberNumber,
+        ...(role !== 'guest' && { member_number: memberNumber }),
       });
       if (error) {
         errors = { form: error.message };
@@ -182,6 +189,11 @@
                 {m.member_registration_date_label()} <span class={sortKey === 'created_at' ? '' : 'opacity-30'}>{sortIcon('created_at')}</span>
               </button>
             </th>
+            <th class="px-4 py-2.5 text-left font-normal">
+              <span class="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                {m.member_role_label()}
+              </span>
+            </th>
             <th class="px-4 py-2.5"></th>
           </tr>
         </thead>
@@ -189,11 +201,24 @@
           {#each sortedMembers as member}
             <tr onclick={() => goto(`/${data.club.slug}/admin/members/${member.id}`)}
               class="border-b border-border last:border-0 hover:bg-card/80 cursor-pointer transition-colors">
-              <td class="px-4 py-3 text-xs text-muted-foreground">{member.member_number}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">
+                {#if member.member_number !== null}
+                  {member.member_number}
+                {:else}
+                  <span class="text-muted-foreground/30">—</span>
+                {/if}
+              </td>
               <td class="px-4 py-3 text-sm font-medium text-foreground">{member.first_name}</td>
               <td class="px-4 py-3 text-sm text-foreground">{member.last_name}</td>
               <td class="px-4 py-3 text-xs text-muted-foreground">{member.nickname ?? ''}</td>
               <td class="px-4 py-3 text-xs text-muted-foreground">{formatDate(member.created_at)}</td>
+              <td class="px-4 py-3">
+                {#if member.role === 'guest'}
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{m.member_role_guest()}</span>
+                {:else if member.role === 'admin'}
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent font-medium">{m.member_role_admin()}</span>
+                {/if}
+              </td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-center">
                   {#if member.user_id}
@@ -363,18 +388,36 @@
           />
         </div>
 
-        <!-- Member number -->
-        <div class="flex flex-col gap-1">
-          <label for="memberNumber" class="block text-xs font-medium text-muted-foreground mb-1">
-            {m.member_member_number_label()}
+        {#if role !== 'guest'}
+          <!-- Member number -->
+          <div class="flex flex-col gap-1">
+            <label for="memberNumber" class="block text-xs font-medium text-muted-foreground mb-1">
+              {m.member_member_number_label()}
+            </label>
+            <input
+              id="memberNumber"
+              type="number"
+              bind:value={memberNumber}
+              min="1"
+              class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
+            />
+          </div>
+        {/if}
+
+        <!-- Role -->
+        <div class="flex flex-col gap-1 col-span-2">
+          <label for="role" class="block text-xs font-medium text-muted-foreground mb-1">
+            {m.member_role_label()}
           </label>
-          <input
-            id="memberNumber"
-            type="number"
-            bind:value={memberNumber}
-            min="1"
+          <select
+            id="role"
+            bind:value={role}
             class="w-full px-3 py-2 bg-background border border-input rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors"
-          />
+          >
+            <option value="member">{m.member_role_member()}</option>
+            <option value="admin">{m.member_role_admin()}</option>
+            <option value="guest">{m.member_role_guest()}</option>
+          </select>
         </div>
       </div>
 
