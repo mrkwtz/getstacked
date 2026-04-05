@@ -69,3 +69,19 @@ export function calculateTotalFees(
 ): number {
   return playerCount * buyInFee + totalRebuys * rebuyFee + addonCount * addonFee;
 }
+
+export function calculateAverageStack(
+  tournament: { buy_in_chips: number | null; rebuy_chips: number | null; addon_chips: number | null },
+  players: { finish_position: number | null; rebuys: number; addon: boolean }[]
+): number | null {
+  if (tournament.buy_in_chips === null) return null;
+  const remaining = players.filter((p) => p.finish_position === null);
+  if (remaining.length === 0) return null;
+  const totalRebuys = players.reduce((sum, p) => sum + p.rebuys, 0);
+  const addonCount = players.filter((p) => p.addon).length;
+  const totalChips =
+    players.length * tournament.buy_in_chips +
+    totalRebuys * (tournament.rebuy_chips ?? 0) +
+    addonCount * (tournament.addon_chips ?? 0);
+  return Math.floor(totalChips / remaining.length);
+}

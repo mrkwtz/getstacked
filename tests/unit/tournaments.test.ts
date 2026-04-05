@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validatePayouts, calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown, calculateTotalFees } from '$lib/tournaments';
+import { validatePayouts, calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown, calculateTotalFees, calculateAverageStack } from '$lib/tournaments';
 
 describe('validatePayouts', () => {
   it('returns error_required for empty array', () => {
@@ -198,5 +198,60 @@ describe('calculateTotalFees', () => {
 
   it('handles fee on buy-in only with rebuys and addons having no fee', () => {
     expect(calculateTotalFees(4, 500, 3, 0, 2, 0)).toBe(2000);
+  });
+});
+
+describe('calculateAverageStack', () => {
+  const chipConfig = { buy_in_chips: 10000, rebuy_chips: 10000, addon_chips: 5000 };
+
+  it('returns null when buy_in_chips is null', () => {
+    const players = [{ finish_position: null, rebuys: 0, addon: false }];
+    expect(calculateAverageStack({ buy_in_chips: null, rebuy_chips: null, addon_chips: null }, players)).toBeNull();
+  });
+
+  it('returns null when no players remain (all busted)', () => {
+    const players = [
+      { finish_position: 2, rebuys: 0, addon: false },
+      { finish_position: 1, rebuys: 0, addon: false },
+    ];
+    expect(calculateAverageStack(chipConfig, players)).toBeNull();
+  });
+
+  it('freezeout: 4 players, none busted', () => {
+    const players = Array.from({ length: 4 }, () => ({ finish_position: null, rebuys: 0, addon: false }));
+    // total chips = 4 * 10000 = 40000, remaining = 4, avg = 10000
+    expect(calculateAverageStack(chipConfig, players)).toBe(10000);
+  });
+
+  it('freezeout: 4 players, 2 busted', () => {
+    const players = [
+      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: 4, rebuys: 0, addon: false },
+      { finish_position: 3, rebuys: 0, addon: false },
+    ];
+    // total chips = 4 * 10000 = 40000, remaining = 2, avg = 20000
+    expect(calculateAverageStack(chipConfig, players)).toBe(20000);
+  });
+
+  it('rebuy: counts rebuy and addon chips', () => {
+    const players = [
+      { finish_position: null, rebuys: 2, addon: true },
+      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: 3, rebuys: 1, addon: false },
+    ];
+    // total chips = 3*10000 (buyins) + (2+1)*10000 (rebuys) + 1*5000 (addon) = 30000+30000+5000 = 65000
+    // remaining = 2, avg = 32500
+    expect(calculateAverageStack(chipConfig, players)).toBe(32500);
+  });
+
+  it('rounds down (Math.floor) fractional result', () => {
+    const players = [
+      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: null, rebuys: 0, addon: false },
+      { finish_position: null, rebuys: 0, addon: false },
+    ];
+    // Use odd buy_in_chips to force a fraction: 10001 chips * 3 players = 30003, / 3 = 10001 (exact here)
+    expect(calculateAverageStack({ buy_in_chips: 10001, rebuy_chips: null, addon_chips: null }, players)).toBe(Math.floor(30003 / 3));
   });
 });
