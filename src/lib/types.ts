@@ -567,10 +567,21 @@ export type ClubContext = {
 };
 
 export interface BlindLevel {
-  small_blind: number;
-  big_blind: number;
-  ante: number;
+  type?: 'level' | 'break'; // omitted means 'level' (backwards-compatible)
+  small_blind: number;       // 0 for breaks
+  big_blind: number;         // 0 for breaks
+  ante: number;              // 0 for breaks
   duration_minutes: number;
+  label?: string;            // optional name, e.g. "Dinner Break"
+}
+
+export interface TimerState {
+  started_at: string;
+  pauses: Array<{
+    paused_at: string;
+    resumed_at: string | null;
+  }>;
+  skip_ms: number;
 }
 
 export interface Payout {
@@ -612,8 +623,9 @@ export interface Tournament {
   blind_structure_id: string | null;
   prize_structure_id: string | null;
   status: 'registration' | 'running' | 'finished';
+  timer_state?: TimerState | null;
   created_at: string;
-  blind_structures?: { name: string } | null;
+  blind_structures?: { name: string; levels: BlindLevel[] } | null;
   prize_structures?: { name: string; payouts: { position: number; percentage: number }[] } | null;
 }
 
