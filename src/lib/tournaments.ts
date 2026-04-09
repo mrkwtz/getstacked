@@ -66,7 +66,7 @@ export function calculatePayouts(
   return results;
 }
 
-export function calculateTotalFees(
+export function calculateTotalRake(
   playerCount: number,
   buyInFee: number,
   totalRebuys: number,

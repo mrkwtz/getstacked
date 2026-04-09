@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validatePayouts, calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown, calculateTotalFees, calculateAverageStack } from '$lib/tournaments';
+import { validatePayouts, calculatePrizePool, calculatePayouts, formatPrizePoolBreakdown, calculateTotalRake, calculateAverageStack } from '$lib/tournaments';
 
 describe('validatePayouts', () => {
   it('returns error_required for empty array', () => {
@@ -188,26 +188,26 @@ describe('formatPrizePoolBreakdown', () => {
   });
 });
 
-describe('calculateTotalFees', () => {
-  it('calculates fees for buy-in only (freezeout)', () => {
-    expect(calculateTotalFees(4, 500, 0, 0, 0, 0)).toBe(2000);
+describe('calculateTotalRake', () => {
+  it('calculates rake for buy-in only (freezeout)', () => {
+    expect(calculateTotalRake(4, 500, 0, 0, 0, 0)).toBe(2000);
   });
 
-  it('calculates fees for all entry types', () => {
-    // 3 players * 500 buy-in fee + 2 rebuys * 300 rebuy fee + 1 addon * 200 addon fee
-    expect(calculateTotalFees(3, 500, 2, 300, 1, 200)).toBe(2300);
+  it('calculates rake for all entry types', () => {
+    // 3 players * 500 buy-in rake + 2 rebuys * 300 rebuy rake + 1 addon * 200 addon rake
+    expect(calculateTotalRake(3, 500, 2, 300, 1, 200)).toBe(2300);
   });
 
-  it('returns 0 when all fees are 0', () => {
-    expect(calculateTotalFees(5, 0, 3, 0, 2, 0)).toBe(0);
+  it('returns 0 when all rakes are 0', () => {
+    expect(calculateTotalRake(5, 0, 3, 0, 2, 0)).toBe(0);
   });
 
   it('returns 0 with zero players', () => {
-    expect(calculateTotalFees(0, 500, 0, 300, 0, 200)).toBe(0);
+    expect(calculateTotalRake(0, 500, 0, 300, 0, 200)).toBe(0);
   });
 
-  it('handles fee on buy-in only with rebuys and addons having no fee', () => {
-    expect(calculateTotalFees(4, 500, 3, 0, 2, 0)).toBe(2000);
+  it('handles rake on buy-in only with rebuys and addons having no rake', () => {
+    expect(calculateTotalRake(4, 500, 3, 0, 2, 0)).toBe(2000);
   });
 });
 
