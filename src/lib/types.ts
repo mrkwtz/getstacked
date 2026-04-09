@@ -244,6 +244,7 @@ export type Database = {
           blind_structure_id: string | null
           prize_structure_id: string | null
           status: string
+          timer_state: Json | null
           created_at: string
         }
         Insert: {
@@ -264,6 +265,7 @@ export type Database = {
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string
+          timer_state?: Json | null
           created_at?: string
         }
         Update: {
@@ -284,6 +286,7 @@ export type Database = {
           blind_structure_id?: string | null
           prize_structure_id?: string | null
           status?: string
+          timer_state?: Json | null
           created_at?: string
         }
         Relationships: [

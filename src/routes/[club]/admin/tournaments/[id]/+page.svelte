@@ -4,6 +4,19 @@
   import { calculatePayouts, formatPrizePoolBreakdown, calculateAverageStack } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
+  import { page } from '$app/stores';
+  import {
+    computeCurrentLevelIndex,
+    computeRemainingMs,
+    computePlaytimeMs,
+    computeTimeUntilNextBreakMs,
+    isTimerPaused,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    skipLevel,
+  } from '$lib/timer';
+  import type { TimerState, BlindLevel, Json } from '$lib/types';
   import type { TournamentTable } from '$lib/types';
   import type { PageData } from './$types';
   import { Pencil } from '@lucide/svelte';
@@ -76,6 +89,43 @@
   const averageStack = $derived(
     calculateAverageStack(t, data.players)
   );
+
+  let now = $state(new Date());
+
+  $effect(() => {
+    const tick = setInterval(() => { now = new Date(); }, 1000);
+    const poll = setInterval(() => { invalidateAll(); }, 5000);
+    return () => { clearInterval(tick); clearInterval(poll); };
+  });
+
+  const timerState = $derived(t.timer_state as unknown as TimerState | null);
+  const blindLevels = $derived((t.blind_structures?.levels ?? []) as unknown as BlindLevel[]);
+
+  const currentLevelIdx = $derived(
+    timerState && blindLevels.length > 0
+      ? computeCurrentLevelIndex(timerState, blindLevels, now)
+      : 0,
+  );
+  const currentLevel = $derived(blindLevels[currentLevelIdx] ?? null);
+  const remainingMs = $derived(
+    timerState && blindLevels.length > 0
+      ? computeRemainingMs(timerState, blindLevels, now)
+      : 0,
+  );
+  const nextLevel = $derived(blindLevels[currentLevelIdx + 1] ?? null);
+  const timerPaused = $derived(timerState ? isTimerPaused(timerState) : false);
+  const levelProgress = $derived(
+    currentLevel
+      ? 1 - remainingMs / (currentLevel.duration_minutes * 60_000)
+      : 0,
+  );
+
+  function formatTime(ms: number): string {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
 
   const reviewPayouts = $derived(
     data.prizeStructure
@@ -234,11 +284,42 @@
     errorKey = null;
     try {
       const supabase = createClient();
-      await supabase.from('tournaments').update({ status: 'running' }).eq('id', data.tournament.id);
+      const newTimerState = startTimer(new Date());
+      await supabase.from('tournaments').update({
+        status: 'running',
+        timer_state: newTimerState as unknown as Json,
+      }).eq('id', data.tournament.id);
       await invalidateAll();
     } finally {
       loading = false;
     }
+  }
+
+  async function handleTimerPause() {
+    if (!timerState) return;
+    const supabase = createClient();
+    await supabase.from('tournaments')
+      .update({ timer_state: pauseTimer(timerState, new Date()) as unknown as Json })
+      .eq('id', data.tournament.id);
+    await invalidateAll();
+  }
+
+  async function handleTimerResume() {
+    if (!timerState) return;
+    const supabase = createClient();
+    await supabase.from('tournaments')
+      .update({ timer_state: resumeTimer(timerState, new Date()) as unknown as Json })
+      .eq('id', data.tournament.id);
+    await invalidateAll();
+  }
+
+  async function handleTimerSkip() {
+    if (!timerState || blindLevels.length === 0) return;
+    const supabase = createClient();
+    await supabase.from('tournaments')
+      .update({ timer_state: skipLevel(timerState, blindLevels, new Date()) as unknown as Json })
+      .eq('id', data.tournament.id);
+    await invalidateAll();
   }
 
   async function handleBustPlayer(playerId: string) {
@@ -607,6 +688,71 @@
       {/if}
     </div>
   </div>
+
+  {#if t.status === 'running' && timerState && blindLevels.length > 0}
+    <div class="bg-card border border-border rounded-lg px-4 py-3 flex items-center gap-4">
+      <div class="min-w-0">
+        <div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">
+          {currentLevel?.type === 'break'
+            ? (currentLevel.label || m.timer_break())
+            : `${m.timer_level()} ${currentLevelIdx + 1 - blindLevels.slice(0, currentLevelIdx).filter((l) => l.type === 'break').length} · ${currentLevel?.small_blind}/${currentLevel?.big_blind}`}
+        </div>
+        <div class="text-2xl font-bold font-mono tracking-widest leading-none {remainingMs === 0 ? 'text-accent' : 'text-foreground'}">
+          {remainingMs === 0 ? m.timer_times_up() : formatTime(remainingMs)}
+        </div>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="bg-border rounded-full h-1 mb-1.5">
+          <div
+            class="bg-accent h-1 rounded-full transition-all duration-1000"
+            style="width: {Math.min(100, Math.round(levelProgress * 100))}%"
+          ></div>
+        </div>
+        {#if nextLevel}
+          <div class="text-[10px] text-muted-foreground truncate">
+            {m.timer_next_preview()}:
+            {nextLevel.type === 'break'
+              ? (nextLevel.label || m.timer_break())
+              : `${nextLevel.small_blind}/${nextLevel.big_blind}`}
+            · {nextLevel.duration_minutes} min
+          </div>
+        {/if}
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        {#if timerPaused}
+          <button
+            type="button"
+            onclick={handleTimerResume}
+            class="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:bg-accent/90 transition-colors cursor-pointer"
+          >
+            ▶ {m.timer_resume()}
+          </button>
+        {:else}
+          <button
+            type="button"
+            onclick={handleTimerPause}
+            class="text-xs bg-muted text-foreground px-3 py-1.5 rounded-md hover:bg-muted/80 transition-colors cursor-pointer"
+          >
+            ⏸ {m.timer_pause()}
+          </button>
+        {/if}
+        <button
+          type="button"
+          onclick={handleTimerSkip}
+          class="text-xs bg-muted text-foreground px-3 py-1.5 rounded-md hover:bg-muted/80 transition-colors cursor-pointer"
+        >
+          ⏭ {m.timer_next_level()}
+        </button>
+        <a
+          href="{$page.url.pathname}/clock"
+          target="_blank"
+          class="text-xs text-accent hover:text-accent/80 transition-colors ml-1"
+        >
+          🖥 {m.timer_clock_link()} ↗
+        </a>
+      </div>
+    </div>
+  {/if}
 
   <!-- Prize pool callout -->
   <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-start">
