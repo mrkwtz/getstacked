@@ -109,59 +109,73 @@
     </span>
   </div>
 
-  <!-- Center: big timer -->
+  <!-- Center -->
   <div class="flex-1 flex flex-col items-center justify-center gap-6">
-    <div class="text-xs text-zinc-500 uppercase tracking-[0.3em]">{levelLabel}</div>
+    {#if t.status === 'finished'}
+      <div class="text-xs text-zinc-500 uppercase tracking-[0.3em]">Tournament</div>
+      <div class="text-[min(16vw,6rem)] font-bold font-mono leading-none tracking-widest text-zinc-600">
+        OVER
+      </div>
+      <div class="w-64 bg-zinc-800 rounded-full h-1">
+        <div class="bg-zinc-600 h-1 rounded-full w-full"></div>
+      </div>
+    {:else}
+      <div class="text-xs text-zinc-500 uppercase tracking-[0.3em]">{levelLabel}</div>
 
-    <div class="text-[min(20vw,8rem)] font-bold font-mono leading-none tracking-widest {remainingMs === 0 ? 'text-accent' : timerPaused ? 'text-zinc-400' : 'text-white'}">
-      {formatTime(remainingMs)}
-    </div>
+      <div class="text-[min(20vw,8rem)] font-bold font-mono leading-none tracking-widest {remainingMs === 0 ? 'text-accent' : timerPaused ? 'text-zinc-500' : 'text-white'}">
+        {formatTime(remainingMs)}
+      </div>
 
-    <!-- Progress bar -->
-    <div class="w-64 bg-zinc-800 rounded-full h-1">
-      <div
-        class="bg-accent h-1 rounded-full transition-all duration-1000"
-        style="width: {Math.min(100, Math.round(levelProgress * 100))}%"
-      ></div>
-    </div>
+      <!-- Progress bar -->
+      <div class="w-64 bg-zinc-800 rounded-full h-1">
+        <div
+          class="bg-accent h-1 rounded-full transition-all duration-1000"
+          style="width: {Math.min(100, Math.round(levelProgress * 100))}%"
+        ></div>
+      </div>
 
-    <!-- Blinds row -->
-    {#if currentLevel && !isBreak}
-      <div class="flex gap-8 mt-2">
-        <div class="text-center">
-          <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_small_blind()}</div>
-          <div class="text-3xl font-semibold text-zinc-200">{currentLevel.small_blind}</div>
-        </div>
-        <div class="text-center">
-          <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_big_blind()}</div>
-          <div class="text-3xl font-semibold text-zinc-200">{currentLevel.big_blind}</div>
-        </div>
-        {#if currentLevel.ante > 0}
+      {#if timerPaused}
+        <div class="text-xs text-zinc-500 uppercase tracking-[0.3em] animate-pulse">⏸ paused</div>
+      {/if}
+
+      <!-- Blinds row -->
+      {#if currentLevel && !isBreak}
+        <div class="flex gap-8 mt-2">
           <div class="text-center">
-            <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_ante()}</div>
-            <div class="text-3xl font-semibold text-zinc-200">{currentLevel.ante}</div>
+            <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_small_blind()}</div>
+            <div class="text-3xl font-semibold text-zinc-200">{currentLevel.small_blind}</div>
           </div>
-        {/if}
-        {#if nextLevel}
-          <div class="text-center border-l border-zinc-800 pl-8">
-            <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_next_level()}</div>
-            <div class="text-base text-zinc-500 mt-1.5">
-              {nextLevel.type === 'break'
-                ? (nextLevel.label || m.timer_break())
-                : `${nextLevel.small_blind} / ${nextLevel.big_blind}`}
+          <div class="text-center">
+            <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_big_blind()}</div>
+            <div class="text-3xl font-semibold text-zinc-200">{currentLevel.big_blind}</div>
+          </div>
+          {#if currentLevel.ante > 0}
+            <div class="text-center">
+              <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_ante()}</div>
+              <div class="text-3xl font-semibold text-zinc-200">{currentLevel.ante}</div>
             </div>
-          </div>
-        {/if}
-      </div>
-    {:else if isBreak && nextLevel}
-      <div class="text-center">
-        <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_next_level()}</div>
-        <div class="text-base text-zinc-500">
-          {nextLevel.type === 'break'
-            ? (nextLevel.label || m.timer_break())
-            : `${nextLevel.small_blind} / ${nextLevel.big_blind}`}
+          {/if}
+          {#if nextLevel}
+            <div class="text-center border-l border-zinc-800 pl-8">
+              <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_next_level()}</div>
+              <div class="text-base text-zinc-500 mt-1.5">
+                {nextLevel.type === 'break'
+                  ? (nextLevel.label || m.timer_break())
+                  : `${nextLevel.small_blind} / ${nextLevel.big_blind}`}
+              </div>
+            </div>
+          {/if}
         </div>
-      </div>
+      {:else if isBreak && nextLevel}
+        <div class="text-center">
+          <div class="text-[10px] text-zinc-600 uppercase tracking-widest mb-1">{m.clock_next_level()}</div>
+          <div class="text-base text-zinc-500">
+            {nextLevel.type === 'break'
+              ? (nextLevel.label || m.timer_break())
+              : `${nextLevel.small_blind} / ${nextLevel.big_blind}`}
+          </div>
+        </div>
+      {/if}
     {/if}
   </div>
 
