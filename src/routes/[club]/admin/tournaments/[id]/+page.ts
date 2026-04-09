@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { calculatePrizePool, calculateTotalFees } from '$lib/tournaments';
+import { calculatePrizePool, calculateTotalRake } from '$lib/tournaments';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, parent }) => {
@@ -48,18 +48,18 @@ export const load: PageLoad = async ({ params, parent }) => {
     tournament.addon_amount ?? 0,
   );
 
-  const totalFees = calculateTotalFees(
+  const totalRake = calculateTotalRake(
     allPlayers.length,
-    tournament.buy_in_fee ?? 0,
+    tournament.buy_in_rake ?? 0,
     totalRebuys,
-    tournament.rebuy_fee ?? 0,
+    tournament.rebuy_rake ?? 0,
     addonCount,
-    tournament.addon_fee ?? 0,
+    tournament.addon_rake ?? 0,
   );
 
   const prizeStructure = tournament.prize_structures
     ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
     : null;
 
-  return { tournament, players: allPlayers, availableMembers, prizePool, totalFees, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
+  return { tournament, players: allPlayers, availableMembers, prizePool, totalRake, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
 };

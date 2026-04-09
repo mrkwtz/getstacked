@@ -766,9 +766,9 @@
           </span>
         </span>
       {/each}
-      {#if data.totalFees > 0}
+      {#if data.totalRake > 0}
         <span class="text-xs text-muted-foreground">
-          {m.tournament_fees_label()}: €{(data.totalFees / 100).toFixed(0)}
+          {m.tournament_rake_label()}: €{(data.totalRake / 100).toFixed(0)}
         </span>
       {/if}
     </div>

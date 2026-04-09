@@ -311,7 +311,7 @@
         </div>
         <div>
           <label for="t-buyin-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-            {m.tournament_buy_in_fee_label()}
+            {m.tournament_buy_in_rake_label()}
           </label>
           <input
             id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
@@ -392,7 +392,7 @@
             </div>
             <div>
               <label for="t-rebuy-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-                {m.tournament_rebuy_fee_label()}
+                {m.tournament_rebuy_rake_label()}
               </label>
               <input
                 id="t-rebuy-fee" type="number" name="rebuy_fee" min="0" step="0.01"
@@ -425,7 +425,7 @@
             </div>
             <div>
               <label for="t-addon-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
-                {m.tournament_addon_fee_label()}
+                {m.tournament_addon_rake_label()}
               </label>
               <input
                 id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
