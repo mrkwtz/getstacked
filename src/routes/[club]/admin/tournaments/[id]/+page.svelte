@@ -758,7 +758,7 @@
   <div class="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 flex justify-between items-start">
     <div class="flex flex-col gap-0.5">
       <span class="text-xs font-medium text-muted-foreground">{m.tournament_prize_pool_label()}</span>
-      {#each formatPrizePoolBreakdown(data.players.length, t.buy_in_amount, totalRebuys, t.rebuy_amount ?? 0, addonCount, t.addon_amount ?? 0) as part}
+      {#each formatPrizePoolBreakdown(data.players.length, t.buy_in_amount - (t.buy_in_rake ?? 0), totalRebuys, (t.rebuy_amount ?? 0) - (t.rebuy_rake ?? 0), addonCount, (t.addon_amount ?? 0) - (t.addon_rake ?? 0)) as part}
         <span class="text-xs text-muted-foreground">
           {part.count} × €{(part.amountCents / 100).toFixed(0)}
           <span class="opacity-60">
