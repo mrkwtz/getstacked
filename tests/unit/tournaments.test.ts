@@ -48,31 +48,41 @@ describe('validatePayouts', () => {
 });
 
 describe('calculatePrizePool', () => {
-  it('freezeout: player_count × buy_in only', () => {
-    expect(calculatePrizePool(4, 2000, 0, 0, 0, 0)).toBe(8000);
+  it('freezeout: player_count × buy_in only, no rake', () => {
+    expect(calculatePrizePool(4, 2000, 0, 0, 0, 0, 0, 0, 0)).toBe(8000);
   });
 
-  it('rebuy: adds rebuys and add-ons', () => {
-    expect(calculatePrizePool(3, 2000, 2, 2000, 1, 1000)).toBe(
+  it('freezeout: deducts buy-in rake from prize pool', () => {
+    // 4 players × (€20 - €2 rake) = 4 × 1800 = 7200
+    expect(calculatePrizePool(4, 2000, 200, 0, 0, 0, 0, 0, 0)).toBe(7200);
+  });
+
+  it('rebuy: adds rebuys and add-ons, no rake', () => {
+    expect(calculatePrizePool(3, 2000, 0, 2, 2000, 0, 1, 1000, 0)).toBe(
       3 * 2000 + 2 * 2000 + 1 * 1000,
     );
   });
 
+  it('rebuy: deducts rake from all entry types', () => {
+    // 3 × (2000-200) + 2 × (2000-300) + 1 × (1000-100) = 5400+3400+900 = 9700
+    expect(calculatePrizePool(3, 2000, 200, 2, 2000, 300, 1, 1000, 100)).toBe(9700);
+  });
+
   it('zero players returns 0', () => {
-    expect(calculatePrizePool(0, 2000, 0, 0, 0, 0)).toBe(0);
+    expect(calculatePrizePool(0, 2000, 0, 0, 0, 0, 0, 0, 0)).toBe(0);
   });
 
   it('all amounts in cents in, cents out', () => {
-    expect(calculatePrizePool(1, 5000, 0, 0, 0, 0)).toBe(5000);
+    expect(calculatePrizePool(1, 5000, 0, 0, 0, 0, 0, 0, 0)).toBe(5000);
   });
 
   it('returns correct prize pool for basic arithmetic case', () => {
-    // 10 players * 100 buy-in + 3 rebuys * 100 + 2 add-ons * 50
-    expect(calculatePrizePool(10, 100, 3, 100, 2, 50)).toBe(1400);
+    // 10 players * 100 buy-in + 3 rebuys * 100 + 2 add-ons * 50, no rake
+    expect(calculatePrizePool(10, 100, 0, 3, 100, 0, 2, 50, 0)).toBe(1400);
   });
 
   it('handles no rebuys and no add-ons', () => {
-    expect(calculatePrizePool(5, 200, 0, 0, 0, 0)).toBe(1000);
+    expect(calculatePrizePool(5, 200, 0, 0, 0, 0, 0, 0, 0)).toBe(1000);
   });
 });
 

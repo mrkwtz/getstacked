@@ -12,13 +12,20 @@ export function validatePayouts(
 
 export function calculatePrizePool(
   playerCount: number,
-  buyIn: number,
+  buyInAmount: number,
+  buyInRake: number,
   totalRebuys: number,
   rebuyAmount: number,
+  rebuyRake: number,
   addonCount: number,
-  addonAmount: number
+  addonAmount: number,
+  addonRake: number
 ): number {
-  return playerCount * buyIn + totalRebuys * rebuyAmount + addonCount * addonAmount;
+  return (
+    playerCount * (buyInAmount - buyInRake) +
+    totalRebuys * (rebuyAmount - rebuyRake) +
+    addonCount * (addonAmount - addonRake)
+  );
 }
 
 export interface PrizePoolPart {
