@@ -235,9 +235,9 @@ export type Database = {
           buy_in_amount: number
           rebuy_amount: number | null
           addon_amount: number | null
-          buy_in_fee: number | null
-          rebuy_fee: number | null
-          addon_fee: number | null
+          buy_in_rake: number | null
+          rebuy_rake: number | null
+          addon_rake: number | null
           buy_in_chips: number | null
           rebuy_chips: number | null
           addon_chips: number | null
@@ -256,9 +256,9 @@ export type Database = {
           buy_in_amount: number
           rebuy_amount?: number | null
           addon_amount?: number | null
-          buy_in_fee?: number | null
-          rebuy_fee?: number | null
-          addon_fee?: number | null
+          buy_in_rake?: number | null
+          rebuy_rake?: number | null
+          addon_rake?: number | null
           buy_in_chips?: number | null
           rebuy_chips?: number | null
           addon_chips?: number | null
@@ -277,9 +277,9 @@ export type Database = {
           buy_in_amount?: number
           rebuy_amount?: number | null
           addon_amount?: number | null
-          buy_in_fee?: number | null
-          rebuy_fee?: number | null
-          addon_fee?: number | null
+          buy_in_rake?: number | null
+          rebuy_rake?: number | null
+          addon_rake?: number | null
           buy_in_chips?: number | null
           rebuy_chips?: number | null
           addon_chips?: number | null
@@ -617,9 +617,9 @@ export interface Tournament {
   buy_in_amount: number;
   rebuy_amount: number | null;
   addon_amount: number | null;
-  buy_in_fee: number | null;
-  rebuy_fee: number | null;
-  addon_fee: number | null;
+  buy_in_rake: number | null;
+  rebuy_rake: number | null;
+  addon_rake: number | null;
   buy_in_chips: number | null;
   rebuy_chips: number | null;
   addon_chips: number | null;
