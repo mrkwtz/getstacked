@@ -3,7 +3,14 @@ import { calculatePrizePool, calculateAverageStack } from '$lib/tournaments';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, parent }) => {
-  const { supabase, club } = await parent();
+  const { supabase } = await parent();
+
+  const { data: club } = await supabase
+    .from('clubs')
+    .select('id')
+    .eq('slug', params.club)
+    .single();
+  if (!club) throw error(404, 'Club not found');
 
   const { data: tournament } = await supabase
     .from('tournaments')
