@@ -68,13 +68,13 @@ export function calculatePayouts(
 
 export function calculateTotalRake(
   playerCount: number,
-  buyInFee: number,
+  buyInRake: number,
   totalRebuys: number,
-  rebuyFee: number,
+  rebuyRake: number,
   addonCount: number,
-  addonFee: number
+  addonRake: number
 ): number {
-  return playerCount * buyInFee + totalRebuys * rebuyFee + addonCount * addonFee;
+  return playerCount * buyInRake + totalRebuys * rebuyRake + addonCount * addonRake;
 }
 
 export function calculateAverageStack(
