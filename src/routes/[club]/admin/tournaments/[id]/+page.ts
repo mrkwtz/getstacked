@@ -42,10 +42,13 @@ export const load: PageLoad = async ({ params, parent }) => {
   const prizePool = calculatePrizePool(
     allPlayers.length,
     tournament.buy_in_amount,
+    tournament.buy_in_rake ?? 0,
     totalRebuys,
     tournament.rebuy_amount ?? 0,
+    tournament.rebuy_rake ?? 0,
     addonCount,
     tournament.addon_amount ?? 0,
+    tournament.addon_rake ?? 0,
   );
 
   const totalRake = calculateTotalRake(
