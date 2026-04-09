@@ -156,9 +156,9 @@
       const buyInRaw = formData.get('buy_in_amount')?.toString() ?? '';
       const rebuyRaw = formData.get('rebuy_amount')?.toString() ?? '';
       const addonRaw = formData.get('addon_amount')?.toString() ?? '';
-      const buyInFeeRaw = formData.get('buy_in_fee')?.toString() ?? '';
-      const rebuyFeeRaw = formData.get('rebuy_fee')?.toString() ?? '';
-      const addonFeeRaw = formData.get('addon_fee')?.toString() ?? '';
+      const buyInRakeRaw = formData.get('buy_in_rake')?.toString() ?? '';
+      const rebuyRakeRaw = formData.get('rebuy_rake')?.toString() ?? '';
+      const addonRakeRaw = formData.get('addon_rake')?.toString() ?? '';
       const buyInChipsRaw = formData.get('buy_in_chips')?.toString() ?? '';
       const rebuyChipsRaw = formData.get('rebuy_chips')?.toString() ?? '';
       const addonChipsRaw = formData.get('addon_chips')?.toString() ?? '';
@@ -197,16 +197,19 @@
         else addonChips = addonChipsVal;
       }
 
-      const buyInFee = buyInFeeRaw ? Math.round(parseFloat(buyInFeeRaw) * 100) : null;
-      if (buyInFee !== null && buyInFee < 0) errors.buy_in_fee = true;
+      const buyInRake = buyInRakeRaw ? Math.round(parseFloat(buyInRakeRaw) * 100) : null;
+      if (buyInRake !== null && buyInRake < 0) errors.buy_in_rake = true;
+      if (buyInRake !== null && buyInRake >= buyIn) errors.buy_in_rake = true;
 
-      let rebuyFee: number | null = null;
-      let addonFee: number | null = null;
+      let rebuyRake: number | null = null;
+      let addonRake: number | null = null;
       if (formatVal === 'rebuy') {
-        rebuyFee = rebuyFeeRaw ? Math.round(parseFloat(rebuyFeeRaw) * 100) : null;
-        if (rebuyFee !== null && rebuyFee < 0) errors.rebuy_fee = true;
-        addonFee = addonFeeRaw ? Math.round(parseFloat(addonFeeRaw) * 100) : null;
-        if (addonFee !== null && addonFee < 0) errors.addon_fee = true;
+        rebuyRake = rebuyRakeRaw ? Math.round(parseFloat(rebuyRakeRaw) * 100) : null;
+        if (rebuyRake !== null && rebuyRake < 0) errors.rebuy_rake = true;
+        if (rebuyRake !== null && rebuyAmount !== null && rebuyRake >= rebuyAmount) errors.rebuy_rake = true;
+        addonRake = addonRakeRaw ? Math.round(parseFloat(addonRakeRaw) * 100) : null;
+        if (addonRake !== null && addonRake < 0) errors.addon_rake = true;
+        if (addonRake !== null && addonAmount !== null && addonRake >= addonAmount) errors.addon_rake = true;
       }
 
       if (Object.values(errors).some(Boolean)) {
@@ -236,9 +239,9 @@
           buy_in_amount: buyIn,
           rebuy_amount: rebuyAmount,
           addon_amount: addonAmount,
-          buy_in_fee: buyInFee,
-          rebuy_fee: rebuyFee,
-          addon_fee: addonFee,
+          buy_in_rake: buyInRake,
+          rebuy_rake: rebuyRake,
+          addon_rake: addonRake,
           buy_in_chips: buyInChips,
           rebuy_chips: rebuyChips,
           addon_chips: addonChips,
@@ -310,13 +313,13 @@
           />
         </div>
         <div>
-          <label for="t-buyin-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+          <label for="t-buyin-rake" class="block text-xs font-medium text-muted-foreground mb-1.5">
             {m.tournament_buy_in_rake_label()}
           </label>
           <input
-            id="t-buyin-fee" type="number" name="buy_in_fee" min="0" step="0.01"
-            oninput={() => clearFieldError('buy_in_fee')}
-            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_fee ? 'ring-2 ring-accent' : ''}"
+            id="t-buyin-rake" type="number" name="buy_in_rake" min="0" step="0.01"
+            oninput={() => clearFieldError('buy_in_rake')}
+            class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.buy_in_rake ? 'ring-2 ring-accent' : ''}"
           />
         </div>
         <div>
@@ -391,13 +394,13 @@
               />
             </div>
             <div>
-              <label for="t-rebuy-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label for="t-rebuy-rake" class="block text-xs font-medium text-muted-foreground mb-1.5">
                 {m.tournament_rebuy_rake_label()}
               </label>
               <input
-                id="t-rebuy-fee" type="number" name="rebuy_fee" min="0" step="0.01"
-                oninput={() => clearFieldError('rebuy_fee')}
-                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_fee ? 'ring-2 ring-accent' : ''}"
+                id="t-rebuy-rake" type="number" name="rebuy_rake" min="0" step="0.01"
+                oninput={() => clearFieldError('rebuy_rake')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.rebuy_rake ? 'ring-2 ring-accent' : ''}"
               />
             </div>
             <div>
@@ -424,13 +427,13 @@
               />
             </div>
             <div>
-              <label for="t-addon-fee" class="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label for="t-addon-rake" class="block text-xs font-medium text-muted-foreground mb-1.5">
                 {m.tournament_addon_rake_label()}
               </label>
               <input
-                id="t-addon-fee" type="number" name="addon_fee" min="0" step="0.01"
-                oninput={() => clearFieldError('addon_fee')}
-                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_fee ? 'ring-2 ring-accent' : ''}"
+                id="t-addon-rake" type="number" name="addon_rake" min="0" step="0.01"
+                oninput={() => clearFieldError('addon_rake')}
+                class="w-full px-3 py-2 bg-background border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors ring-offset-background {fieldErrors.addon_rake ? 'ring-2 ring-accent' : ''}"
               />
             </div>
             <div>
