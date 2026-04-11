@@ -568,6 +568,47 @@
     }
   }
 
+  async function handleSwapSeats(playerAId: string, playerBId: string) {
+    if (loading) return;
+    seatingError = null;
+    const playerA = data.players.find((p) => p.id === playerAId);
+    const playerB = data.players.find((p) => p.id === playerBId);
+    if (!playerA || !playerB) return;
+    loading = true;
+    try {
+      const supabase = createClient();
+      await Promise.all([
+        supabase
+          .from('tournament_players')
+          .update({ table_id: playerB.table_id, seat_number: playerB.seat_number })
+          .eq('id', playerAId),
+        supabase
+          .from('tournament_players')
+          .update({ table_id: playerA.table_id, seat_number: playerA.seat_number })
+          .eq('id', playerBId),
+      ]);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleUnseatPlayer(playerId: string) {
+    if (loading) return;
+    seatingError = null;
+    loading = true;
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('tournament_players')
+        .update({ table_id: null, seat_number: null })
+        .eq('id', playerId);
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
+  }
+
   async function handleUpdateDealer(tableId: string, dealer: string) {
     if (loading) return;
     loading = true;
