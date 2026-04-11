@@ -7,8 +7,8 @@
   const { data } = $props<{
     data: {
       club: { id: string; slug: string };
-      blindStructures: { id: string; name: string }[];
-      prizeStructures: { id: string; name: string }[];
+      blindStructures: { id: string; name: string; levels: unknown }[];
+      prizeStructures: { id: string; name: string; payouts: unknown }[];
     };
   }>();
 
@@ -74,7 +74,7 @@
       const { data: created, error } = await supabase
         .from('blind_structures')
         .insert({ club_id: data.club.id, name: blindName.trim(), levels: parsedLevels })
-        .select('id, name')
+        .select('id, name, levels')
         .single();
       if (error || !created) { blindError = 'server_error'; return; }
       blindStructures = [...blindStructures, created];
@@ -127,7 +127,7 @@
       const { data: created, error } = await supabase
         .from('prize_structures')
         .insert({ club_id: data.club.id, name: prizeName.trim(), payouts: parsedPayouts })
-        .select('id, name')
+        .select('id, name, payouts')
         .single();
       if (error || !created) { prizeError = 'server_error'; return; }
       prizeStructures = [...prizeStructures, created];
@@ -218,16 +218,14 @@
         return;
       }
 
-      const supabase = createClient();
+      const selectedBlind = blindStructureId
+        ? data.blindStructures.find((bs: { id: string; name: string; levels: unknown }) => bs.id === blindStructureId) ?? null
+        : null;
+      const selectedPrize = prizeStructureId
+        ? data.prizeStructures.find((ps: { id: string; name: string; payouts: unknown }) => ps.id === prizeStructureId) ?? null
+        : null;
 
-      if (blindStructureId) {
-        const { data: bs } = await supabase.from('blind_structures').select('id').eq('id', blindStructureId).eq('club_id', data.club.id).single();
-        if (!bs) { errorKey = 'error_required'; return; }
-      }
-      if (prizeStructureId) {
-        const { data: ps } = await supabase.from('prize_structures').select('id').eq('id', prizeStructureId).eq('club_id', data.club.id).single();
-        if (!ps) { errorKey = 'error_required'; return; }
-      }
+      const supabase = createClient();
 
       const { data: tournament, error } = await supabase
         .from('tournaments')
@@ -247,6 +245,8 @@
           addon_chips: addonChips,
           blind_structure_id: blindStructureId || null,
           prize_structure_id: prizeStructureId || null,
+          blind_levels: selectedBlind ? selectedBlind.levels : null,
+          prize_payouts: selectedPrize ? selectedPrize.payouts : null,
           status: 'registration',
         })
         .select('id')
