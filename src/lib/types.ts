@@ -245,6 +245,8 @@ export type Database = {
           prize_structure_id: string | null
           status: string
           timer_state: Json | null
+          blind_levels: Json | null
+          prize_payouts: Json | null
           created_at: string
         }
         Insert: {
@@ -266,6 +268,8 @@ export type Database = {
           prize_structure_id?: string | null
           status?: string
           timer_state?: Json | null
+          blind_levels?: Json | null
+          prize_payouts?: Json | null
           created_at?: string
         }
         Update: {
@@ -287,6 +291,8 @@ export type Database = {
           prize_structure_id?: string | null
           status?: string
           timer_state?: Json | null
+          blind_levels?: Json | null
+          prize_payouts?: Json | null
           created_at?: string
         }
         Relationships: [
@@ -627,6 +633,8 @@ export interface Tournament {
   prize_structure_id: string | null;
   status: 'registration' | 'running' | 'finished';
   timer_state?: TimerState | null;
+  blind_levels: { type: string; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label: string }[] | null;
+  prize_payouts: { position: number; percentage: number }[] | null;
   created_at: string;
   blind_structures?: { name: string; levels: BlindLevel[] } | null;
   prize_structures?: { name: string; payouts: { position: number; percentage: number }[] } | null;
