@@ -1286,7 +1286,7 @@
             {/each}
           </div>
 
-          <!-- Unseated players -->
+          <!-- Unseated players strip -->
           {@const unseated = data.players.filter((p) => p.table_id === null)}
           {#if unseated.length > 0}
             <div class="flex flex-col gap-2">
@@ -1301,28 +1301,23 @@
                   {m.seating_auto_seat_button()}
                 </button>
               </div>
-              {#each unseated as player}
-                <div class="flex items-center gap-2 text-sm text-foreground">
-                  <span class="flex-1">{player.members ? displayName(player.members) : '?'}</span>
-                  <select
-                    class="bg-background border border-input rounded-md text-xs px-2 py-1"
-                    onchange={(e) => {
-                      const [tableId, seatStr] = (e.currentTarget as HTMLSelectElement).value.split(':');
-                      if (tableId && seatStr) handleManualSeat(player.id, tableId, parseInt(seatStr));
-                    }}
+              <div
+                class="border border-dashed rounded-lg p-3 flex flex-wrap gap-2 min-h-[44px] transition-colors {dragOverUnseated ? 'border-accent bg-accent/10' : 'border-border'}"
+                ondragover={handleUnseatedDragOver}
+                ondragleave={handleUnseatedDragLeave}
+                ondrop={handleUnseatedDrop}
+              >
+                {#each unseated as player}
+                  <span
+                    draggable="true"
+                    ondragstart={() => handleDragStart(player.id)}
+                    ondragend={handleDragEnd}
+                    class="text-xs bg-muted px-2 py-1 rounded cursor-grab select-none {draggedPlayerId === player.id ? 'opacity-50' : ''}"
                   >
-                    <option value="">{m.seating_assign_seat_placeholder()}</option>
-                    {#each data.tables as table}
-                      {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
-                        {@const taken = data.players.some((p) => p.table_id === table.id && p.seat_number === seat && p.id !== player.id)}
-                        {#if !taken}
-                          <option value="{table.id}:{seat}">T{table.number} S{seat}</option>
-                        {/if}
-                      {/each}
-                    {/each}
-                  </select>
-                </div>
-              {/each}
+                    {player.members ? displayName(player.members) : '?'}
+                  </span>
+                {/each}
+              </div>
             </div>
           {/if}
         {/if}
