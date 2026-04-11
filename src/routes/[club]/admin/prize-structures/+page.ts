@@ -5,7 +5,7 @@ export const load: PageLoad = async ({ parent }) => {
 
   const { data: structures } = await supabase
     .from('prize_structures')
-    .select('*, tournaments(id)')
+    .select('id, name, payouts')
     .eq('club_id', club.id)
     .order('name');
 
@@ -14,7 +14,6 @@ export const load: PageLoad = async ({ parent }) => {
       id: s.id,
       name: s.name,
       payouts: s.payouts as { position: number; percentage: number }[],
-      in_use: Array.isArray(s.tournaments) && s.tournaments.length > 0,
     })),
   };
 };

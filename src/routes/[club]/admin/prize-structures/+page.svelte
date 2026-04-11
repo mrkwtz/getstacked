@@ -12,7 +12,6 @@
         id: string;
         name: string;
         payouts: { position: number; percentage: number }[];
-        in_use: boolean;
       }[];
     };
   }>();

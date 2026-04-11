@@ -5,7 +5,7 @@ export const load: PageLoad = async ({ parent }) => {
 
   const { data: structures } = await supabase
     .from('blind_structures')
-    .select('*, tournaments(id)')
+    .select('id, name, levels')
     .eq('club_id', club.id)
     .order('name');
 
@@ -14,7 +14,6 @@ export const load: PageLoad = async ({ parent }) => {
       id: s.id,
       name: s.name,
       levels: s.levels as { small_blind: number; big_blind: number; ante: number; duration_minutes: number }[],
-      in_use: Array.isArray(s.tournaments) && s.tournaments.length > 0,
     })),
   };
 };

@@ -219,10 +219,10 @@
       }
 
       const selectedBlind = blindStructureId
-        ? data.blindStructures.find((bs: { id: string; name: string; levels: unknown }) => bs.id === blindStructureId) ?? null
+        ? blindStructures.find((bs) => bs.id === blindStructureId) ?? null
         : null;
       const selectedPrize = prizeStructureId
-        ? data.prizeStructures.find((ps: { id: string; name: string; payouts: unknown }) => ps.id === prizeStructureId) ?? null
+        ? prizeStructures.find((ps) => ps.id === prizeStructureId) ?? null
         : null;
 
       const supabase = createClient();

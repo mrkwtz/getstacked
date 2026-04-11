@@ -12,7 +12,6 @@
         id: string;
         name: string;
         levels: { type?: string; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label?: string }[];
-        in_use: boolean;
       }[];
     };
   }>();
