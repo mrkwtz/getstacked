@@ -633,8 +633,8 @@ export interface Tournament {
   prize_structure_id: string | null;
   status: 'registration' | 'running' | 'finished';
   timer_state?: TimerState | null;
-  blind_levels: { type: string; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label: string }[] | null;
-  prize_payouts: { position: number; percentage: number }[] | null;
+  blind_levels: BlindLevel[] | null;
+  prize_payouts: Payout[] | null;
   created_at: string;
   blind_structures?: { name: string; levels: BlindLevel[] } | null;
   prize_structures?: { name: string; payouts: { position: number; percentage: number }[] } | null;
