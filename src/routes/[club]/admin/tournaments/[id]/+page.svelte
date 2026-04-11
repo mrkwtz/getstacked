@@ -613,7 +613,7 @@
 
   function openBlindEditModal() {
     const raw = (t.blind_levels ?? t.blind_structures?.levels ?? []) as {
-      type?: string; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label?: string
+      type: 'level' | 'break'; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label?: string
     }[];
     blindEditLevels = raw.map((l) =>
       (l.type === 'break')
@@ -644,7 +644,8 @@
       const { error } = await supabase
         .from('tournaments')
         .update({ blind_levels: parsed })
-        .eq('id', t.id);
+        .eq('id', t.id)
+        .eq('club_id', t.club_id);
       if (error) { blindEditError = 'server_error'; return; }
       showBlindEditModal = false;
       await invalidateAll();
@@ -674,7 +675,8 @@
       const { error } = await supabase
         .from('tournaments')
         .update({ prize_payouts: parsed })
-        .eq('id', t.id);
+        .eq('id', t.id)
+        .eq('club_id', t.club_id);
       if (error) { prizeEditError = 'server_error'; return; }
       showPrizeEditModal = false;
       await invalidateAll();
