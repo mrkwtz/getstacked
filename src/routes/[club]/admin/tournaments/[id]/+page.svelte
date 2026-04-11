@@ -577,7 +577,7 @@
     loading = true;
     try {
       const supabase = createClient();
-      await Promise.all([
+      const [resultA, resultB] = await Promise.all([
         supabase
           .from('tournament_players')
           .update({ table_id: playerB.table_id, seat_number: playerB.seat_number })
@@ -587,6 +587,10 @@
           .update({ table_id: playerA.table_id, seat_number: playerA.seat_number })
           .eq('id', playerBId),
       ]);
+      if (resultA.error || resultB.error) {
+        seatingError = resultA.error?.message ?? resultB.error?.message ?? 'Swap failed';
+        return;
+      }
       await invalidateAll();
     } finally {
       loading = false;
@@ -599,10 +603,11 @@
     loading = true;
     try {
       const supabase = createClient();
-      await supabase
+      const { error } = await supabase
         .from('tournament_players')
         .update({ table_id: null, seat_number: null })
         .eq('id', playerId);
+      if (error) { seatingError = error.message; return; }
       await invalidateAll();
     } finally {
       loading = false;
@@ -624,7 +629,8 @@
     dragOverTarget = `${tableId}:${seatNumber}`;
   }
 
-  function handleSeatDragLeave() {
+  function handleSeatDragLeave(e: DragEvent) {
+    if (e.currentTarget instanceof Element && e.currentTarget.contains(e.relatedTarget as Node)) return;
     dragOverTarget = null;
   }
 
@@ -648,7 +654,8 @@
     dragOverUnseated = true;
   }
 
-  function handleUnseatedDragLeave() {
+  function handleUnseatedDragLeave(e: DragEvent) {
+    if (e.currentTarget instanceof Element && e.currentTarget.contains(e.relatedTarget as Node)) return;
     dragOverUnseated = false;
   }
 

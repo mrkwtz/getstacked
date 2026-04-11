@@ -22,7 +22,7 @@ test.describe('drag-and-drop seating (registration)', () => {
     const chip = page.locator('[draggable=true]').first();
     const name = (await chip.textContent())?.trim() ?? '';
     const emptyCell = page.locator('.bg-muted.text-muted-foreground').first();
-    await page.dragAndDrop('[draggable=true]', emptyCell);
+    await chip.dragTo(emptyCell);
     await expect(emptyCell).toContainText(name);
   });
 
@@ -33,7 +33,7 @@ test.describe('drag-and-drop seating (registration)', () => {
     const nameB = (await chips.nth(1).textContent())?.trim() ?? '';
     const cellA = chips.nth(0).locator('..');
     const cellB = chips.nth(1).locator('..');
-    await page.dragAndDrop(chips.nth(0), chips.nth(1));
+    await chips.nth(0).dragTo(chips.nth(1));
     await expect(cellA).toContainText(nameB);
     await expect(cellB).toContainText(nameA);
   });
@@ -43,7 +43,7 @@ test.describe('drag-and-drop seating (registration)', () => {
     const chip = page.locator('[draggable=true]').first();
     const name = (await chip.textContent())?.trim() ?? '';
     const strip = page.locator('.border-dashed').first();
-    await page.dragAndDrop(chip, strip);
+    await chip.dragTo(strip);
     await expect(strip).toContainText(name);
   });
 
@@ -53,7 +53,7 @@ test.describe('drag-and-drop seating (registration)', () => {
     const unseatedChip = strip.locator('[draggable=true]').first();
     const name = (await unseatedChip.textContent())?.trim() ?? '';
     const emptyCell = page.locator('.bg-muted.text-muted-foreground').first();
-    await page.dragAndDrop(unseatedChip, emptyCell);
+    await unseatedChip.dragTo(emptyCell);
     await expect(emptyCell).toContainText(name);
     await expect(strip).not.toContainText(name);
   });
@@ -65,7 +65,7 @@ test.describe('drag-and-drop seating (registration)', () => {
     const unseatedName = (await unseatedChip.textContent())?.trim() ?? '';
     const seatedChip = page.locator('[draggable=true]').first();
     const seatedName = (await seatedChip.textContent())?.trim() ?? '';
-    await page.dragAndDrop(unseatedChip, seatedChip);
+    await unseatedChip.dragTo(seatedChip);
     await expect(strip).toContainText(seatedName);
     await expect(page.locator('.border-dashed')).not.toContainText(unseatedName);
   });
@@ -80,8 +80,9 @@ test.describe('drag-and-drop seating (running)', () => {
     await page.goto(`/${club}/admin/tournaments/${runningId}`);
     const activeChip = page.locator('[draggable=true]').first();
     const name = (await activeChip.textContent())?.trim() ?? '';
+    const originalCell = activeChip.locator('..');
     const bustedCell = page.locator('.opacity-50').first();
-    await page.dragAndDrop(activeChip, bustedCell);
-    await expect(bustedCell).not.toContainText(name);
+    await activeChip.dragTo(bustedCell);
+    await expect(originalCell).not.toContainText(name);
   });
 });
