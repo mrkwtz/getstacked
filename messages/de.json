@@ -62,6 +62,8 @@
   "tournament_rake_label": "Rake",
   "tournament_blind_structure_label": "Blind-Struktur (optional)",
   "tournament_prize_structure_label": "Preisstruktur (optional)",
+  "tournament_edit_blind_structure": "Blind-Struktur bearbeiten",
+  "tournament_edit_prize_structure": "Preisstruktur bearbeiten",
   "tournament_create_button": "Turnier erstellen",
   "tournament_none_option": "Keine",
   "tournament_status_registration": "Registrierung offen",

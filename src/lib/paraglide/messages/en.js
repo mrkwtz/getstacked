@@ -511,6 +511,22 @@ export const tournament_prize_structure_label = () => `Prize structure (optional
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
+export const tournament_edit_blind_structure = () => `Edit blind structure`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const tournament_edit_prize_structure = () => `Edit prize structure`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
 export const tournament_create_button = () => `Create tournament`
 
 

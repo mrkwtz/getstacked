@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createClient } from '$lib/supabase';
   import { invalidateAll, goto } from '$app/navigation';
-  import { calculatePayouts, formatPrizePoolBreakdown, calculateAverageStack } from '$lib/tournaments';
+  import { calculatePayouts, formatPrizePoolBreakdown, calculateAverageStack, validatePayouts } from '$lib/tournaments';
   import * as m from '$lib/paraglide/messages';
   import { drawSeats, autoSeat, suggestRebalanceMove, suggestTableBreak } from '$lib/seating';
   import { page } from '$app/stores';
@@ -21,6 +21,11 @@
   import type { PageData } from './$types';
   import { Pencil } from '@lucide/svelte';
   import { displayName } from '$lib/members';
+  import BlindStructureForm from '$lib/components/BlindStructureForm.svelte';
+  import PrizeStructureForm from '$lib/components/PrizeStructureForm.svelte';
+  import { DialogContent } from '$lib/components/ui/dialog/index.js';
+  import { Dialog as DialogPrimitive } from 'bits-ui';
+  import type { LevelRow } from '$lib/components/BlindStructureForm.svelte';
 
   const { data }: { data: PageData } = $props();
 
@@ -83,6 +88,17 @@
   let showDeleteModal = $state(false);
   let deleting = $state(false);
 
+  // Structure edit modal state
+  let showBlindEditModal = $state(false);
+  let blindEditLevels = $state<LevelRow[]>([]);
+  let blindEditLoading = $state(false);
+  let blindEditError = $state<string | null>(null);
+
+  let showPrizeEditModal = $state(false);
+  let prizeEditPayouts = $state<{ position: number; percentage: string }[]>([]);
+  let prizeEditLoading = $state(false);
+  let prizeEditError = $state<string | null>(null);
+
   const totalRebuys = $derived(data.players.reduce((sum, p) => sum + p.rebuys, 0));
   const addonCount = $derived(data.players.filter((p) => p.addon).length);
 
@@ -99,7 +115,9 @@
   });
 
   const timerState = $derived(t.timer_state as unknown as TimerState | null);
-  const blindLevels = $derived((t.blind_structures?.levels ?? []) as unknown as BlindLevel[]);
+  const blindLevels = $derived(
+    ((t.blind_levels ?? t.blind_structures?.levels ?? []) as unknown as BlindLevel[])
+  );
 
   const currentLevelIdx = $derived(
     timerState && blindLevels.length > 0
@@ -593,6 +611,78 @@
     await invalidateAll();
   }
 
+  function openBlindEditModal() {
+    const raw = (t.blind_levels ?? t.blind_structures?.levels ?? []) as {
+      type?: string; small_blind: number; big_blind: number; ante: number; duration_minutes: number; label?: string
+    }[];
+    blindEditLevels = raw.map((l) =>
+      (l.type === 'break')
+        ? { type: 'break' as const, duration_minutes: String(l.duration_minutes), label: l.label ?? '' }
+        : { type: 'level' as const, small_blind: String(l.small_blind), big_blind: String(l.big_blind), ante: String(l.ante), duration_minutes: String(l.duration_minutes), label: l.label ?? '' }
+    );
+    blindEditError = null;
+    showBlindEditModal = true;
+  }
+
+  async function saveBlindLevels() {
+    if (blindEditLoading) return;
+    blindEditError = null;
+    const parsed = blindEditLevels.map((l) =>
+      l.type === 'break'
+        ? { type: 'break' as const, small_blind: 0, big_blind: 0, ante: 0, duration_minutes: Number(l.duration_minutes), label: l.label.trim() || 'Break' }
+        : { type: 'level' as const, small_blind: Number(l.small_blind), big_blind: Number(l.big_blind), ante: Number(l.ante), duration_minutes: Number(l.duration_minutes), label: l.label.trim() }
+    );
+    for (const level of parsed) {
+      if (level.duration_minutes <= 0) { blindEditError = 'error_required'; return; }
+      if (level.type === 'level' && (level.small_blind <= 0 || level.big_blind < level.small_blind || level.ante < 0)) {
+        blindEditError = 'error_required'; return;
+      }
+    }
+    blindEditLoading = true;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('tournaments')
+        .update({ blind_levels: parsed })
+        .eq('id', t.id);
+      if (error) { blindEditError = 'server_error'; return; }
+      showBlindEditModal = false;
+      await invalidateAll();
+    } finally {
+      blindEditLoading = false;
+    }
+  }
+
+  function openPrizeEditModal() {
+    const raw = (t.prize_payouts ?? t.prize_structures?.payouts ?? []) as { position: number; percentage: number }[];
+    prizeEditPayouts = raw
+      .sort((a, b) => a.position - b.position)
+      .map((p, i) => ({ position: i + 1, percentage: String(p.percentage) }));
+    prizeEditError = null;
+    showPrizeEditModal = true;
+  }
+
+  async function savePrizePayouts() {
+    if (prizeEditLoading) return;
+    prizeEditError = null;
+    const parsed = prizeEditPayouts.map((p, i) => ({ position: i + 1, percentage: Number(p.percentage) }));
+    const validationError = validatePayouts(parsed);
+    if (validationError) { prizeEditError = validationError; return; }
+    prizeEditLoading = true;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('tournaments')
+        .update({ prize_payouts: parsed })
+        .eq('id', t.id);
+      if (error) { prizeEditError = 'server_error'; return; }
+      showPrizeEditModal = false;
+      await invalidateAll();
+    } finally {
+      prizeEditLoading = false;
+    }
+  }
+
   async function handleFinishTournament() {
     if (loading) return;
     if (data.tournament.status !== 'running') return;
@@ -659,6 +749,18 @@
         </button>
       </h1>
       <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
+      {#if t.blind_levels || t.blind_structures}
+        <button type="button" onclick={openBlindEditModal}
+          class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mt-0.5">
+          {m.tournament_edit_blind_structure()}
+        </button>
+      {/if}
+      {#if t.prize_payouts || t.prize_structures}
+        <button type="button" onclick={openPrizeEditModal}
+          class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mt-0.5">
+          {m.tournament_edit_prize_structure()}
+        </button>
+      {/if}
     </div>
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(t.status)}">
@@ -1242,6 +1344,48 @@
   {/if}
 
 </div>
+
+<!-- Blind structure edit modal -->
+<DialogPrimitive.Root bind:open={showBlindEditModal}>
+  <DialogContent>
+    <h2 class="text-base font-semibold text-foreground">{m.blind_structure_edit_title()}</h2>
+    <BlindStructureForm bind:levels={blindEditLevels} />
+    {#if blindEditError}
+      <p class="text-xs text-accent">{resolveError(blindEditError)}</p>
+    {/if}
+    <div class="flex gap-3">
+      <button type="button" onclick={saveBlindLevels} disabled={blindEditLoading}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        {m.blind_structure_save_button()}
+      </button>
+      <button type="button" onclick={() => { showBlindEditModal = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </DialogContent>
+</DialogPrimitive.Root>
+
+<!-- Prize structure edit modal -->
+<DialogPrimitive.Root bind:open={showPrizeEditModal}>
+  <DialogContent>
+    <h2 class="text-base font-semibold text-foreground">{m.prize_structure_edit_title()}</h2>
+    <PrizeStructureForm bind:payouts={prizeEditPayouts} />
+    {#if prizeEditError}
+      <p class="text-xs text-accent">{resolveError(prizeEditError)}</p>
+    {/if}
+    <div class="flex gap-3">
+      <button type="button" onclick={savePrizePayouts} disabled={prizeEditLoading}
+        class="bg-accent text-accent-foreground text-sm font-medium px-4 py-2 rounded-md hover:bg-accent/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        {m.prize_structure_save_button()}
+      </button>
+      <button type="button" onclick={() => { showPrizeEditModal = false; }}
+        class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {m.tournament_cancel_review()}
+      </button>
+    </div>
+  </DialogContent>
+</DialogPrimitive.Root>
 
 <!-- Finish review modal -->
 {#if t.status === 'running' && showReview}

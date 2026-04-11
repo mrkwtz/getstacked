@@ -7,7 +7,7 @@ export const load: PageLoad = async ({ params, parent }) => {
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('*, blind_structures(name, levels), prize_structures(name, payouts)')
+    .select('*, blind_structures(name, levels), prize_structures(name, payouts), blind_levels, prize_payouts')
     .eq('id', params.id)
     .eq('club_id', club.id)
     .single();
@@ -60,9 +60,11 @@ export const load: PageLoad = async ({ params, parent }) => {
     tournament.addon_rake ?? 0,
   );
 
-  const prizeStructure = tournament.prize_structures
-    ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
-    : null;
+  const prizeStructure = tournament.prize_payouts
+    ? { payouts: tournament.prize_payouts as { position: number; percentage: number }[] }
+    : tournament.prize_structures
+      ? { payouts: tournament.prize_structures.payouts as { position: number; percentage: number }[] }
+      : null;
 
   return { tournament, players: allPlayers, availableMembers, prizePool, totalRake, prizeStructure, tables: tables ?? [], prizeStructures: prizeStructures ?? [], blindStructures: blindStructures ?? [] };
 };
