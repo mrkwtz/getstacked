@@ -815,6 +815,30 @@ export const blind_structure_create_button = () => `Create`
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_edit_title = () => `Edit blind structure`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_edit_button = () => `Edit`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_save_button = () => `Save`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
 export const blind_structure_empty = () => `No blind structures yet.`
 
 
@@ -895,6 +919,30 @@ export const prize_structure_create_button = () => `Create`
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_edit_title = () => `Edit prize structure`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_edit_button = () => `Edit`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_save_button = () => `Save`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
 export const prize_structure_empty = () => `No prize structures yet.`
 
 
@@ -907,31 +955,7 @@ export const prize_structure_in_use = () => `In use`
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_edit_title = () => `Edit prize structure`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_save_button = () => `Save`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_edit_button = () => `Edit`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
@@ -1659,23 +1683,7 @@ export const tournament_avg_stack_label = () => `Avg. stack`
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const tournament_edit_blind_structure = () => `Edit blind structure`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const tournament_edit_prize_structure = () => `Edit prize structure`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
@@ -1691,31 +1699,7 @@ export const blind_structure_break_label_placeholder = () => `Break name (e.g. D
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_edit_title = () => `Edit blind structure`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_save_button = () => `Save`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_edit_button = () => `Edit`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */

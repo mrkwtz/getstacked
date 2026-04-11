@@ -815,6 +815,30 @@ export const blind_structure_create_button = () => `Erstellen`
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_edit_title = () => `Blind-Struktur bearbeiten`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_edit_button = () => `Bearbeiten`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const blind_structure_save_button = () => `Speichern`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
 export const blind_structure_empty = () => `Noch keine Blind-Strukturen.`
 
 
@@ -895,6 +919,30 @@ export const prize_structure_create_button = () => `Erstellen`
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_edit_title = () => `Preisstruktur bearbeiten`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_edit_button = () => `Bearbeiten`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export const prize_structure_save_button = () => `Speichern`
+
+
+/**
+ * 
+ * @returns {string}
+ */
+/* @__NO_SIDE_EFFECTS__ */
 export const prize_structure_empty = () => `Noch keine Preisstrukturen.`
 
 
@@ -907,31 +955,7 @@ export const prize_structure_in_use = () => `In Verwendung`
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_edit_title = () => `Preisstruktur bearbeiten`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_save_button = () => `Speichern`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const prize_structure_edit_button = () => `Bearbeiten`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
@@ -1659,23 +1683,7 @@ export const tournament_avg_stack_label = () => `Ø Stack`
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const tournament_edit_blind_structure = () => `Blind-Struktur bearbeiten`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const tournament_edit_prize_structure = () => `Preisstruktur bearbeiten`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
@@ -1691,31 +1699,7 @@ export const blind_structure_break_label_placeholder = () => `Pausenname (z.B. A
 
 
 /**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_edit_title = () => `Blind-Struktur bearbeiten`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_save_button = () => `Speichern`
-
-
-/**
- *
- * @returns {string}
- */
-/* @__NO_SIDE_EFFECTS__ */
-export const blind_structure_edit_button = () => `Bearbeiten`
-
-
-/**
- *
+ * 
  * @returns {string}
  */
 /* @__NO_SIDE_EFFECTS__ */
