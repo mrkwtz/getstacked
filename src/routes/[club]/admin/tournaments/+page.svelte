@@ -3,7 +3,14 @@
   import * as m from '$lib/paraglide/messages';
   import type { Tournament } from '$lib/types';
 
-  const { data } = $props<{ data: { tournaments: Tournament[]; club: { slug: string } } }>();
+  const { data } = $props<{
+    data: {
+      tournaments: Tournament[];
+      club: { slug: string };
+      blindStructureCount: number;
+      prizeStructureCount: number;
+    };
+  }>();
 
   function statusLabel(status: Tournament['status']): string {
     if (status === 'registration') return m.tournament_status_registration();
@@ -69,12 +76,29 @@
     </div>
   {/if}
 
-  <div class="flex gap-6">
-    <a href="/{data.club.slug}/admin/blind-structures" class="text-xs text-muted-foreground hover:text-foreground transition-colors border-b border-border pb-0.5">
-      {m.blind_structures_title()}
-    </a>
-    <a href="/{data.club.slug}/admin/prize-structures" class="text-xs text-muted-foreground hover:text-foreground transition-colors border-b border-border pb-0.5">
-      {m.prize_structures_title()}
-    </a>
+  <div class="flex gap-3">
+    <button
+      type="button"
+      onclick={() => goto(`/${data.club.slug}/admin/blind-structures`)}
+      class="flex items-center justify-between gap-5 bg-card border border-border rounded-lg px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-left"
+    >
+      <div>
+        <p class="text-sm font-semibold text-foreground">{m.blind_structures_title()}</p>
+        <p class="text-xs text-muted-foreground">{data.blindStructureCount} structures</p>
+      </div>
+      <span class="text-accent/70 text-base leading-none">›</span>
+    </button>
+
+    <button
+      type="button"
+      onclick={() => goto(`/${data.club.slug}/admin/prize-structures`)}
+      class="flex items-center justify-between gap-5 bg-card border border-border rounded-lg px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-left"
+    >
+      <div>
+        <p class="text-sm font-semibold text-foreground">{m.prize_structures_title()}</p>
+        <p class="text-xs text-muted-foreground">{data.prizeStructureCount} structures</p>
+      </div>
+      <span class="text-accent/70 text-base leading-none">›</span>
+    </button>
   </div>
 </div>
