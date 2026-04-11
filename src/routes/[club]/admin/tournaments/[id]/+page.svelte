@@ -1261,8 +1261,24 @@
                 <div class="grid grid-cols-2 gap-1.5 text-xs">
                   {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
                     {@const player = seated.find((p) => p.seat_number === seat)}
-                    <div class="px-2 py-1 rounded {player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'}">
-                      {seat} {player ? (player.members ? displayName(player.members) : '?') : '—'}
+                    {@const isDropTarget = dragOverTarget === `${table.id}:${seat}`}
+                    <div
+                      class="px-2 py-1 rounded transition-colors {player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'} {isDropTarget ? 'ring-1 ring-accent bg-accent/10' : ''}"
+                      ondragover={(e) => handleSeatDragOver(e, table.id, seat)}
+                      ondragleave={handleSeatDragLeave}
+                      ondrop={(e) => handleSeatDrop(e, table.id, seat)}
+                    >
+                      {seat}
+                      {#if player}
+                        <span
+                          draggable="true"
+                          ondragstart={() => handleDragStart(player.id)}
+                          ondragend={handleDragEnd}
+                          class="cursor-grab select-none {draggedPlayerId === player.id ? 'opacity-50' : ''}"
+                        >{player.members ? displayName(player.members) : '?'}</span>
+                      {:else}
+                        —
+                      {/if}
                     </div>
                   {/each}
                 </div>
