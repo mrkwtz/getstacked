@@ -142,7 +142,7 @@
 <div class="flex flex-col gap-6">
   <!-- Header -->
   <div class="flex items-start justify-between">
-    <h1 class="text-base font-semibold text-foreground">{m.members_title()}</h1>
+    <h1 class="text-base font-semibold text-foreground">{m.members_title()} <span class="text-muted-foreground font-normal">({data.members.length})</span></h1>
     <button
       type="button"
       onclick={openModal}
