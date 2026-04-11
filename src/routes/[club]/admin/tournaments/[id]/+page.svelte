@@ -60,13 +60,6 @@
   const formatLabel = $derived(
     t.format === 'freezeout' ? m.tournament_format_freezeout() : m.tournament_format_rebuy()
   );
-  const metaLine = $derived([
-    formatDate(t.date),
-    formatLabel,
-    `€${(t.buy_in_amount / 100).toFixed(2)} buy-in`,
-    t.blind_structures?.name,
-    t.prize_structures?.name,
-  ].filter(Boolean).join(' · '));
 
   // Running state derived values
   const nextBustPosition = $derived((() => {
@@ -750,19 +743,27 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </h1>
-      <p class="text-xs text-muted-foreground mt-1">{metaLine}</p>
-      {#if t.blind_levels || t.blind_structures}
-        <button type="button" onclick={openBlindEditModal}
-          class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mt-0.5">
-          {m.tournament_edit_blind_structure()}
-        </button>
-      {/if}
-      {#if t.prize_payouts || t.prize_structures}
-        <button type="button" onclick={openPrizeEditModal}
-          class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mt-0.5">
-          {m.tournament_edit_prize_structure()}
-        </button>
-      {/if}
+      <p class="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-1">
+        <span>{formatDate(t.date)}</span>
+        <span>·</span>
+        <span>{formatLabel}</span>
+        <span>·</span>
+        <span>€{(t.buy_in_amount / 100).toFixed(2)} buy-in</span>
+        {#if t.blind_structures?.name}
+          <span>·</span>
+          <button type="button" onclick={openBlindEditModal}
+            class="hover:underline hover:text-foreground transition-colors cursor-pointer">
+            {t.blind_structures.name}
+          </button>
+        {/if}
+        {#if t.prize_structures?.name}
+          <span>·</span>
+          <button type="button" onclick={openPrizeEditModal}
+            class="hover:underline hover:text-foreground transition-colors cursor-pointer">
+            {t.prize_structures.name}
+          </button>
+        {/if}
+      </p>
     </div>
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium px-2 py-0.5 rounded-full {statusClass(t.status)}">
