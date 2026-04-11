@@ -1,0 +1,35 @@
+* Spieler müssen aus Turnier entfernt werden können - done
+* Löschfunktion aus dem Club, Bestätigung anfordern - done
+* Guthaben weg - done
+* Übersetzung failed manchmal und ist unterschiedlich auf rechter und linker seite - done
+* Attribut Adresse für Spieler - done
+* Sprache automatisch erfassen von Browsersprache - done
+* "Links" sollten buttons sein, um anzuzeigen, dass man drauf klicken kann
+* Blindstufen müssten in der Turniererstellung anpassbar sein und sollen dann als neue Blindstufe gespeichert werden - done
+* Review results / Auszahlung anpassbar machen (wenn z.B. ein Deal zwischen Spielern stattfindet) - done
+* Fee vom Preispool abziehen (also in Preispool konfigurierbar machen) - fee muss pro Zahltyp einstellbar sein (also fee für buyin, rebuy und addon) - done
+* Blind Struktur / Preis Struktur müssen aus Turnier Erstellungsmaske erstellt werden können - done
+* Turniere müssen gelöscht werden können - done
+* Formate manuell erstellbar - Surrender = Gibt Chips ab und macht nen Rebuy
+* Anzahl an Chips pro Zahlung einstellbar (Rebuy, Buyin, Addon, Surrender)
+* Adresse bei Spieler Erstellung fehlt - done
+* Players muss Mitglieder heißen, nur Players wenn im Turnier - done
+* Anzahl Spieler auf Spielerseite anzeigen
+* Beitrittsdatum in der Tabelle anzeigen - done
+* Sortieren nach Spalten - done
+* Guest players as member type - these don't have membership numbers - done
+* Blind Level und Prize Levels müssen editierbar sein 
+* Pause bei Blind level - done
+* Bounty / PKO (PKO: Hälfte bekommt der Hunter, Hälfte kommt auf das Bounts des Hunters)
+* "Gebühr" in Rake umbenennen und von den buy-in abziehen - done
+* Spieler müssen auch vorher schon an bestimmte Positionen gesetzt werden können
+* Chips muss rein - done
+* manuelle Pause - done
+* Timer etc - done
+* in Blindstufen condition für Average > 10*BB
+* wenn Spieler raus ist, dann sollen die ans ende der liste bzw die liste soll von hinten gesehen die platzierung angezeigt werden
+* Blindstufe muss Attribut für Spieltyp (No Limit Holdem, Omaha etc)
+* Gastspieler dürfen sich KEINEN User Account erstellen - done
+* Blind Stufe, Spieler Gesamt, Spieler noch drin, Chips im Spiel, Avg Chips, Uhrzeit, Spielzeit, Nächste Pause, Blinds, Spielart, Zeit für aktuelle Blindstufe - done
+* Notes feld bei den Spielern - done
+* Spieler löschen aus Turnier, Sicherheitsabfrage. Wenn der rausgeschmissene schon einen Platz hatte, dann müssen natürlich alle anderen nachrücken

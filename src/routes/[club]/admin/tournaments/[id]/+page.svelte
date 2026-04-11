@@ -609,6 +609,57 @@
     }
   }
 
+  function handleDragStart(playerId: string) {
+    draggedPlayerId = playerId;
+  }
+
+  function handleDragEnd() {
+    draggedPlayerId = null;
+    dragOverTarget = null;
+    dragOverUnseated = false;
+  }
+
+  function handleSeatDragOver(e: DragEvent, tableId: string, seatNumber: number) {
+    e.preventDefault();
+    dragOverTarget = `${tableId}:${seatNumber}`;
+  }
+
+  function handleSeatDragLeave() {
+    dragOverTarget = null;
+  }
+
+  function handleSeatDrop(e: DragEvent, tableId: string, seatNumber: number) {
+    e.preventDefault();
+    if (!draggedPlayerId) return;
+    const activeTarget = data.players.find(
+      (p) => p.table_id === tableId && p.seat_number === seatNumber && p.finish_position === null,
+    );
+    if (activeTarget && activeTarget.id !== draggedPlayerId) {
+      handleSwapSeats(draggedPlayerId, activeTarget.id);
+    } else {
+      handleManualSeat(draggedPlayerId, tableId, seatNumber);
+    }
+    draggedPlayerId = null;
+    dragOverTarget = null;
+  }
+
+  function handleUnseatedDragOver(e: DragEvent) {
+    e.preventDefault();
+    dragOverUnseated = true;
+  }
+
+  function handleUnseatedDragLeave() {
+    dragOverUnseated = false;
+  }
+
+  function handleUnseatedDrop(e: DragEvent) {
+    e.preventDefault();
+    if (!draggedPlayerId) return;
+    handleUnseatPlayer(draggedPlayerId);
+    draggedPlayerId = null;
+    dragOverUnseated = false;
+  }
+
   async function handleUpdateDealer(tableId: string, dealer: string) {
     if (loading) return;
     loading = true;
