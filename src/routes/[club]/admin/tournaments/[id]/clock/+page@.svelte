@@ -23,7 +23,7 @@
 
   const t = $derived(data.tournament);
   const timerState = $derived(t.timer_state as TimerState | null);
-  const blindLevels = $derived((t.blind_structures?.levels ?? []) as unknown as BlindLevel[]);
+  const blindLevels = $derived(((t.blind_levels ?? t.blind_structures?.levels) ?? []) as unknown as BlindLevel[]);
 
   const currentLevelIdx = $derived(
     timerState && blindLevels.length > 0

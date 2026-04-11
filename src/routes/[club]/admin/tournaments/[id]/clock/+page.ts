@@ -14,7 +14,7 @@ export const load: PageLoad = async ({ params, parent }) => {
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('*, blind_structures(name, levels), prize_structures(name, payouts)')
+    .select('*, blind_structures(name, levels), prize_structures(name, payouts), blind_levels')
     .eq('id', params.id)
     .eq('club_id', club.id)
     .single();
