@@ -181,7 +181,9 @@
   let seatingError = $state<string | null>(null);
   let confirmReset = $state(false);
   let dismissedSuggestion = $state(false);
-  let movingPlayerId = $state<string | null>(null);
+  let draggedPlayerId = $state<string | null>(null);
+  let dragOverTarget = $state<string | null>(null); // "${tableId}:${seatNumber}"
+  let dragOverUnseated = $state(false);
 
   const activePlayers = $derived(
     data.players
@@ -591,7 +593,6 @@
         .eq('id', move.playerId);
       if (error) { seatingError = error.message; return; }
       dismissedSuggestion = false;
-      movingPlayerId = null;
       await invalidateAll();
     } finally {
       loading = false;
