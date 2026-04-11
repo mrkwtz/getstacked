@@ -1366,23 +1366,6 @@
           </div>
         {/if}
 
-        <!-- Manual move hint / cancel -->
-        {#if movingPlayerId}
-          {@const movingPlayer = data.players.find((p) => p.id === movingPlayerId)}
-          <div class="flex items-center justify-between gap-3 bg-muted border border-border rounded-lg px-4 py-3">
-            <span class="text-sm text-foreground">
-              {m.seating_move_hint({ name: movingPlayer?.members ? displayName(movingPlayer.members) : '?' })}
-            </span>
-            <button
-              type="button"
-              onclick={() => { movingPlayerId = null; }}
-              class="text-xs border border-border text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer shrink-0"
-            >
-              {m.seating_cancel_move()}
-            </button>
-          </div>
-        {/if}
-
         <!-- Table cards grid -->
         <div class="grid grid-cols-2 gap-3">
           {#each data.tables as table}
@@ -1413,39 +1396,57 @@
                 {#each Array.from({ length: table.max_seats }, (_, i) => i + 1) as seat}
                   {@const player = tablePlayers.find((p) => p.seat_number === seat && p.finish_position === null) ?? tablePlayers.find((p) => p.seat_number === seat)}
                   {@const busted = player && player.finish_position !== null}
-                  {@const isSelected = player && player.id === movingPlayerId}
-                  {@const isTarget = movingPlayerId && !isSelected && (!player || busted)}
-                  <button
-                    type="button"
-                    disabled={loading || (!isSelected && !isTarget && !!movingPlayerId)}
-                    onclick={() => {
-                      if (isSelected) { movingPlayerId = null; return; }
-                      if (movingPlayerId && isTarget) {
-                        handleConfirmMove({ playerId: movingPlayerId, toTableId: table.id, toSeatNumber: seat });
-                        return;
-                      }
-                      if (!movingPlayerId && player && !busted) {
-                        movingPlayerId = player.id;
-                      }
-                    }}
-                    class="px-2 py-1 rounded text-left w-full transition-colors
-                      {isSelected
-                        ? 'bg-accent text-accent-foreground ring-2 ring-accent cursor-pointer'
-                        : isTarget
-                          ? 'bg-accent/10 text-muted-foreground border border-dashed border-accent/50 cursor-pointer hover:bg-accent/20'
-                          : busted
-                            ? 'bg-muted text-muted-foreground line-through opacity-50 cursor-default'
-                            : player
-                              ? 'bg-accent/20 text-foreground cursor-pointer hover:bg-accent/30'
-                              : 'bg-muted text-muted-foreground cursor-default'}"
+                  {@const isDropTarget = dragOverTarget === `${table.id}:${seat}`}
+                  <div
+                    class="px-2 py-1 rounded transition-colors {busted ? 'bg-muted text-muted-foreground opacity-50' : player ? 'bg-accent/20 text-foreground' : 'bg-muted text-muted-foreground'} {isDropTarget ? 'ring-1 ring-accent bg-accent/10' : ''}"
+                    ondragover={(e) => handleSeatDragOver(e, table.id, seat)}
+                    ondragleave={handleSeatDragLeave}
+                    ondrop={(e) => handleSeatDrop(e, table.id, seat)}
                   >
-                    {seat} {player ? (player.members ? displayName(player.members) : '?') : '—'}
-                  </button>
+                    {seat}
+                    {#if player && !busted}
+                      <span
+                        draggable="true"
+                        ondragstart={() => handleDragStart(player.id)}
+                        ondragend={handleDragEnd}
+                        class="cursor-grab select-none {draggedPlayerId === player.id ? 'opacity-50' : ''}"
+                      >{player.members ? displayName(player.members) : '?'}</span>
+                    {:else if player}
+                      <span class="line-through">{player.members ? displayName(player.members) : '?'}</span>
+                    {:else}
+                      —
+                    {/if}
+                  </div>
                 {/each}
               </div>
             </div>
           {/each}
         </div>
+
+        <!-- Unseated players strip -->
+        {#if data.players.filter((p) => p.table_id === null && p.finish_position === null).length > 0}
+          {@const runningUnseated = data.players.filter((p) => p.table_id === null && p.finish_position === null)}
+          <div class="flex flex-col gap-2">
+            <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{m.seating_unseated_title()}</h3>
+            <div
+              class="border border-dashed rounded-lg p-3 flex flex-wrap gap-2 min-h-[44px] transition-colors {dragOverUnseated ? 'border-accent bg-accent/10' : 'border-border'}"
+              ondragover={handleUnseatedDragOver}
+              ondragleave={handleUnseatedDragLeave}
+              ondrop={handleUnseatedDrop}
+            >
+              {#each runningUnseated as player}
+                <span
+                  draggable="true"
+                  ondragstart={() => handleDragStart(player.id)}
+                  ondragend={handleDragEnd}
+                  class="text-xs bg-muted px-2 py-1 rounded cursor-grab select-none {draggedPlayerId === player.id ? 'opacity-50' : ''}"
+                >
+                  {player.members ? displayName(player.members) : '?'}
+                </span>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
   {/if}
