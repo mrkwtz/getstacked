@@ -102,6 +102,7 @@
   "blind_structure_create_button": "Create",
   "blind_structure_empty": "No blind structures yet.",
   "blind_structure_in_use": "In use",
+  "structure_count": "{count} structures",
   "prize_structures_title": "Prize structures",
   "prize_structure_new_title": "New prize structure",
   "prize_structure_name_label": "Name",

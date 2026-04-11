@@ -102,6 +102,7 @@
   "blind_structure_create_button": "Erstellen",
   "blind_structure_empty": "Noch keine Blind-Strukturen.",
   "blind_structure_in_use": "In Verwendung",
+  "structure_count": "{count} Strukturen",
   "prize_structures_title": "Preisstrukturen",
   "prize_structure_new_title": "Neue Preisstruktur",
   "prize_structure_name_label": "Name",

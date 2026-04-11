@@ -84,9 +84,9 @@
     >
       <div>
         <p class="text-sm font-semibold text-foreground">{m.blind_structures_title()}</p>
-        <p class="text-xs text-muted-foreground">{data.blindStructureCount} structures</p>
+        <p class="text-xs text-muted-foreground">{m.structure_count({ count: data.blindStructureCount })}</p>
       </div>
-      <span class="text-accent/70 text-base leading-none">›</span>
+      <span class="text-accent/70 text-base leading-none" aria-hidden="true">›</span>
     </button>
 
     <button
@@ -96,9 +96,9 @@
     >
       <div>
         <p class="text-sm font-semibold text-foreground">{m.prize_structures_title()}</p>
-        <p class="text-xs text-muted-foreground">{data.prizeStructureCount} structures</p>
+        <p class="text-xs text-muted-foreground">{m.structure_count({ count: data.prizeStructureCount })}</p>
       </div>
-      <span class="text-accent/70 text-base leading-none">›</span>
+      <span class="text-accent/70 text-base leading-none" aria-hidden="true">›</span>
     </button>
   </div>
 </div>
