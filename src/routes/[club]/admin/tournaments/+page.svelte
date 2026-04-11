@@ -77,9 +77,8 @@
   {/if}
 
   <div class="flex gap-3">
-    <button
-      type="button"
-      onclick={() => goto(`/${data.club.slug}/admin/blind-structures`)}
+    <a
+      href="/{data.club.slug}/admin/blind-structures"
       class="flex items-center justify-between gap-5 bg-card border border-border rounded-lg px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-left"
     >
       <div>
@@ -87,11 +86,10 @@
         <p class="text-xs text-muted-foreground">{m.structure_count({ count: data.blindStructureCount })}</p>
       </div>
       <span class="text-accent/70 text-base leading-none" aria-hidden="true">›</span>
-    </button>
+    </a>
 
-    <button
-      type="button"
-      onclick={() => goto(`/${data.club.slug}/admin/prize-structures`)}
+    <a
+      href="/{data.club.slug}/admin/prize-structures"
       class="flex items-center justify-between gap-5 bg-card border border-border rounded-lg px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-left"
     >
       <div>
@@ -99,6 +97,6 @@
         <p class="text-xs text-muted-foreground">{m.structure_count({ count: data.prizeStructureCount })}</p>
       </div>
       <span class="text-accent/70 text-base leading-none" aria-hidden="true">›</span>
-    </button>
+    </a>
   </div>
 </div>
